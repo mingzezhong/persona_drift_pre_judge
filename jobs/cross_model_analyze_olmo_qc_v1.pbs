@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -N olmo-qc-analysis
+#PBS -q smallq
+#PBS -l select=1:ncpus=4:mem=16gb
+#PBS -l walltime=01:00:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export PYTHONUNBUFFERED=1
+
+python -c 'import json; from pathlib import Path; p=json.loads(Path("outputs/cross_model_replication/olmo_qc_v1/formal_generation_qc.json").read_text()); assert p["formal_generation_qc_pass"] is True'
+PYTHONPATH=src:. python scripts/analyze_cross_model_replication.py \
+  --config configs/cross_model_replication_olmo_qc_v1.yaml

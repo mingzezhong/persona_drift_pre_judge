@@ -1,0 +1,39 @@
+version: 1
+purpose: >-
+  Fully blinded three-family persona-consistency cross-model replication for
+  the independently rooted OLMo QC-remediated formal run. Internal example
+  IDs, condition, checkpoint, history, system prompt, gold anchor score,
+  activation, and prior judge outputs are hidden from every judge.
+
+input:
+  manifest: outputs/cross_model_replication/olmo_qc_v1/probes.jsonl
+  rubric: configs/extraction_judge_rubric_v2.yaml
+
+inference:
+  dtype: bfloat16
+  device_map: auto
+  attention_implementation: eager
+  max_new_tokens: 256
+  max_retries: 1
+
+judges:
+  measurement_a:
+    reviewer_id: measurement_a
+    review_sheet: outputs/cross_model_replication/olmo_qc_v1/review/measurement_a.csv
+    model: mistralai/Mistral-Small-24B-Instruct-2501
+    revision: 9527884be6e5616bdd54de542f9ae13384489724
+    tokenizer_kwargs:
+      fix_mistral_regex: true
+    output: outputs/cross_model_replication/olmo_qc_v1/judges/mistral.jsonl
+  measurement_b:
+    reviewer_id: measurement_b
+    review_sheet: outputs/cross_model_replication/olmo_qc_v1/review/measurement_b.csv
+    model: microsoft/phi-4
+    revision: 2db69c1c3e91a05d2c64a3185acfbaf36f744e25
+    output: outputs/cross_model_replication/olmo_qc_v1/judges/phi4.jsonl
+  measurement_c:
+    reviewer_id: measurement_c
+    review_sheet: outputs/cross_model_replication/olmo_qc_v1/review/measurement_c.csv
+    model: ibm-granite/granite-3.3-8b-instruct
+    revision: 51dd4bc2ade4059a6bd87649d68aa11e4fb2529b
+    output: outputs/cross_model_replication/olmo_qc_v1/judges/granite.jsonl

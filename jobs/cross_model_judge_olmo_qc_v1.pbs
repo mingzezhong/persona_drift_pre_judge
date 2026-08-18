@@ -1,0 +1,44 @@
+#!/bin/bash
+#PBS -N olmo-qc-judge
+#PBS -q large_gpuq
+#PBS -l select=1:ngpus=1:ncpus=4:mem=32gb
+#PBS -l walltime=03:00:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export HF_HOME="$HOME/.cache/huggingface"
+export PYTHONUNBUFFERED=1
+export TOKENIZERS_PARALLELISM=false
+
+GPU_INDEX=""
+while IFS=, read -r candidate_index candidate_memory; do
+  candidate_index="${candidate_index//[[:space:]]/}"
+  exec 9>"/tmp/persona-drift-${USER}-gpu-${candidate_index}.lock"
+  if flock -n 9; then
+    GPU_INDEX="$candidate_index"
+    break
+  fi
+done < <(
+  nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits |
+    sort -t, -k2,2n
+)
+if ! [[ "$GPU_INDEX" =~ ^[0-9]+$ ]]; then
+  echo "Could not acquire one node-local GPU lock." >&2
+  exit 1
+fi
+export CUDA_VISIBLE_DEVICES="$GPU_INDEX"
+
+: "${JUDGE_ID:?JUDGE_ID must be supplied with qsub -v}"
+case "$JUDGE_ID" in
+  measurement_a|measurement_b|measurement_c) ;;
+  *) echo "Unexpected judge ID: $JUDGE_ID" >&2; exit 2 ;;
+esac
+PYTHONPATH=src:. python scripts/judge_extraction.py \
+  --config configs/ai_judges_cross_model_olmo_qc_v1.yaml \
+  --judge-id "$JUDGE_ID" \
+  --resume
