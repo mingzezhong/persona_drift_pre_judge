@@ -1,0 +1,86 @@
+version: 1
+experiment: olmo_prompt_salience_pilot_v1
+mode: engineering_prompt_salience_full_pilot
+
+data:
+  template: data/templates/persona_cross_model_olmo_prompt_minimal_v1.yaml
+  output_dir: outputs/cross_model_replication/olmo_prompt_salience_pilot_v1
+  axes: [independent_sycophantic, cautious_risk_seeking]
+  conditions: [neutral, gradual_pressure, abrupt_pressure, topic_shift]
+  topics: [municipal_water_reuse, coastal_ferry_ticketing, regional_food_cold_chain]
+  seeds: [631, 632]
+  total_turns: 25
+  abrupt_onset_turn: 7
+  checkpoint_turns: [0, 5, 10, 15, 20, 25]
+  expected_trajectories: 48
+  expected_main_turns: 1200
+  expected_probes: 288
+
+hardware:
+  accelerator: cuda
+  gpu_count: 1
+  expected_name_substring: Blackwell
+  min_memory_gib: 90
+  dtype: bfloat16
+  attention_implementation: eager
+  allow_tf32: true
+  allow_bf16: true
+
+model:
+  name: allenai/OLMo-2-1124-7B-Instruct
+  revision: 470b1fba1ae01581f270116362ee4aa1b97f4c84
+
+vectors:
+  path: outputs/cross_model_replication/olmo_v1/vectors/persona_vectors.pt
+  sha256: a412c5b8f0b9c37d8f4d0881e6bfbfcca2c743ae2c47318cb963a24c369ef12f
+  summary: outputs/cross_model_replication/olmo_v1/vectors/summary.json
+  summary_sha256: ff53abd61afc074ab110a0a449a784d77730d4a664ed3542e86562e66bc796e0
+  reference_layer: 20
+  representation:
+    monitoring: last_prompt_token
+    behavior: response_token_mean
+  projection: cosine
+
+generation:
+  max_new_tokens: 384
+  min_new_tokens: 24
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true
+  generated_only_repetition_penalty: 1.10
+  generated_only_no_repeat_ngram_size: 4
+
+prompt_salience:
+  variant: minimal
+  template_sha256: bfa1391c51d020872852eb824e2a98a557357d60e0d31f8f238fce43334d5415
+
+generation_quality:
+  max_role_start_rate: 0.02
+  max_length_rate: 0.10
+  forbidden_text_markers: ["<|im_start|>", "<tool_call>", "</tool_call>"]
+
+pilot_quality:
+  combined_max_length_rate: 0.10
+  main_max_length_rate: 0.10
+  probe_max_length_rate: 0.10
+  max_topic_cell_max_length_rate: 0.20
+  overall_duplicate_4gram_ge_0_15_rate: 0.05
+  max_topic_cell_duplicate_4gram_ge_0_15_rate: 0.10
+  overall_format_compliance_rate: 0.85
+  min_topic_cell_format_compliance_rate: 0.75
+  complete_sentence_ending_rate: 0.95
+  list_or_heading_rate: 0.05
+  role_start_rate: 0.02
+
+analysis:
+  confirmatory: false
+  outcomes_must_not_be_evaluated: true
+  manual_response_text_must_not_be_inspected: true
+  formal_replication_authorized_before_pilot: false
+
+provenance:
+  source_template_sha256: 968c92387590a9e9d12d19b772aa2b522aed8eabfd85af41e30a3e0175b40d49
+  prompt_salience_smoke_summary: outputs/cross_model_replication/olmo_prompt_salience_smoke_v1/summary.json
+  prompt_salience_smoke_summary_sha256: fc5186acd277a8d4d30a78da0c86a0fea98988e9a7acd452fff4adb902c6ee8d
+  prompt_salience_smoke_selected_variant: minimal
+  formal_reserved_seeds: [701, 702, 703, 704, 705, 706, 707, 708, 709, 710]

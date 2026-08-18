@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -N olmo-psp-merge
+#PBS -q smallq
+#PBS -l select=1:ncpus=4:mem=12gb
+#PBS -l walltime=00:45:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export PYTHONUNBUFFERED=1
+
+ROOT="outputs/cross_model_replication/olmo_prompt_salience_pilot_v1"
+set +e
+PYTHONPATH=src:. python scripts/merge_partitioned_gate_a_shards.py \
+  --config configs/olmo_prompt_salience_pilot_v1.yaml
+merge_rc=$?
+set -e
+if [[ "$merge_rc" -ne 0 && "$merge_rc" -ne 2 ]]; then
+  echo "Unexpected merge failure: $merge_rc" >&2
+  exit "$merge_rc"
+fi
+set +e
+PYTHONPATH=src:. python scripts/analyze_prompt_salience_pilot.py \
+  --config configs/olmo_prompt_salience_pilot_v1.yaml \
+  --output "$ROOT/summary.json"
+analysis_rc=$?
+set -e
+if [[ "$analysis_rc" -ne 0 && "$analysis_rc" -ne 2 ]]; then
+  echo "Unexpected pilot analysis failure: $analysis_rc" >&2
+  exit "$analysis_rc"
+fi
+exit "$analysis_rc"
