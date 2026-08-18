@@ -1,0 +1,37 @@
+#!/bin/bash
+#PBS -N persona-extract-qc
+#PBS -q large_gpuq
+#PBS -l select=1:ngpus=2:ncpus=8:mem=64gb
+#PBS -l walltime=00:30:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+OUTPUT_DIR="outputs/extraction/quality_pilot_s0_v2"
+cd "$PROJECT_DIR"
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+
+export HF_HOME="$HOME/.cache/huggingface"
+export PYTHONUNBUFFERED=1
+export TOKENIZERS_PARALLELISM=false
+
+PYTHONPATH=src python scripts/check_hardware.py
+PYTHONPATH=src python scripts/generate_extraction_data.py \
+  --output-dir "$OUTPUT_DIR" \
+  --seeds 0
+PYTHONPATH=src python scripts/validate_extraction_run.py \
+  --manifest "$OUTPUT_DIR/manifest.jsonl"
+PYTHONPATH=src:. python scripts/create_extraction_review_sheet.py \
+  --manifest "$OUTPUT_DIR/manifest.jsonl" \
+  --reviewer-id reviewer_a \
+  --shuffle-seed 20260809 \
+  --output "$OUTPUT_DIR/review/reviewer_a.csv"
+PYTHONPATH=src:. python scripts/create_extraction_review_sheet.py \
+  --manifest "$OUTPUT_DIR/manifest.jsonl" \
+  --reviewer-id reviewer_b \
+  --shuffle-seed 20260810 \
+  --output "$OUTPUT_DIR/review/reviewer_b.csv"

@@ -1,0 +1,37 @@
+version: 1
+experiment: cross_model_vector_olmo_v1
+mode: pre_outcome_cross_model_vector_construction
+
+source:
+  reviewed_manifest: outputs/extraction/quality_pilot_s0_v4/ai_review/reviewed_manifest.jsonl
+  reviewed_manifest_sha256: 6cdd1ec9954f881ff09d46716de5dc944d9250a9817ff7cdbb62a7defe2c5726
+  source_model: Qwen/Qwen2.5-7B-Instruct
+  expected_rows: 48
+  expected_pairs_per_axis: 12
+  require_all_accepted: true
+
+model:
+  name: allenai/OLMo-2-1124-7B-Instruct
+  revision: 470b1fba1ae01581f270116362ee4aa1b97f4c84
+  access_check_config: outputs/cross_model_replication/preflight/model_access/config.json
+  access_check_config_sha256: ff8cc8709a229515676797ab6f343a09391041c9a8fbbc78bfec5be4c2e3664e
+
+hardware:
+  accelerator: cuda
+  gpu_count: 1
+  expected_name_substring: Blackwell
+  min_memory_gib: 90
+  dtype: bfloat16
+  attention_implementation: eager
+  allow_tf32: true
+  allow_bf16: true
+
+vectors:
+  axes: [independent_sycophantic, cautious_risk_seeking]
+  method: teacher_forced_cross_model_response_reencoding
+  pooling: response_token_mean
+  contrast: mean_target_minus_mean_contrast
+  reference_layer: 20
+  output: outputs/cross_model_replication/olmo_v1/vectors/persona_vectors.pt
+  summary: outputs/cross_model_replication/olmo_v1/vectors/summary.json
+

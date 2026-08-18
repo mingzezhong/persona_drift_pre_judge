@@ -1,0 +1,383 @@
+diff --git a/configs/pilot.yaml b/configs/pilot.yaml
+index 1d72ad2..eacc2b8 100644
+--- a/configs/pilot.yaml
++++ b/configs/pilot.yaml
+@@ -4,12 +4,14 @@ experiment: controlled_pilot_v0
+ hardware:
+   accelerator: cuda
+   gpu_count: 2
+-  expected_gpu: NVIDIA V100
++  expected_gpu: NVIDIA RTX PRO 6000 Blackwell Server Edition
++  expected_name_substring: Blackwell
++  min_memory_gib: 90
+   strategy: auto
+-  dtype: float16
++  dtype: bfloat16
+   attention_implementation: eager
+-  allow_tf32: false
+-  allow_bf16: false
++  allow_tf32: true
++  allow_bf16: true
+   quantize_target_model: false
+ 
+ models:
+@@ -74,4 +76,3 @@ evaluation:
+     - false_alarms_per_100_turns
+   bootstrap_unit: trajectory
+   bootstrap_samples: 2000
+-
+diff --git a/docs/model_selection.md b/docs/model_selection.md
+index b2a80a1..823d1ee 100644
+--- a/docs/model_selection.md
++++ b/docs/model_selection.md
+@@ -33,38 +33,39 @@ We reproduce that extraction procedure in Phase 1. We do not assume that layer
+ 20 is optimal for pre-drift forecasting. Layer 20 is a preregistered reference;
+ the forecasting layer is selected on the validation split only and then frozen.
+ 
+-## V100 execution policy
++## CETUS Blackwell execution policy
+ 
+-V100 supports accelerated FP16 but not native BF16. Therefore:
++The allocated node exposes two NVIDIA RTX PRO 6000 Blackwell Server Edition
++GPUs with roughly 96 GiB each, compute capability 12.0, and working native
++BF16 under PyTorch 2.9.1/CUDA 12.8. Therefore:
+ 
+-- use `torch.float16`, never BF16;
+-- use standard Transformers/PyTorch attention (`eager` initially);
+-- do not require FlashAttention 2, FP8, or V100-incompatible vLLM kernels;
++- use `torch.bfloat16` for primary model inference and activation extraction;
++- enable TF32 for any FP32 CUDA matrix multiplications;
++- use standard Transformers/PyTorch attention (`eager` initially) so the
++  activation-hook path remains simple and auditable;
++- do not require FlashAttention 2, FP8, or vLLM kernels for the pilot;
+ - do not quantize the target model in the primary experiments because
+   quantization may change activation geometry;
+ - run under `torch.inference_mode()` and keep the model in `eval()` mode;
+ - pin exact model revisions and package versions before the full experiment.
+ 
+-The V100 exists in 16 GB and 32 GB variants. At runtime:
+-
+-- with 32 GB per GPU, place one FP16 model replica on each GPU and split
+-  independent trajectories across the two replicas;
+-- with 16 GB per GPU, shard one 7B/8B target model across both GPUs for
+-  activation extraction, then run trajectories sequentially;
++- place one BF16 7B/8B model replica on each GPU and split independent
++  examples or trajectories across the two replicas;
++- use separate worker output directories, then merge manifests after both
++  workers finish, to avoid concurrent appends to one JSONL file;
+ - never pool full token-by-layer activations for an entire generated sequence.
+   Store only the last-prompt-token vector and response-token mean per layer.
+ 
+-The current development shell does not expose `nvidia-smi` or CUDA, so the
+-remote GPU memory size and CUDA stack must be verified on the compute node
+-before downloading model weights.
++The observed runtime baseline is two visible GPUs, driver 580.142, PyTorch
++2.9.1+cu128, Transformers 4.57.6, and successful BF16 matrix multiplication.
++The hardware check is repeated at the start of each scheduled experiment.
+ 
+ ## Initial precision invariance check
+ 
+-Before collecting trajectories, run 100 held-out prompts twice:
++Before collecting trajectories, run a held-out prompt subset twice:
+ 
+-1. FP16 target configuration;
+-2. FP32 on a small subset that fits, or CPU for a reduced prompt subset.
++1. BF16 target configuration;
++2. FP32 on a small subset that fits, with FP16 as an optional secondary check.
+ 
+ Record output agreement, persona projection rank correlation, and classification
+-AUROC. This is a diagnostic, not a requirement that FP16 equal FP32 exactly.
+-
++AUROC. This is a diagnostic, not a requirement that BF16 equal FP32 exactly.
+diff --git a/scripts/check_hardware.py b/scripts/check_hardware.py
+index ec4266b..cc81620 100644
+--- a/scripts/check_hardware.py
++++ b/scripts/check_hardware.py
+@@ -4,13 +4,18 @@
+ from dataclasses import asdict
+ import json
+ 
+-from persona_drift.hardware import validate_dual_v100
++from persona_drift.hardware import validate_cuda_hardware
+ 
+ 
+ def main() -> None:
+-    print(json.dumps([asdict(device) for device in validate_dual_v100()], indent=2))
++    devices = validate_cuda_hardware(
++        expected_gpu_count=2,
++        expected_name_substring="Blackwell",
++        require_bf16=True,
++        min_memory_gib=90,
++    )
++    print(json.dumps([asdict(device) for device in devices], indent=2))
+ 
+ 
+ if __name__ == "__main__":
+     main()
+-
+diff --git a/scripts/generate_extraction_data.py b/scripts/generate_extraction_data.py
+index 261599c..7470a28 100644
+--- a/scripts/generate_extraction_data.py
++++ b/scripts/generate_extraction_data.py
+@@ -12,7 +12,7 @@ from typing import Any
+ import torch
+ import yaml
+ 
+-from persona_drift.hardware import validate_dual_v100
++from persona_drift.hardware import validate_cuda_hardware
+ from persona_drift.modeling import generate_and_capture_response, load_target
+ from persona_drift.schema import ExtractionExample
+ 
+@@ -47,14 +47,27 @@ def generation_settings(config: dict[str, Any]) -> dict[str, Any]:
+ 
+ def main() -> None:
+     args = parse_args()
++    config = yaml.safe_load(args.config.read_text())
++    hardware = config["hardware"]
+     if not args.skip_hardware_check:
+-        validate_dual_v100()
++        validate_cuda_hardware(
++            expected_gpu_count=int(hardware["gpu_count"]),
++            expected_name_substring=hardware.get("expected_name_substring"),
++            require_bf16=bool(hardware.get("allow_bf16", False)),
++            min_memory_gib=hardware.get("min_memory_gib"),
++        )
+ 
+     template = yaml.safe_load(args.template.read_text())
+-    config = yaml.safe_load(args.config.read_text())
+     model_name = args.model or config["models"]["primary"]["name"]
+     generation = generation_settings(config)
+-    target = load_target(model_name, revision=args.revision, device_map=args.device_map)
++    target = load_target(
++        model_name,
++        revision=args.revision,
++        device_map=args.device_map,
++        dtype=hardware["dtype"],
++        attention_implementation=hardware["attention_implementation"],
++        allow_tf32=bool(hardware["allow_tf32"]),
++    )
+ 
+     args.output_dir.mkdir(parents=True, exist_ok=True)
+     activation_dir = args.output_dir / "activations"
+@@ -111,4 +124,3 @@ def main() -> None:
+ 
+ if __name__ == "__main__":
+     main()
+-
+diff --git a/src/persona_drift/hardware.py b/src/persona_drift/hardware.py
+index 489f989..3faa504 100644
+--- a/src/persona_drift/hardware.py
++++ b/src/persona_drift/hardware.py
+@@ -1,4 +1,4 @@
+-"""Runtime checks for the supported dual-V100 configuration."""
++"""Runtime inspection and validation for CUDA experiment hardware."""
+ 
+ from __future__ import annotations
+ 
+@@ -22,10 +22,11 @@ def inspect_gpus() -> list[GPUInfo]:
+     devices: list[GPUInfo] = []
+     for index in range(torch.cuda.device_count()):
+         properties = torch.cuda.get_device_properties(index)
+-        bf16_supported = bool(
+-            hasattr(torch.cuda, "is_bf16_supported")
+-            and torch.cuda.is_bf16_supported()
+-        )
++        with torch.cuda.device(index):
++            bf16_supported = bool(
++                hasattr(torch.cuda, "is_bf16_supported")
++                and torch.cuda.is_bf16_supported()
++            )
+         devices.append(
+             GPUInfo(
+                 index=index,
+@@ -38,16 +39,35 @@ def inspect_gpus() -> list[GPUInfo]:
+     return devices
+ 
+ 
+-def validate_dual_v100() -> list[GPUInfo]:
+-    """Fail early unless exactly two V100 devices are visible."""
++def validate_cuda_hardware(
++    *,
++    expected_gpu_count: int = 2,
++    expected_name_substring: str | None = None,
++    require_bf16: bool = False,
++    min_memory_gib: float | None = None,
++) -> list[GPUInfo]:
++    """Validate the visible devices against the experiment configuration."""
+ 
+     devices = inspect_gpus()
+     rendered = [asdict(device) for device in devices]
+-    if len(devices) != 2:
+-        raise RuntimeError(f"expected 2 visible GPUs, found {len(devices)}: {rendered}")
+-    if any("V100" not in device.name for device in devices):
+-        raise RuntimeError(f"expected V100 GPUs: {rendered}")
+-    if any(device.bf16_supported for device in devices):
+-        raise RuntimeError("unexpected BF16 report for V100; verify the CUDA environment")
++    if len(devices) != expected_gpu_count:
++        raise RuntimeError(
++            f"expected {expected_gpu_count} visible GPUs, found {len(devices)}: "
++            f"{rendered}"
++        )
++    if expected_name_substring is not None and any(
++        expected_name_substring.casefold() not in device.name.casefold()
++        for device in devices
++    ):
++        raise RuntimeError(
++            f"expected GPU names containing {expected_name_substring!r}: {rendered}"
++        )
++    if require_bf16 and any(not device.bf16_supported for device in devices):
++        raise RuntimeError(f"BF16 is required but not supported by every GPU: {rendered}")
++    if min_memory_gib is not None and any(
++        device.total_memory_gib < min_memory_gib for device in devices
++    ):
++        raise RuntimeError(
++            f"expected at least {min_memory_gib} GiB per GPU: {rendered}"
++        )
+     return devices
+-
+diff --git a/src/persona_drift/modeling.py b/src/persona_drift/modeling.py
+index 659be6f..e35e0c1 100644
+--- a/src/persona_drift/modeling.py
++++ b/src/persona_drift/modeling.py
+@@ -25,12 +25,21 @@ def load_target(
+     *,
+     revision: str | None = None,
+     device_map: str = "auto",
++    dtype: str | torch.dtype = "bfloat16",
++    attention_implementation: str = "eager",
++    allow_tf32: bool = True,
+ ) -> LoadedTarget:
+-    """Load a target model under the V100-safe FP16/eager-attention policy."""
++    """Load a target model using the configured CUDA precision policy."""
+ 
+     if not torch.cuda.is_available():
+         raise RuntimeError("CUDA is required for target-model extraction")
+ 
++    resolved_dtype = resolve_dtype(dtype)
++    if resolved_dtype is torch.bfloat16 and not torch.cuda.is_bf16_supported():
++        raise RuntimeError("bfloat16 was requested but is not supported by this GPU")
++    torch.backends.cuda.matmul.allow_tf32 = allow_tf32
++    torch.backends.cudnn.allow_tf32 = allow_tf32
++
+     common: dict[str, Any] = {}
+     if revision is not None:
+         common["revision"] = revision
+@@ -41,10 +50,10 @@ def load_target(
+ 
+     model = AutoModelForCausalLM.from_pretrained(
+         model_name,
+-        torch_dtype=torch.float16,
++        dtype=resolved_dtype,
+         device_map=device_map,
+         low_cpu_mem_usage=True,
+-        attn_implementation="eager",
++        attn_implementation=attention_implementation,
+         **common,
+     )
+     model.eval()
+@@ -57,6 +66,25 @@ def load_target(
+     return LoadedTarget(model, tokenizer, revision, str(resolved))
+ 
+ 
++def resolve_dtype(dtype: str | torch.dtype) -> torch.dtype:
++    """Resolve the small, explicit dtype vocabulary used by experiment configs."""
++
++    if isinstance(dtype, torch.dtype):
++        return dtype
++    aliases = {
++        "bfloat16": torch.bfloat16,
++        "bf16": torch.bfloat16,
++        "float16": torch.float16,
++        "fp16": torch.float16,
++        "float32": torch.float32,
++        "fp32": torch.float32,
++    }
++    try:
++        return aliases[dtype.casefold()]
++    except KeyError as exc:
++        raise ValueError(f"unsupported model dtype: {dtype!r}") from exc
++
++
+ def input_device(model: nn.Module) -> torch.device:
+     """Return the embedding device, including for Accelerate-sharded models."""
+ 
+@@ -142,4 +170,3 @@ def generate_and_capture_response(
+         )
+     response_activations = stack_captures(captures)[:, 0, :]
+     return response_text, response_activations, pre_response
+-
+diff --git a/persona_blackwell_mod_v1/tests/test_hardware.py b/tests/test_hardware.py
+new file mode 100644
+index 0000000..6b3f255
+--- /dev/null
++++ b/tests/test_hardware.py
+@@ -0,0 +1,41 @@
++import pytest
++
++import persona_drift.hardware as hardware
++from persona_drift.hardware import GPUInfo, validate_cuda_hardware
++
++
++def gpu(
++    index: int,
++    *,
++    name: str = "NVIDIA RTX PRO 6000 Blackwell Server Edition",
++    memory: float = 95.6,
++    bf16: bool = True,
++) -> GPUInfo:
++    return GPUInfo(index, name, memory, (12, 0), bf16)
++
++
++def test_blackwell_pair_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(hardware, "inspect_gpus", lambda: [gpu(0), gpu(1)])
++    devices = validate_cuda_hardware(
++        expected_gpu_count=2,
++        expected_name_substring="blackwell",
++        require_bf16=True,
++        min_memory_gib=90,
++    )
++    assert len(devices) == 2
++
++
++def test_wrong_device_count_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(hardware, "inspect_gpus", lambda: [gpu(0)])
++    with pytest.raises(RuntimeError, match="expected 2 visible GPUs"):
++        validate_cuda_hardware(expected_gpu_count=2)
++
++
++def test_missing_bf16_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(
++        hardware,
++        "inspect_gpus",
++        lambda: [gpu(0), gpu(1, bf16=False)],
++    )
++    with pytest.raises(RuntimeError, match="BF16 is required"):
++        validate_cuda_hardware(expected_gpu_count=2, require_bf16=True)
+diff --git a/persona_blackwell_mod_v1/tests/test_modeling.py b/tests/test_modeling.py
+new file mode 100644
+index 0000000..1cf8650
+--- /dev/null
++++ b/tests/test_modeling.py
+@@ -0,0 +1,22 @@
++import pytest
++import torch
++
++from persona_drift.modeling import resolve_dtype
++
++
++@pytest.mark.parametrize(
++    ("name", "expected"),
++    [
++        ("bfloat16", torch.bfloat16),
++        ("bf16", torch.bfloat16),
++        ("float16", torch.float16),
++        ("fp32", torch.float32),
++    ],
++)
++def test_resolve_dtype(name: str, expected: torch.dtype) -> None:
++    assert resolve_dtype(name) is expected
++
++
++def test_resolve_dtype_rejects_unknown_value() -> None:
++    with pytest.raises(ValueError, match="unsupported model dtype"):
++        resolve_dtype("fp8")

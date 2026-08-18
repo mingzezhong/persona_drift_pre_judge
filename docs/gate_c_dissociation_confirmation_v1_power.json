@@ -1,0 +1,80 @@
+{
+  "binomial_precision_at_recommended_design": {
+    "sixty_of_60_alarm_wilson_95ci": [
+      0.93982814785791,
+      0.9999999999999998
+    ],
+    "zero_of_60_control_alarm_wilson_95ci": [
+      0.0,
+      0.06017185214208986
+    ],
+    "zero_of_60_drift_wilson_95ci": [
+      0.0,
+      0.06017185214208986
+    ]
+  },
+  "bootstrap_samples_per_target": 5000,
+  "development_only": true,
+  "inputs": {
+    "development_predictions": "outputs/gate_c/development_v2/analysis/primary_predictions.csv",
+    "development_predictions_sha256": "8117babdb9926c5093eeae09e330b4acd3e137afdcb03c28bbfb3c2dea15025c",
+    "v2_summary": "outputs/gate_c/development_v2/analysis/summary.json",
+    "v2_summary_sha256": "7f2a70c2c9b4fe8283b2ac84cd8415d37999fcab0f4d3d3ab6342d6e1f2141cd"
+  },
+  "method": "complete-trajectory resampling within condition",
+  "precision_by_positive_axis_trajectory_total": {
+    "120": {
+      "empirical_95_interval": [
+        -0.0007216580754543204,
+        0.036810860888484974
+      ],
+      "median_delta_auprc": 0.015897809408242758,
+      "per_condition": 30,
+      "probability_estimate_below_0_05": 0.9988,
+      "trajectories": 120
+    },
+    "160": {
+      "empirical_95_interval": [
+        0.0016134828855578797,
+        0.03383739248989353
+      ],
+      "median_delta_auprc": 0.016106758315519,
+      "per_condition": 40,
+      "probability_estimate_below_0_05": 1.0,
+      "trajectories": 160
+    },
+    "40": {
+      "empirical_95_interval": [
+        -0.012842289733388862,
+        0.050912863993593745
+      ],
+      "median_delta_auprc": 0.01454129073592969,
+      "per_condition": 10,
+      "probability_estimate_below_0_05": 0.9698,
+      "trajectories": 40
+    },
+    "80": {
+      "empirical_95_interval": [
+        -0.004814407353591079,
+        0.04192430751572512
+      ],
+      "median_delta_auprc": 0.015739181718459783,
+      "per_condition": 20,
+      "probability_estimate_below_0_05": 0.9942,
+      "trajectories": 80
+    }
+  },
+  "protocol": "gate_c_dissociation_confirmation_power_v1",
+  "recommended_design": {
+    "axes": 2,
+    "conditions": 4,
+    "pressure_trajectories_per_axis": 60,
+    "rationale": "N=120 has empirical 97.5th-percentile delta AUPRC below 0.05 and provides 60 resistant pressure trajectories",
+    "seeds_per_topic": 10,
+    "topics": 3,
+    "total_trajectories": 240,
+    "trajectories_per_axis": 120
+  },
+  "seed": 20260920,
+  "smallest_useful_incremental_auprc": 0.05
+}

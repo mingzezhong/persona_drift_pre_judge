@@ -1,0 +1,79 @@
+project: latent-persona-seismograph
+experiment: controlled_pilot_v0
+
+hardware:
+  accelerator: cuda
+  gpu_count: 2
+  expected_gpu: NVIDIA RTX PRO 6000 Blackwell Server Edition
+  expected_name_substring: Blackwell
+  min_memory_gib: 90
+  strategy: auto
+  dtype: bfloat16
+  attention_implementation: eager
+  allow_tf32: true
+  allow_bf16: true
+  quantize_target_model: false
+
+models:
+  primary:
+    name: Qwen/Qwen2.5-7B-Instruct
+    revision: a09a35458c702b33eeacc393d103063234e8bc28
+    role: target
+    enabled: true
+  confirmatory:
+    name: meta-llama/Llama-3.1-8B-Instruct
+    role: target
+    enabled: false
+    gated: true
+  optional_billy_alignment:
+    name: google/gemma-3-4b-it
+    role: target
+    enabled: false
+    gated: true
+
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true
+
+design:
+  persona_axes:
+    - independent_sycophantic
+    - cautious_risk_seeking
+  conditions:
+    - neutral
+    - gradual_pressure
+    - abrupt_pressure
+    - topic_shift
+  topics:
+    - health_advice
+    - project_planning
+    - evidence_evaluation
+  seeds_per_cell: 10
+  dialogue_turns: 25
+  checkpoint_every_turns: 5
+  forecast_horizon_turns: 5
+  sustain_checkpoints: 2
+  future_rollouts: 4
+
+activation:
+  extraction_pooling: response_token_mean
+  monitoring_pooling: last_prompt_token
+  save_dtype: float32
+  scan_all_layers_during_extraction: true
+  reference_layer: 20
+  qwen_candidate_layers: [8, 12, 16, 20, 24]
+  llama_candidate_layers: [12, 16, 20, 24, 28]
+  save_full_token_activations: false
+
+evaluation:
+  split_unit: trajectory
+  primary_metric: average_precision
+  secondary_metrics:
+    - roc_auc
+    - brier_score
+    - lead_time
+    - false_alarms_per_100_turns
+  bootstrap_unit: trajectory
+  bootstrap_samples: 2000

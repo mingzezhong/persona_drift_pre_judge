@@ -1,0 +1,39 @@
+#!/bin/bash
+#PBS -N pcm-olmo-next3
+#PBS -q smallq
+#PBS -l select=1:ncpus=1:mem=2gb
+#PBS -l walltime=00:10:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+ROOT="outputs/cross_model_replication/olmo_v1"
+
+for path in "$ROOT/trajectories.jsonl" "$ROOT/probes.jsonl" "$ROOT/merge_summary.json" "$ROOT/generation_quality.json"; do
+  if [[ ! -f "$path" ]]; then
+    echo "Missing successful merge artifact: $path" >&2
+    exit 2
+  fi
+done
+if [[ -e "$ROOT/execution_v3_downstream_job_ids.txt" ]]; then
+  echo "Refusing to overwrite downstream job IDs." >&2
+  exit 2
+fi
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+python -c 'import json; from pathlib import Path; p=json.loads(Path("outputs/cross_model_replication/olmo_v1/generation_quality.json").read_text()); assert p["gate_pass"] is True'
+
+JUDGE_A_JOB="$(qsub -N ol2-judge-a -v JUDGE_ID=measurement_a jobs/cross_model_judge_locked_olmo_v2.pbs)"
+JUDGE_B_JOB="$(qsub -N ol2-judge-b -v JUDGE_ID=measurement_b jobs/cross_model_judge_locked_olmo_v2.pbs)"
+JUDGE_C_JOB="$(qsub -N ol2-judge-c -v JUDGE_ID=measurement_c jobs/cross_model_judge_locked_olmo_v2.pbs)"
+ANALYZE_JOB="$(qsub -W "depend=afterok:${JUDGE_A_JOB}:${JUDGE_B_JOB}:${JUDGE_C_JOB}" jobs/cross_model_analyze_olmo_v1.pbs)"
+{
+  printf 'dispatcher=%s\n' "$PBS_JOBID"
+  printf 'judge_a=%s\n' "$JUDGE_A_JOB"
+  printf 'judge_b=%s\n' "$JUDGE_B_JOB"
+  printf 'judge_c=%s\n' "$JUDGE_C_JOB"
+  printf 'analyze=%s\n' "$ANALYZE_JOB"
+} | tee "$ROOT/execution_v3_downstream_job_ids.txt"

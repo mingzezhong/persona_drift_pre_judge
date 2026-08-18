@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Model and experiment artifacts
+models/
+artifacts/
+outputs/
+logs/
+data/raw/
+data/processed/
+wandb/
+
+# OS/editor metadata and local backups
+.DS_Store
+._*
+*.orig
+.idea/
+.vscode/
+
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example

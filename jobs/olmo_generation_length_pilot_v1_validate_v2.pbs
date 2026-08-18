@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N olmo-len-test2
+#PBS -q smallq
+#PBS -l select=1:ncpus=4:mem=12gb
+#PBS -l walltime=00:45:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONUNBUFFERED=1
+
+PYTHONPATH=src:. python -m py_compile \
+  scripts/validate_generation_length_pilot.py \
+  scripts/analyze_generation_length_pilot.py \
+  tests/test_generation_length_pilot.py
+PYTHONPATH=src:. python -m pytest \
+  tests/test_generation_length_pilot.py \
+  -p no:cacheprovider
+PYTHONPATH=src:. python scripts/validate_generation_length_pilot.py \
+  --base-config configs/cross_model_replication_olmo_v1.yaml \
+  --configs \
+    configs/cross_model_length_pilot_olmo_v1_cap256.yaml \
+    configs/cross_model_length_pilot_olmo_v1_cap384.yaml

@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -N persona-ga-merge-smk-v3
+#PBS -q smallq
+#PBS -l select=1:ncpus=4:mem=8gb
+#PBS -l walltime=00:20:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export PYTHONUNBUFFERED=1
+
+PYTHONPATH=src python scripts/merge_gate_a_shards.py \
+  --config configs/gate_a_smoke_v3.yaml
+PYTHONPATH=src:. python scripts/create_extraction_review_sheet.py \
+  --manifest outputs/gate_a/smoke_v3/probes.jsonl \
+  --template data/templates/persona_gate_a_v3.yaml \
+  --reviewer-id reviewer_a \
+  --shuffle-seed 20260901 \
+  --output outputs/gate_a/smoke_v3/review/reviewer_a.csv
+PYTHONPATH=src:. python scripts/create_extraction_review_sheet.py \
+  --manifest outputs/gate_a/smoke_v3/probes.jsonl \
+  --template data/templates/persona_gate_a_v3.yaml \
+  --reviewer-id reviewer_b \
+  --shuffle-seed 20260902 \
+  --output outputs/gate_a/smoke_v3/review/reviewer_b.csv

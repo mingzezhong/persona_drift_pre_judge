@@ -1,0 +1,25 @@
+project: latent-persona-seismograph
+experiment: representation_gate_b_generation_v1
+
+hardware:
+  accelerator: cuda
+  gpu_count: 1
+  expected_gpu: NVIDIA RTX PRO 6000 Blackwell Server Edition
+  expected_name_substring: Blackwell
+  min_memory_gib: 90
+  dtype: bfloat16
+  attention_implementation: eager
+  allow_tf32: true
+  allow_bf16: true
+
+models:
+  primary:
+    name: Qwen/Qwen2.5-7B-Instruct
+    revision: a09a35458c702b33eeacc393d103063234e8bc28
+
+generation:
+  max_new_tokens: 160
+  min_new_tokens: 32
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -N persona-gate-b-merge-v2
+#PBS -q smallq
+#PBS -l select=1:ncpus=4:mem=32gb
+#PBS -l walltime=00:30:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+OUTPUT_DIR="outputs/gate_b/representation_pilot_v2"
+cd "$PROJECT_DIR"
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+
+export PYTHONUNBUFFERED=1
+
+PYTHONPATH=src python scripts/merge_extraction_reviews.py \
+  --config configs/ai_judges_gate_b_v2.yaml \
+  --resume
+PYTHONPATH=src python scripts/check_pair_quality_gate.py \
+  --manifest "$OUTPUT_DIR/ai_review/reviewed_manifest.jsonl" \
+  --rubric configs/extraction_judge_rubric_v2.yaml \
+  --output "$OUTPUT_DIR/ai_review/pair_quality.json" \
+  --resume
+PYTHONPATH=src python scripts/evaluate_persona_vectors.py \
+  --config configs/gate_b_v2.yaml \
+  --manifest "$OUTPUT_DIR/ai_review/reviewed_manifest.jsonl"

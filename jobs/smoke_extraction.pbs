@@ -1,0 +1,25 @@
+#!/bin/bash
+#PBS -N persona-extract-smoke
+#PBS -l select=1:ngpus=2:ncpus=8:mem=64gb
+#PBS -l walltime=01:00:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+
+export HF_HOME="$HOME/.cache/huggingface"
+export PYTHONUNBUFFERED=1
+export TOKENIZERS_PARALLELISM=false
+
+PYTHONPATH=src python scripts/check_hardware.py
+PYTHONPATH=src python scripts/generate_extraction_data.py \
+  --output-dir outputs/extraction/smoke_v2 \
+  --axes independent_sycophantic cautious_risk_seeking \
+  --prompt-ids extract_001 \
+  --seeds 0

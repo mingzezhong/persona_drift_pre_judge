@@ -1,0 +1,38 @@
+version: 2
+purpose: >-
+  Independent behavior review for Gate B. Reviews validate whether assigned
+  held-out persona conditions were expressed; projection analysis retains every
+  example regardless of review decision.
+
+input:
+  manifest: outputs/gate_b/representation_pilot_v2/manifest.jsonl
+  rubric: configs/extraction_judge_rubric_v2.yaml
+
+inference:
+  dtype: bfloat16
+  device_map: auto
+  attention_implementation: eager
+  max_new_tokens: 256
+  max_retries: 1
+
+judges:
+  judge_a:
+    reviewer_id: reviewer_a
+    review_sheet: outputs/gate_b/representation_pilot_v2/review/reviewer_a.csv
+    model: mistralai/Mistral-Small-24B-Instruct-2501
+    revision: 9527884be6e5616bdd54de542f9ae13384489724
+    tokenizer_kwargs:
+      fix_mistral_regex: true
+    output: outputs/gate_b/representation_pilot_v2/ai_review/judge_a_mistral.jsonl
+  judge_b:
+    reviewer_id: reviewer_b
+    review_sheet: outputs/gate_b/representation_pilot_v2/review/reviewer_b.csv
+    model: microsoft/phi-4
+    revision: 2db69c1c3e91a05d2c64a3185acfbaf36f744e25
+    output: outputs/gate_b/representation_pilot_v2/ai_review/judge_b_phi4.jsonl
+
+consensus:
+  rule: all_reviewers_must_accept
+  disagreement_action: reject_and_flag
+  reviewed_manifest: outputs/gate_b/representation_pilot_v2/ai_review/reviewed_manifest.jsonl
+  summary: outputs/gate_b/representation_pilot_v2/ai_review/consensus_summary.json

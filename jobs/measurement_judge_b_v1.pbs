@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N pmd-v1-phi
+#PBS -q large_gpuq
+#PBS -l select=1:ngpus=1:ncpus=4:mem=32gb
+#PBS -l walltime=03:00:00
+#PBS -j oe
+#PBS -o /shared/homes/u24524629/persona_drift_pre_judge/logs/
+
+set -euo pipefail
+PROJECT_DIR="${PBS_O_WORKDIR:-/shared/homes/u24524629/persona_drift_pre_judge}"
+cd "$PROJECT_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate persona-drift
+export HF_HOME="$HOME/.cache/huggingface"
+export PYTHONUNBUFFERED=1
+export TOKENIZERS_PARALLELISM=false
+
+GPU_INDEX="$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits | sort -t, -k2,2n | head -1 | cut -d, -f1 | tr -d " ")"
+if ! [[ "$GPU_INDEX" =~ ^[0-9]+$ ]]; then exit 1; fi
+export CUDA_VISIBLE_DEVICES="$GPU_INDEX"
+echo "Selected physical GPU index: $GPU_INDEX"
+
+PYTHONPATH=src:. python scripts/judge_extraction.py \
+  --config configs/ai_judges_measurement_development_v1.yaml \
+  --judge-id measurement_b \
+  --resume
+
