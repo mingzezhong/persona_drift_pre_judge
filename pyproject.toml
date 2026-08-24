@@ -1,24 +1,33 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=75", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "persona-drift-pre-judge"
-version = "0.1.0"
-description = "Prospective activation-based forecasting of persona drift"
-requires-python = ">=3.10"
+version = "0.2.0"
+description = "Pressure-conditioned latent-trajectory forecasting of LLM persona drift"
+requires-python = ">=3.11,<3.13"
 dependencies = [
-  "accelerate>=0.33,<2",
-  "numpy>=1.24,<3",
-  "pandas>=2,<3",
-  "pyarrow>=14,<22",
+  "accelerate>=1.1,<2",
+  "numpy>=1.26,<3",
+  "pandas>=2.2,<3",
+  "pyarrow>=18,<23",
   "pyyaml>=6,<7",
-  "scikit-learn>=1.3,<2",
-  "transformers>=4.46,<5",
+  "safetensors>=0.5,<1",
+  "scikit-learn>=1.5,<2",
+  "scipy>=1.13,<2",
+  "torch>=2.9,<3",
+  "transformers>=4.57,<5",
+  "zarr>=3,<4",
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7.4,<9"]
+analysis = [
+  "matplotlib>=3.9,<4",
+  "statsmodels>=0.14,<1",
+]
+data = ["datasets>=3,<5"]
+test = ["pytest>=8,<9"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -27,4 +36,3 @@ where = ["src"]
 addopts = "-q"
 pythonpath = ["src"]
 testpaths = ["tests"]
-

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print and validate compute-node GPUs using an experiment config."""
+"""Print and validate compute-node GPUs using the restart-v2 config."""
 
 from __future__ import annotations
 
@@ -15,7 +15,9 @@ from persona_drift.hardware import validate_cuda_hardware
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=Path, default=Path("configs/pilot.yaml"))
+    parser.add_argument(
+        "--config", type=Path, default=Path("configs/restart_v2.yaml")
+    )
     return parser.parse_args()
 
 

@@ -1,0 +1,202 @@
+# Restart-v2 protocol manifest.
+#
+# deep-research-report.{md,pdf} defines the research design and
+# 重启项目的细节.md is its complementary execution specification. The latter
+# operationalizes items intentionally left open by the design; it is not an
+# alternative or competing protocol.
+
+schema_version: restart-v2
+study_name: latent_persona_seismograph_restart_v2
+implementation_status: protocol_skeleton_only
+
+authoritative_documents:
+  primary_design:
+    - deep-research-report.md
+    - deep-research-report.pdf
+  complementary_execution_specification:
+    - 重启项目的细节.md
+
+hardware:
+  gpu_count: 2
+  expected_name_substring: NVIDIA RTX PRO 6000 Blackwell
+  allow_bf16: true
+  min_memory_gib: 90
+
+frozen:
+  main_turn:
+    definition: one_formal_user_message_plus_one_assistant_response
+    count: 25
+    system_and_persona_initialization_counted: false
+
+  personas:
+    source: anthropic_model_written_evals
+    conditions:
+      - risk-averse
+      - risk-seeking
+      - stands-its-ground
+      - agreeableness
+    external_generalization_source: personagym
+
+  models:
+    - id: Qwen/Qwen3-8B
+      generation_mode: non_thinking
+      enable_thinking: false
+    - id: meta-llama/Llama-3.1-8B-Instruct
+    - id: google/gemma-3-12b-it
+
+  topics:
+    total: 30
+    sources:
+      mmlu_pro:
+        count: 24
+        domains: 12
+        per_domain: 2
+      anthropic_sycophancy:
+        count: 6
+        groups:
+          philosophy: 2
+          nlp: 2
+          politics: 2
+    split_unit: topic
+    partitions:
+      development: 15
+      calibration: 5
+      untouched_test: 10
+    pilot:
+      count: 6
+      must_be_subset_of: development
+      may_enter_untouched_confirmation: false
+
+  activation_capture:
+    timing: pre_response
+    token_position: final_prompt_token
+    layers: all
+    components:
+      - resid_pre
+      - attn_out
+      - mlp_out
+    primary_storage_dtype: float16_or_bfloat16
+    attention_summaries_all_trajectories: true
+    full_attention_pattern_fraction: 0.05
+
+  temporal_contract:
+    observational_cutoff: t_minus_after_user_t_before_assistant_t
+    observational_target_turns: t_through_t_plus_H_minus_1
+    observational_features_exclude_assistant_t: true
+    fork_cutoff: t_plus_after_completed_assistant_t
+    fork_future_turns: t_plus_1_through_t_plus_H
+    fork_prefix_includes_assistant_t: true
+    clocks_are_distinct_estimands: true
+
+  pressure:
+    levels:
+      minimum: 0
+      maximum: 5
+      labels: [L0, L1, L2, L3, L4, L5]
+    neutral_baseline_turns: [1, 2, 3, 4, 5]
+    ppu_definition: one_adjacent_level_increment_within_the_same_pressure_family
+    cumulative_exposure_unit: ppu_turns
+    lambda_enabled: false
+    outcome_used_to_calibrate_ppu: false
+    pilot_candidate_schedules:
+      # Five explicit absolute block schedules; every entry expands to five
+      # main turns. Runtime schedule shifting or clipping is forbidden.
+      S_minus_2: [0, 0, 0, 1, 2]
+      S_minus_1: [0, 0, 1, 2, 3]
+      S_0: [0, 1, 2, 3, 4]
+      S_plus_1: [0, 2, 3, 4, 5]
+      S_plus_2: [0, 3, 4, 5, 5]
+      block_turns: 5
+    main_arm_semantics: grid_neighbors_of_interior_transition_schedule
+    pilot_grid_boundary_policy: five_explicit_absolute_schedules_no_runtime_clipping
+    generic_level_boundary_policy: error_never_clip
+
+  intervention:
+    prefix_turns: [10, 15]
+    horizon_turns: 5
+    randomized_constant_doses_ppu: [0, 1, 2, 3]
+    dose_semantics: add_d_levels_to_each_of_the_five_planned_future_turns
+    eligible_prefix_requirements:
+      - completed_through_prefix_turn_without_drift
+      - maximum_planned_future_level_at_most_2
+      - all_doses_0_through_3_feasible_without_clipping
+    insufficient_eligible_prefix_policy: stop_and_amend_never_substitute_or_clip
+    operational_risk_threshold:
+      primary: 0.8
+      sensitivity: [0.7, 0.9]
+    causal_radius_unit: ppu
+    level_boundary_policy: error_never_create_L6
+
+  sample_design:
+    pilot:
+      models: 3
+      personas: 4
+      topics: 6
+      seeds: 4
+      candidate_schedules: 5
+      full_trajectories: 1440
+      generated_turns: 36000
+    main:
+      models: 3
+      personas: 4
+      topics: 30
+      seeds: 8
+      pressure_schedules: 3
+      full_trajectories: 8640
+      generated_turns: 216000
+    intervention:
+      status: contingent_target_subject_to_G7_eligibility
+      eligible_prefixes_per_model_persona: 50
+      total_prefixes: 600
+      doses: 4
+      continuation_seeds: 4
+      fork_continuations: 9600
+      turns_per_continuation: 5
+      generated_turns: 48000
+      shortfall_policy: stop_and_amend_never_substitute_or_clip
+    base_plan_target_model_generated_turns: 300000
+    base_plan_assumptions: 8_main_seeds_and_full_intervention_target_eligible
+    pilot_power_simulation_target: 0.90
+    preregistered_seed_expansion_if_underpowered:
+      from: 8
+      to: 10
+
+# These gates are intentionally not guessed by the code skeleton. Each must be
+# resolved in a versioned protocol artifact before the named phase may run.
+protocol_gates:
+  public_topic_item_ids_and_conversion_templates:
+    status: open_must_freeze_before_pilot
+  development_calibration_test_topic_id_assignment:
+    status: open_must_freeze_before_pilot
+  six_development_pilot_topic_ids:
+    status: open_must_freeze_before_pilot
+  persona_system_prompt_construction_and_validation:
+    status: open_must_freeze_before_pilot
+  pressure_family_definitions:
+    status: open_must_freeze_before_pressure_calibration
+  pressure_template_bank_and_independent_rater_protocol:
+    status: open_must_freeze_before_pressure_calibration
+  calibrated_pressure_template_ids_for_each_pilot_schedule_turn:
+    status: open_must_freeze_before_pilot
+  behavior_only_sustained_drift_rubric_and_onset_rule:
+    status: open_must_freeze_before_pilot_labels
+  persona_vector_extraction_and_held_out_validation:
+    status: open_must_freeze_before_activation_analysis
+  topic_stratified_transition_positivity_rule:
+    status: open_must_freeze_before_pilot_decision
+  primary_endpoint_alpha_warning_budget_and_multiplicity:
+    status: open_must_preregister_before_untouched_test
+  horizon_censoring_and_sequential_false_alarm_calibration:
+    status: open_must_preregister_before_untouched_test
+  mechanistic_attention_subset_selection_rule:
+    status: open_must_freeze_before_main_generation
+  causal_radius_hierarchical_estimator_and_cluster_unit:
+    status: open_must_preregister_before_intervention_analysis
+
+environment_gates:
+  model_license_and_huggingface_access:
+    status: verify_before_model_smoke_test
+  architecture_specific_hook_equivalence:
+    status: verify_with_numerical_smoke_tests
+  ten_trajectory_storage_and_throughput_benchmark_per_model:
+    status: required_before_pilot_submission

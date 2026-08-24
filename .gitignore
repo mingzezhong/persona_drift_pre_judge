@@ -1,19 +1,29 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.coverage
+htmlcov/
 .venv/
 build/
 dist/
 *.egg-info/
 
-# Model and experiment artifacts
+# Model, dataset, and experiment artifacts
 models/
 artifacts/
 outputs/
 logs/
+legacy_artifacts/
+checkpoints/
+scratch/
+.hf_home/
 data/raw/
 data/processed/
 wandb/
+
+# Scheduler output
+*.o[0-9]*
+*.e[0-9]*
 
 # OS/editor metadata and local backups
 .DS_Store
