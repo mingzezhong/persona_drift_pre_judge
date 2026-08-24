@@ -56,6 +56,8 @@ V2 的核心识别要求是：
 
 不得仅依据 README 修改科学定义；任何正式变更必须新增带版本的 amendment。
 
+**项目范围决定（2026-08-25）：V2 不采用 Conditional Flow。** 本项目不设计、实现、调参、比较或报告 Conditional Flow、Conditional Normalizing Flow、Normalizing Flow、Flow Matching，以及其他 flow-based density/trajectory models；它们不属于 baseline、ablation、备选模型或后续 gate。来源材料中的相关候选讨论按 G0 checksum 原样保留，仅用于记录方案形成过程，不构成执行授权。任何重新纳入都必须由用户明确改变项目范围并建立新的 major-version protocol，不能通过 V2 的普通 amendment 或 `G1–G8` 重新打开。
+
 主报告中保留的内部 cite 占位符属于来源原文的 provenance，本仓库不直接修改源文件。它们不是投稿可用的参考文献。论文投稿前必须通过单独的 **Bibliography Gate**：逐条将占位符映射到可核查的 primary source URL/DOI，完成引用核验；仍有未解析占位符时不得提交论文。
 
 来源校验、旧版本恢复和持续记录见：
@@ -80,6 +82,7 @@ V2 的核心识别要求是：
 | Primary warning horizon | H=5；H=3、10 为 sensitivity analyses |
 | Region baseline | Conditional expected response + dynamic shrinkage Mahalanobis tube |
 | Risk model | Discrete-time hazard with right censoring |
+| Excluded methods | Conditional/Normalizing Flow、Flow Matching 及其他 flow-based density/trajectory models（整个 V2 排除） |
 | Intervention | Randomized prefix forks，d∈{0,1,2,3}，H=5 |
 | Robustness threshold | η=0.8；0.7、0.9 为 sensitivity analyses |
 
@@ -116,7 +119,7 @@ V2 的核心识别要求是：
 4. `G3`：冻结三模型 revisions、chat templates、hook semantics 和 10-trajectory storage/runtime benchmark；
 5. `G4`：完成 outcome-blind L0–L5 pressure calibration；
 6. `G5`：运行 1,440-trajectory dose-finding pilot并选择 transition schedules；
-7. `G6`：冻结 primary endpoint、false-alarm budget、\(\alpha\)、power 和完整分析计划；
+7. `G6`：冻结 primary endpoint、false-alarm budget、\(\alpha\)、power、完整分析计划和 non-Flow extension allowlist；
 8. 运行 main study并一次性打开 untouched test；
 9. `G7`：冻结 intervention estimator后运行 randomized forks；
 10. `G8`：pipeline 冻结后进行 PersonaGym external evaluation。

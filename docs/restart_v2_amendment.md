@@ -1,7 +1,7 @@
 # Persona Drift 项目重启 V2：执行解释与补充条款
 
-版本：`v2.0-preparation`
-日期：2026-08-24
+版本：`v2.1-preparation`
+日期：2026-08-25
 状态：V2 正式执行契约；G0 `PASS`，G1–G8 尚未通过，尚未生成 V2 实验结果
 
 ## 1. 文件关系与适用范围
@@ -20,6 +20,12 @@
 | `deep-research-report.md` | `b7a66a480c93ed11e03f5467b5c20467933c8ce7f2551febf17a6553b81fcc2f` |
 | `deep-research-report.pdf` | `96244c26cdb27ffed30d42fc244d0e1f888ed2671973921eeda233006f1e5b03` |
 | `重启项目的细节.md` | `250af87c1c21f8bac04ab61dbd39bdd72c4e31f7aab47634a501c0d0e86c9880` |
+
+### 1.1 项目级方法排除条款
+
+自 `v2.1-preparation` 起，V2 明确不考虑 Conditional Flow。该决定覆盖 pilot、main study、randomized intervention 和 external evaluation 的全部阶段：不得设计、实现、训练、调参、比较或报告 Conditional Flow、Conditional Normalizing Flow、Normalizing Flow、Flow Matching，以及其他 flow-based density/trajectory models；也不得把它们列为 baseline、ablation、备选模型、negative result 或 gate 后扩展。
+
+三份 G0 来源材料保持原始 checksum，不因本条款回写。其中关于 flow 方法的候选讨论只属于方案形成过程的 provenance，不构成 V2 执行授权。任何重新纳入都必须由用户明确改变项目范围并建立新的 major-version protocol；普通 V2 amendment 或 `G1–G8` 均无权重新打开这一方法族。
 
 旧 Gate A/B/C、Qwen/OLMo 结果只作为 historical exploratory evidence，用于解释为什么重启；不得进入 V2 模型选择、阈值校准或 confirmatory test。
 
@@ -268,7 +274,7 @@ R_{t^+}^{fork,(5)}(d)
 | `G3` Instrumentation | 三模型 license/access、精确 revisions、chat templates、non-thinking 设置、hook contract、10-trajectory smoke、数值回放和存储测量 | 批量采集 activation |
 | `G4` Pressure calibration | 每个 persona × family 的 L0–L5 模板、独立 rater 方案、ordinal/Rasch 接受标准、失败重写规则 | 运行 dose-finding pilot |
 | `G5` Pilot decision | aggregate transition band + topic-stratified within-cell positivity/overlap、S* 选择/停止规则、drift-rate 与 cluster variance、资源基准 | 冻结 main cells |
-| `G6` Analysis lock | two-clock estimands、primary endpoint、trajectory-max \(\alpha\)/sequential method、Turn-25 horizon rule、warning/false-alarm budget、最小有意义增益、text baseline、power simulation、8→10 seeds 规则、多重比较 | 运行 main confirmatory generation |
+| `G6` Analysis lock | two-clock estimands、primary endpoint、trajectory-max \(\alpha\)/sequential method、Turn-25 horizon rule、warning/false-alarm budget、最小有意义增益、text baseline、power simulation、8→10 seeds 规则、多重比较、non-Flow extension allowlist | 运行 main confirmatory generation |
 | `G7` Intervention lock | prefix sampling/eligibility、fork randomization、dose-response estimator、saturation禁令、primary causal estimand、600-prefix shortfall rule | 运行 randomized forks |
 | `G8` External evaluation | PersonaGym 20 persona IDs、mapping、样本量和一次性打开规则 | 外部泛化 |
 
@@ -277,4 +283,4 @@ R_{t^+}^{fork,(5)}(d)
 - 任一 gate 通过后，其 manifest 和 checksum 必须提交 Git；后续修改使用新的 amendment，不覆盖原记录。
 - Untouched Test 在 `G6` 之后才可读取 outcome；一次性分析后原样报告，不因结果改变方法。
 - V2 的“准备完成”不等于“有实验结果”。任何 README、摘要或论文草稿都必须把 planned、running、completed 和 confirmed 严格区分。
-- 更复杂的 GP、HMM、normalizing flow 或 activation patching 只有在 Mahalanobis/hazard baseline 按冻结标准完成后才能进入预注册扩展。
+- GP、HMM、trajectory encoder 或 activation patching 只有在 Mahalanobis/hazard baseline 按冻结标准完成后，才可进入 `G6` 的 non-Flow 预注册扩展清单。Conditional/Normalizing Flow、Flow Matching 及其他 flow-based density/trajectory models 已由第 1.1 节在整个 V2 中排除，不属于任何 gate 的候选。

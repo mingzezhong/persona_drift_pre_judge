@@ -1,7 +1,8 @@
 # Latent Persona Seismograph V2：正式研究协议
 
 Protocol ID：`LPS-V2-20260824`
-版本：`2.0-preparation`
+版本：`2.1-preparation`
+修订日期：2026-08-25
 状态：正式协议；G0 `PASS`，G1–G8 open；尚未开始 V2 pilot，尚无 V2 实验结果
 权威设计来源：[`deep-research-report.md`](../deep-research-report.md) 与 [`重启项目的细节.md`](../重启项目的细节.md)
 执行解释：[`docs/restart_v2_amendment.md`](restart_v2_amendment.md)
@@ -41,6 +42,12 @@ Protocol ID：`LPS-V2-20260824`
 - `H2 — Incremental warning`：latent trajectory features 相比同-prefix text baseline 达到预注册的最小有意义增益，同时不突破 false-alarm budget。
 - `H3 — Lead time`：在 Sustained Drift onset 之前，几何 Margin 呈预注册方向变化，并达到预注册的 trajectory-level detection/lead-time 标准。
 - `H4 — Dose response`：随机分配的未来 pressure dose 对 post-response fork risk \(R_{t^+}^{fork,(5)}(d)\) 产生预注册方向的 dose-response effect。
+
+### 1.3 项目范围排除
+
+V2 不采用 Conditional Flow。Pilot、main study、randomized intervention 和 external evaluation 均不得设计、实现、训练、调参、比较或报告 Conditional Flow、Conditional Normalizing Flow、Normalizing Flow、Flow Matching，以及其他 flow-based density/trajectory models。它们不属于 baseline、comparator、ablation、备选模型或 confirmatory/exploratory extension。
+
+权威来源材料中的相关候选讨论按 G0 checksum 原样保留，只记录方案形成过程，不产生执行授权。任何重新纳入都需要用户明确改变项目范围并建立新的 major-version protocol；`G6` 或其他 V2 gate 不能重新开放该方法族。
 
 ## 2. 研究单位与术语
 
@@ -309,7 +316,7 @@ Untouched Test 至少比较：
 5. conditional residual trajectory model；
 6. text + residual trajectory model。
 
-复杂 GP、HMM、flow 或 trajectory encoder 不替代简单 baseline；只有 `G6` 预注册为扩展后才可报告为 confirmatory family。
+GP、HMM 或 trajectory encoder 不替代简单 baseline；只有进入 `G6` 预注册的 non-Flow allowlist 后才可报告为扩展。Conditional/Normalizing Flow、Flow Matching 及其他 flow-based density/trajectory models 不作为 baseline、comparator、ablation 或 extension。
 
 ### 8.5 Primary reporting set
 
@@ -362,7 +369,7 @@ R_{t^+}^{fork,(5)}(d)
 | 3. Instrumentation smoke | 3 target models | model license/access、frozen revisions、hook validation、10-trajectory benchmark | `G3` |
 | 4. Pressure calibration | L0–L5 candidates | calibrated template bank | `G4` |
 | 5. Dose pilot | 1,440 trajectories | S* decisions、topic-stratified within-cell positivity/overlap、variance/runtime/storage | `G5` |
-| 6. Analysis/power lock | pilot summaries only | two-clock estimands、trajectory-max calibration、Turn-25 horizon rule、signed analysis manifest、power result | `G6` |
+| 6. Analysis/power lock | pilot summaries only | two-clock estimands、trajectory-max calibration、Turn-25 horizon rule、signed analysis manifest、power result、non-Flow extension allowlist | `G6` |
 | 7. Main study | 8,640 trajectories | frozen Development/Calibration/Test artifacts | test opened once |
 | 8. Intervention | eligible post-response main prefixes | eligibility/shortfall decision、randomized fork results | `G7` before outcomes |
 | 9. External evaluation | frozen pipeline | PersonaGym study | `G8` |

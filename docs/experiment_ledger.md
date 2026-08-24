@@ -14,6 +14,8 @@ forecasting fit, randomized fork, or confirmatory analysis has been executed.
 | 2026-08-24 | `G0` archive and provenance | **PASS** | Three authority-file hashes verified by `docs/source_materials.sha256`; Git tag and artifact manifest verified |
 | 2026-08-24 | V2 protocol preparation | COMPLETE | Amendment, formal protocol, machine-readable contract, fail-fast schema, and tests added; G1–G8 remain open |
 | 2026-08-24 | Restart-tree validation | PASS | 32 tests passed; source checksums, YAML/code contract, relative links, secret scan, and `git diff --check` passed |
+| 2026-08-25 | V2.1 method-scope decision | COMPLETE | Conditional/Normalizing Flow, Flow Matching, and all flow-based density/trajectory models excluded from every V2 stage and model role; immutable G0 source files retained unchanged as provenance |
+| 2026-08-25 | V2.1 method-scope validation | PASS | 38 tests passed, including project-wide scope, active-config, operational-document, dependency, identifier, and production-source exclusion checks |
 
 Public-data licenses/item IDs remain a `G1` requirement. Exact model revisions,
 license/access, chat templates, and hook equivalence remain `G3` requirements.

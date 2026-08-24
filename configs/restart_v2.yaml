@@ -5,9 +5,46 @@
 # operationalizes items intentionally left open by the design; it is not an
 # alternative or competing protocol.
 
-schema_version: restart-v2
+schema_version: restart-v2.1
 study_name: latent_persona_seismograph_restart_v2
 implementation_status: protocol_skeleton_only
+protocol_revision: 2.1-preparation
+
+scope_exclusions:
+  conditional_flow_family:
+    decision: excluded_from_project
+    scope: all_project_phases_analyses_artifacts_and_reports
+    reason: frozen_project_scope
+    applies_to:
+      - pilot
+      - main
+      - intervention
+      - external_evaluation
+    aliases:
+      - conditional_flow
+      - conditional_normalizing_flow
+      - cnf
+      - normalizing_flow
+      - continuous_normalizing_flow
+      - flow_matching
+      - conditional_maf
+      - conditional_realnvp
+      - conditional_neural_spline_flow
+      - masked_autoregressive_flow
+      - realnvp
+      - neural_spline_flow
+      - flow_based_density_model
+      - flow_based_trajectory_model
+      - other_flow_based_density_or_trajectory_models
+    prohibited_roles:
+      - primary_method
+      - baseline
+      - comparator
+      - ablation
+      - exploratory_extension
+      - confirmatory_extension
+    source_mentions_are_non_operational_provenance: true
+    reintroduction_policy: explicit_user_scope_change_and_new_major_protocol_required
 
 authoritative_documents:
   primary_design:
