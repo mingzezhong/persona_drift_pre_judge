@@ -16,6 +16,7 @@ forecasting fit, randomized fork, or confirmatory analysis has been executed.
 | 2026-08-24 | Restart-tree validation | PASS | 32 tests passed; source checksums, YAML/code contract, relative links, secret scan, and `git diff --check` passed |
 | 2026-08-25 | V2.1 method-scope decision | COMPLETE | Conditional/Normalizing Flow, Flow Matching, and all flow-based density/trajectory models excluded from every V2 stage and model role; immutable G0 source files retained unchanged as provenance |
 | 2026-08-25 | V2.1 method-scope validation | PASS | 38 tests passed, including project-wide scope, active-config, operational-document, dependency, identifier, and production-source exclusion checks |
+| 2026-08-25 | README GitHub math rendering | PASS | Legacy `\(...\)` / `\[...\]` delimiters converted to GitHub-compatible `$...$` / `$$...$$`; GitHub Markdown API rendered all 11 formulas; delimiter regression checks added; 41 tests passed |
 
 Public-data licenses/item IDs remain a `G1` requirement. Exact model revisions,
 license/access, chat templates, and hook equivalence remain `G3` requirements.

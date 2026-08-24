@@ -12,7 +12,7 @@ V2 不再把 Persona Vector projection 的变化直接解释成 Drift。外部 p
 
 研究链路为：
 
-\[
+$$
 \text{Raw Persona State}
 \rightarrow
 \text{Expected Stable Pressure Response}
@@ -26,7 +26,7 @@ V2 不再把 Persona Vector projection 的变化直接解释成 Drift。外部 p
 \text{Future Drift Risk}
 \rightarrow
 \text{Causal Robust Radius}.
-\]
+$$
 
 其中：
 
@@ -36,11 +36,11 @@ V2 不再把 Persona Vector projection 的变化直接解释成 Drift。外部 p
 
 V2 的核心识别要求是：
 
-\[
+$$
 \text{Same Persona + Same Topic + Same Pressure Family + Same Absolute Schedule}
 \Rightarrow
-\{\text{Stable},\text{Drift}\}.
-\]
+\lbrace \text{Stable},\text{Drift} \rbrace.
+$$
 
 如果 outcome 仍由 Persona、topic 或 condition 几乎决定，就不能声称模型学到了“稳定性”。
 
@@ -79,14 +79,14 @@ V2 的核心识别要求是：
 | Primary activation | 每轮生成回答前的 final prompt token |
 | Components | 所有 layers 的 `resid_pre`、`attn_out`、`mlp_out` |
 | Full attention | 仅预先分层抽取的约 5% mechanistic subset |
-| Primary warning horizon | H=5；H=3、10 为 sensitivity analyses |
+| Primary warning horizon | $H=5$； $H\in\lbrace 3,10\rbrace$ 为 sensitivity analyses |
 | Region baseline | Conditional expected response + dynamic shrinkage Mahalanobis tube |
 | Risk model | Discrete-time hazard with right censoring |
 | Excluded methods | Conditional/Normalizing Flow、Flow Matching 及其他 flow-based density/trajectory models（整个 V2 排除） |
-| Intervention | Randomized prefix forks，d∈{0,1,2,3}，H=5 |
-| Robustness threshold | η=0.8；0.7、0.9 为 sensitivity analyses |
+| Intervention | Randomized prefix forks， $d\in\lbrace 0,1,2,3\rbrace$， $H=5$ |
+| Robustness threshold | $\eta=0.8$； $\eta\in\lbrace 0.7,0.9\rbrace$ 为 sensitivity analyses |
 
-连续压力倍率 \(\lambda\) 不属于 V2 第一版。V2 使用每轮 \(L_t\)、PPU 和累计 PPU-turns，并保留完整 absolute schedule。
+连续压力倍率 $\lambda$ 不属于 V2 第一版。V2 使用每轮 $L_t$、PPU 和累计 PPU-turns，并保留完整 absolute schedule。
 
 ## 计划数据规模
 
@@ -119,7 +119,7 @@ V2 的核心识别要求是：
 4. `G3`：冻结三模型 revisions、chat templates、hook semantics 和 10-trajectory storage/runtime benchmark；
 5. `G4`：完成 outcome-blind L0–L5 pressure calibration；
 6. `G5`：运行 1,440-trajectory dose-finding pilot并选择 transition schedules；
-7. `G6`：冻结 primary endpoint、false-alarm budget、\(\alpha\)、power、完整分析计划和 non-Flow extension allowlist；
+7. `G6`：冻结 primary endpoint、false-alarm budget、 $\alpha$ 、power、完整分析计划和 non-Flow extension allowlist；
 8. 运行 main study并一次性打开 untouched test；
 9. `G7`：冻结 intervention estimator后运行 randomized forks；
 10. `G8`：pipeline 冻结后进行 PersonaGym external evaluation。
