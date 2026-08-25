@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
+import re
 from typing import Iterable, Mapping, Sequence, Tuple
 
 from .protocol import ProtocolValidationError
@@ -15,6 +16,7 @@ TOTAL_MAIN_TOPICS = 30
 PILOT_TOPICS = 6
 MMLU_PRO_TOPICS = 24
 SYCOPHANCY_TOPICS = 6
+_SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 
 
 class TopicSource(str, Enum):
@@ -40,6 +42,15 @@ class TopicAnchor:
     source_item_id: str
     source_group: str
     conversion_template_id: str
+    source_url: str
+    source_revision: str
+    source_license: str
+    source_file_sha256: str
+    source_item_sha256: str
+    scenario_template_sha256: str
+    selection_review_sha256: str
+    native_stance_policy: str
+    selection_outcome_blind: bool = True
 
     def __post_init__(self) -> None:
         for field in (
@@ -47,12 +58,37 @@ class TopicAnchor:
             "source_item_id",
             "source_group",
             "conversion_template_id",
+            "source_url",
+            "source_revision",
+            "source_license",
+            "native_stance_policy",
         ):
             value = getattr(self, field)
             if not isinstance(value, str) or not value.strip():
                 raise ProtocolValidationError(f"{field} must be a non-empty string")
         if not isinstance(self.source, TopicSource):
             raise ProtocolValidationError("source must be a TopicSource member")
+        for field in (
+            "source_file_sha256",
+            "source_item_sha256",
+            "scenario_template_sha256",
+            "selection_review_sha256",
+        ):
+            value = getattr(self, field)
+            if not isinstance(value, str) or not _SHA256_RE.fullmatch(value):
+                raise ProtocolValidationError(f"{field} must be 64 lowercase hex characters")
+        if self.selection_outcome_blind is not True:
+            raise ProtocolValidationError("topic selection must be outcome-blind")
+        if self.source is TopicSource.MMLU_PRO:
+            if self.native_stance_policy != "not_applicable":
+                raise ProtocolValidationError("MMLU-Pro stance policy must be not_applicable")
+        elif self.native_stance_policy not in {
+            "remove_or_standardize",
+            "source_specific_baseline",
+        }:
+            raise ProtocolValidationError(
+                "Anthropic sycophancy requires a frozen native-stance policy"
+            )
 
 
 def validate_anchor_catalog(anchors: Sequence[TopicAnchor]) -> Tuple[TopicAnchor, ...]:
@@ -72,6 +108,12 @@ def validate_anchor_catalog(anchors: Sequence[TopicAnchor]) -> Tuple[TopicAnchor
     ids = [anchor.topic_id for anchor in catalog]
     if len(set(ids)) != len(ids):
         raise ProtocolValidationError("topic catalog contains duplicate topic IDs")
+    source_ids = [anchor.source_item_id for anchor in catalog]
+    if len(set(source_ids)) != len(source_ids):
+        raise ProtocolValidationError("topic catalog contains duplicate source item IDs")
+    item_hashes = [anchor.source_item_sha256 for anchor in catalog]
+    if len(set(item_hashes)) != len(item_hashes):
+        raise ProtocolValidationError("topic catalog contains duplicate source item hashes")
 
     by_source = Counter(anchor.source for anchor in catalog)
     expected_sources = {
@@ -103,6 +145,16 @@ def validate_anchor_catalog(anchors: Sequence[TopicAnchor]) -> Tuple[TopicAnchor
         raise ProtocolValidationError(
             "sycophancy anchors must contain 2 philosophy, 2 NLP, and 2 politics "
             f"topics; got {dict(sycophancy_groups)}"
+        )
+    sycophancy_stance_policies = {
+        anchor.native_stance_policy
+        for anchor in catalog
+        if anchor.source is TopicSource.ANTHROPIC_SYCOPHANCY
+    }
+    if len(sycophancy_stance_policies) != 1:
+        raise ProtocolValidationError(
+            "all Anthropic sycophancy anchors must use one frozen "
+            "native_stance_policy; mixed policies are forbidden"
         )
     return catalog
 

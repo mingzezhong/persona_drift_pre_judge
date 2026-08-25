@@ -1,5 +1,7 @@
+from dataclasses import replace
 import unittest
 
+from persona_drift.personas import PersonaGeneralizationRole
 from persona_drift.protocol import ProtocolValidationError, canonical_gradual_schedule
 from persona_drift.records import (
     ActivationComponent,
@@ -9,17 +11,19 @@ from persona_drift.records import (
     ForkMetadata,
     ModelId,
     NumericDType,
-    PersonaCondition,
     StudyPhase,
     TopicPartition,
     TrajectoryMetadata,
+    create_manifest_validated_trajectory_metadata,
     validate_activation_coverage,
     validate_feature_cutoff,
+    validate_trajectory_persona_identity,
 )
+from test_personas_restart_v2 import digest, make_catalog, make_plan
 
 
 class RecordTests(unittest.TestCase):
-    def _trajectory(self, **overrides):
+    def _trajectory_values(self, **overrides):
         schedule = canonical_gradual_schedule()
         values = {
             "trajectory_id": "traj-0001",
@@ -28,11 +32,19 @@ class RecordTests(unittest.TestCase):
             "model_revision": "revision-sha",
             "tokenizer_revision": "tokenizer-sha",
             "chat_template_version": "qwen-chat-v1",
-            "persona": PersonaCondition.RISK_AVERSE,
-            "persona_prompt_version": "risk-averse-v1",
+            "behavioral_family_id": "risk-family",
+            "persona_trait_id": "risk-averse",
+            "persona_prompt_variant_id": "risk-averse-v1",
+            "persona_generalization_role": PersonaGeneralizationRole.SEEN_TRAIT_OBSERVED_WORDING,
+            "persona_prompt_sha256": "d" * 64,
+            "persona_catalog_sha256": "e" * 64,
+            "persona_generalization_plan_sha256": "9" * 64,
             "pressure_family": "encourage-risk",
             "topic_id": "mmlu-econ-001",
             "scenario_version": "scenario-v1",
+            "scenario_sha256": "f" * 64,
+            "topic_move_ids": tuple(f"move-{turn}" for turn in range(1, 26)),
+            "topic_move_sha256s": tuple("a" * 64 for _ in range(25)),
             "topic_partition": TopicPartition.DEVELOPMENT,
             "seed": 0,
             "schedule_id": schedule.schedule_id,
@@ -41,13 +53,17 @@ class RecordTests(unittest.TestCase):
             "generation_config_sha256": "c" * 64,
         }
         values.update(overrides)
-        return TrajectoryMetadata(**values)
+        return values
+
+    def _trajectory(self, **overrides):
+        return TrajectoryMetadata(**self._trajectory_values(**overrides))
 
     def test_valid_trajectory_serializes_enums_and_levels(self) -> None:
         record = self._trajectory()
         payload = record.to_dict()
         self.assertEqual(payload["model_id"], "Qwen/Qwen3-8B")
-        self.assertEqual(payload["persona"], "risk-averse")
+        self.assertEqual(payload["persona_trait_id"], "risk-averse")
+        self.assertEqual(payload["persona_generalization_role"], "seen_trait_observed_wording")
         self.assertEqual(len(payload["pressure_levels"]), 25)
 
     def test_pilot_topic_must_be_development(self) -> None:
@@ -56,6 +72,88 @@ class RecordTests(unittest.TestCase):
                 phase=StudyPhase.PILOT,
                 topic_partition=TopicPartition.UNTOUCHED_TEST,
             )
+
+    def test_persona_hierarchy_and_topic_pressure_components_are_required(self) -> None:
+        with self.assertRaisesRegex(ProtocolValidationError, "persona_prompt_sha256"):
+            self._trajectory(persona_prompt_sha256="not-a-hash")
+        with self.assertRaisesRegex(ProtocolValidationError, "PersonaGeneralizationRole"):
+            self._trajectory(persona_generalization_role="development")
+        with self.assertRaisesRegex(ProtocolValidationError, "topic_move_ids"):
+            self._trajectory(topic_move_ids=("move-1",))
+        with self.assertRaisesRegex(ProtocolValidationError, "topic_move_sha256s"):
+            self._trajectory(topic_move_sha256s=("a" * 64,))
+
+    def test_manifest_backed_factory_accepts_a_catalog_assignment(self) -> None:
+        catalog = make_catalog()
+        plan = make_plan(catalog)
+        values = self._trajectory_values(
+            behavioral_family_id="family-0",
+            persona_trait_id="trait-0-0",
+            persona_prompt_variant_id="variant-0-0-observed",
+            persona_generalization_role=(
+                PersonaGeneralizationRole.SEEN_TRAIT_OBSERVED_WORDING
+            ),
+            persona_prompt_sha256=digest("variant-0-0-observed"),
+        )
+        values.pop("persona_catalog_sha256")
+        values.pop("persona_generalization_plan_sha256")
+        record = create_manifest_validated_trajectory_metadata(
+            persona_catalog=catalog,
+            persona_generalization_plan=plan,
+            persona_catalog_manifest_sha256="e" * 64,
+            persona_generalization_plan_manifest_sha256="9" * 64,
+            **values,
+        )
+        self.assertIs(
+            validate_trajectory_persona_identity(
+                record,
+                persona_catalog=catalog,
+                persona_generalization_plan=plan,
+                persona_catalog_manifest_sha256="e" * 64,
+                persona_generalization_plan_manifest_sha256="9" * 64,
+            ),
+            record,
+        )
+
+    def test_manifest_backed_identity_rejects_invalid_combinations(self) -> None:
+        catalog = make_catalog()
+        plan = make_plan(catalog)
+        record = self._trajectory(
+            behavioral_family_id="family-0",
+            persona_trait_id="trait-0-0",
+            persona_prompt_variant_id="variant-0-0-observed",
+            persona_generalization_role=(
+                PersonaGeneralizationRole.SEEN_TRAIT_OBSERVED_WORDING
+            ),
+            persona_prompt_sha256=digest("variant-0-0-observed"),
+        )
+
+        def validate(candidate):
+            return validate_trajectory_persona_identity(
+                candidate,
+                persona_catalog=catalog,
+                persona_generalization_plan=plan,
+                persona_catalog_manifest_sha256="e" * 64,
+                persona_generalization_plan_manifest_sha256="9" * 64,
+            )
+
+        invalid_records = (
+            replace(record, behavioral_family_id="family-1"),
+            replace(record, persona_trait_id="trait-0-1"),
+            replace(
+                record,
+                persona_generalization_role=(
+                    PersonaGeneralizationRole.UNSEEN_PROMPT_WORDING
+                ),
+            ),
+            replace(record, persona_prompt_sha256="0" * 64),
+            replace(record, persona_catalog_sha256="0" * 64),
+            replace(record, persona_generalization_plan_sha256="0" * 64),
+        )
+        for invalid in invalid_records:
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(ProtocolValidationError):
+                    validate(invalid)
 
     def test_primary_activation_is_pre_response_final_prompt_token(self) -> None:
         valid = {

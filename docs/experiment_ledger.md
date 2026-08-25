@@ -18,6 +18,9 @@ forecasting fit, randomized fork, or confirmatory analysis has been executed.
 | 2026-08-25 | V2.1 method-scope validation | PASS | 38 tests passed, including project-wide scope, active-config, operational-document, dependency, identifier, and production-source exclusion checks |
 | 2026-08-25 | README GitHub math rendering | PASS | Legacy `\(...\)` / `\[...\]` delimiters converted to GitHub-compatible `$...$` / `$$...$$`; GitHub Markdown API rendered all 11 formulas; delimiter regression checks added; 41 tests passed |
 
+| 2026-08-25 | V2.2 Persona/Topic scope amendment | COMPLETE | Discussion provenance hashed; hierarchical Persona ontology adopted as an endorsed direction; Flat-4 counts retired; 30-topic contract retained; exact G1/G2 assets and revised sample size remain open |
+| 2026-08-25 | V2.2 schema validation | PASS | Final full suite: `51 tests passed in 17.17s`; catalog-backed record validation, uniform Anthropic stance policy, open phase-specific seed contract, and hierarchical/cold-start statistical contract validated; source-material SHA256 and `git diff --check` passed |
+
 Public-data licenses/item IDs remain a `G1` requirement. Exact model revisions,
 license/access, chat templates, and hook equivalence remain `G3` requirements.
 Neither is implied by the `G0` pass.

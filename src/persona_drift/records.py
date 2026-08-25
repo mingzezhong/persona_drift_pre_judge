@@ -10,6 +10,11 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Tuple
 
+from .personas import (
+    PersonaCatalog,
+    PersonaGeneralizationPlan,
+    PersonaGeneralizationRole,
+)
 from .protocol import (
     FORK_HORIZON,
     MAIN_TURNS,
@@ -20,7 +25,7 @@ from .protocol import (
 )
 
 
-SCHEMA_VERSION = "restart-v2"
+SCHEMA_VERSION = "restart-v2.2"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -36,12 +41,6 @@ class TopicPartition(str, Enum):
     CALIBRATION = "calibration"
     UNTOUCHED_TEST = "untouched_test"
 
-
-class PersonaCondition(str, Enum):
-    RISK_AVERSE = "risk-averse"
-    RISK_SEEKING = "risk-seeking"
-    STANDS_ITS_GROUND = "stands-its-ground"
-    AGREEABLENESS = "agreeableness"
 
 
 class ModelId(str, Enum):
@@ -117,11 +116,19 @@ class TrajectoryMetadata(_SerializableRecord):
     model_revision: str
     tokenizer_revision: str
     chat_template_version: str
-    persona: PersonaCondition
-    persona_prompt_version: str
+    behavioral_family_id: str
+    persona_trait_id: str
+    persona_prompt_variant_id: str
+    persona_generalization_role: PersonaGeneralizationRole
+    persona_prompt_sha256: str
+    persona_catalog_sha256: str
+    persona_generalization_plan_sha256: str
     pressure_family: str
     topic_id: str
     scenario_version: str
+    scenario_sha256: str
+    topic_move_ids: Tuple[str, ...]
+    topic_move_sha256s: Tuple[str, ...]
     topic_partition: TopicPartition
     seed: int
     schedule_id: str
@@ -136,7 +143,9 @@ class TrajectoryMetadata(_SerializableRecord):
             ("model_revision", self.model_revision),
             ("tokenizer_revision", self.tokenizer_revision),
             ("chat_template_version", self.chat_template_version),
-            ("persona_prompt_version", self.persona_prompt_version),
+            ("behavioral_family_id", self.behavioral_family_id),
+            ("persona_trait_id", self.persona_trait_id),
+            ("persona_prompt_variant_id", self.persona_prompt_variant_id),
             ("pressure_family", self.pressure_family),
             ("topic_id", self.topic_id),
             ("scenario_version", self.scenario_version),
@@ -153,7 +162,32 @@ class TrajectoryMetadata(_SerializableRecord):
                 "complete trajectory records are limited to pilot/main phases"
             )
         _require_enum(self.model_id, ModelId, field="model_id")
-        _require_enum(self.persona, PersonaCondition, field="persona")
+        _require_enum(
+            self.persona_generalization_role,
+            PersonaGeneralizationRole,
+            field="persona_generalization_role",
+        )
+        _sha256(self.persona_prompt_sha256, field="persona_prompt_sha256")
+        _sha256(self.persona_catalog_sha256, field="persona_catalog_sha256")
+        _sha256(
+            self.persona_generalization_plan_sha256,
+            field="persona_generalization_plan_sha256",
+        )
+        _sha256(self.scenario_sha256, field="scenario_sha256")
+        move_ids = tuple(self.topic_move_ids)
+        move_hashes = tuple(self.topic_move_sha256s)
+        if len(move_ids) != MAIN_TURNS or any(
+            not isinstance(item, str) or not item.strip() for item in move_ids
+        ):
+            raise ProtocolValidationError(
+                "topic_move_ids must contain 25 non-empty pressure-free scenario IDs"
+            )
+        if len(move_hashes) != MAIN_TURNS:
+            raise ProtocolValidationError("topic_move_sha256s must contain 25 hashes")
+        for index, value in enumerate(move_hashes):
+            _sha256(value, field=f"topic_move_sha256s[{index}]")
+        object.__setattr__(self, "topic_move_ids", move_ids)
+        object.__setattr__(self, "topic_move_sha256s", move_hashes)
         _require_enum(self.topic_partition, TopicPartition, field="topic_partition")
         if self.phase is StudyPhase.PILOT and self.topic_partition is not TopicPartition.DEVELOPMENT:
             raise ProtocolValidationError(
@@ -171,6 +205,103 @@ class TrajectoryMetadata(_SerializableRecord):
             )
         object.__setattr__(self, "pressure_template_ids", template_ids)
         _sha256(self.generation_config_sha256, field="generation_config_sha256")
+
+
+def validate_trajectory_persona_identity(
+    record: TrajectoryMetadata,
+    *,
+    persona_catalog: PersonaCatalog,
+    persona_generalization_plan: PersonaGeneralizationPlan,
+    persona_catalog_manifest_sha256: str,
+    persona_generalization_plan_manifest_sha256: str,
+) -> TrajectoryMetadata:
+    """Validate one trajectory identity against frozen persona manifests.
+
+    ``TrajectoryMetadata`` remains a serializable record type, but a generation
+    runner must call this API (or the factory below) before accepting a record.
+    The explicit expected manifest hashes prevent a structurally valid record
+    from silently binding to a different catalog or holdout plan.
+    """
+
+    if not isinstance(record, TrajectoryMetadata):
+        raise ProtocolValidationError("record must be a TrajectoryMetadata instance")
+    if not isinstance(persona_catalog, PersonaCatalog):
+        raise ProtocolValidationError("persona_catalog must be a PersonaCatalog")
+    if not isinstance(persona_generalization_plan, PersonaGeneralizationPlan):
+        raise ProtocolValidationError(
+            "persona_generalization_plan must be a PersonaGeneralizationPlan"
+        )
+    _sha256(
+        persona_catalog_manifest_sha256,
+        field="persona_catalog_manifest_sha256",
+    )
+    _sha256(
+        persona_generalization_plan_manifest_sha256,
+        field="persona_generalization_plan_manifest_sha256",
+    )
+    if persona_generalization_plan.catalog != persona_catalog:
+        raise ProtocolValidationError(
+            "persona generalization plan is backed by a different catalog"
+        )
+    if record.persona_catalog_sha256 != persona_catalog_manifest_sha256:
+        raise ProtocolValidationError("trajectory persona catalog manifest hash mismatch")
+    if (
+        record.persona_generalization_plan_sha256
+        != persona_generalization_plan_manifest_sha256
+    ):
+        raise ProtocolValidationError(
+            "trajectory persona generalization plan manifest hash mismatch"
+        )
+
+    variant = persona_catalog.variants_by_id.get(record.persona_prompt_variant_id)
+    if variant is None:
+        raise ProtocolValidationError("trajectory references an unknown prompt variant")
+    if record.persona_prompt_sha256 != variant.prompt_sha256:
+        raise ProtocolValidationError("trajectory persona prompt hash mismatch")
+    persona_generalization_plan.validate_assignment(
+        family_id=record.behavioral_family_id,
+        trait_id=record.persona_trait_id,
+        variant_id=record.persona_prompt_variant_id,
+        declared_role=record.persona_generalization_role,
+    )
+    return record
+
+
+def create_manifest_validated_trajectory_metadata(
+    *,
+    persona_catalog: PersonaCatalog,
+    persona_generalization_plan: PersonaGeneralizationPlan,
+    persona_catalog_manifest_sha256: str,
+    persona_generalization_plan_manifest_sha256: str,
+    **metadata_fields: Any,
+) -> TrajectoryMetadata:
+    """Construct and manifest-validate a trajectory metadata record."""
+
+    reserved = {
+        "persona_catalog_sha256",
+        "persona_generalization_plan_sha256",
+    }
+    supplied = reserved.intersection(metadata_fields)
+    if supplied:
+        raise ProtocolValidationError(
+            f"factory owns manifest hash fields; remove {sorted(supplied)}"
+        )
+    record = TrajectoryMetadata(
+        persona_catalog_sha256=persona_catalog_manifest_sha256,
+        persona_generalization_plan_sha256=(
+            persona_generalization_plan_manifest_sha256
+        ),
+        **metadata_fields,
+    )
+    return validate_trajectory_persona_identity(
+        record,
+        persona_catalog=persona_catalog,
+        persona_generalization_plan=persona_generalization_plan,
+        persona_catalog_manifest_sha256=persona_catalog_manifest_sha256,
+        persona_generalization_plan_manifest_sha256=(
+            persona_generalization_plan_manifest_sha256
+        ),
+    )
 
 
 @dataclass(frozen=True)

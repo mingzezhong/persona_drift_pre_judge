@@ -1,11 +1,11 @@
 # Latent Persona Seismograph V2：正式研究协议
 
 Protocol ID：`LPS-V2-20260824`
-版本：`2.1-preparation`
+版本：`2.2-preparation`
 修订日期：2026-08-25
-状态：正式协议；G0 `PASS`，G1–G8 open；尚未开始 V2 pilot，尚无 V2 实验结果
+状态：正式协议；G0 `PASS`，G1–G8 open；Persona 层级方向已修订，exact inventory 与新版样本量仍 OPEN；尚无 V2.2 实验结果
 权威设计来源：[`deep-research-report.md`](../deep-research-report.md) 与 [`重启项目的细节.md`](../重启项目的细节.md)
-执行解释：[`docs/restart_v2_amendment.md`](restart_v2_amendment.md)
+执行解释：[`docs/restart_v2_amendment.md`](restart_v2_amendment.md)；Persona/Topic 范围由 [`persona_topic_design_amendment_v2_2.md`](persona_topic_design_amendment_v2_2.md) 修订，讨论 provenance 为 [`persona和topic的讨论.md`](../persona和topic的讨论.md)
 
 ## 1. 研究目标
 
@@ -53,7 +53,12 @@ V2 不采用 Conditional Flow。Pilot、main study、randomized intervention 和
 
 - **Main turn**：一条正式 user message + 一条 assistant response；system/persona 初始化不计入。
 - **Full trajectory**：25 个 main turns。
-- **Persona condition**：一个冻结的行为型 persona 及其 system-prompt operationalization。
+- **Behavioral family**：包含多个可区分 Persona traits 的上位行为域。
+- **Persona trait**：具有独立构念、公开来源题库和行为验证的 Persona 单位；主要 Persona 计数以 trait 为准。
+- **Prompt variant**：同一 trait 的结构匹配 system-prompt 表述；是嵌套条件，不是新 Persona。
+- **Evaluation item**：公开 trait 题库中的单条测量题；不是 Persona，也不得与 prompt variant 混计。
+- **Persona generalization role**：seen-trait observed wording、unseen wording、within-family unseen trait 或 unseen behavioral family；它与 Topic split 正交。
+- **Phase assignment manifest \(X_{\phi}\)**：pilot、main 或 fork 的逐行 non-seed design cells；每行显式记录 trait × prompt variant 及所有 phase-specific 交叉因子。
 - **Pressure family**：反 persona 压力机制。
 - **Pressure level \(L_t\)**：同一 family 内经独立、outcome-blind 校准的 L0–L5 ordinal level。
 - **PPU**：同一 family 内相邻 level 增加一级。
@@ -78,18 +83,25 @@ V2 不采用 Conditional Flow。Pilot、main study、randomized intervention 和
 
 精确 repository ID、revision hash、tokenizer revision、chat template、generation parameters 和模型许可/access 状态由 `G3` 冻结。任一模型无法访问或无法满足 hook contract 时不得静默替换；需停止对应阶段并提交 amendment。
 
-### 3.2 Primary personas
+### 3.2 Hierarchical Persona sampling frame
 
-来源为 Anthropic Model-Written Evals，固定四个 behavioral persona conditions：
+V2.2 采用：
 
-- `risk-averse`；
-- `risk-seeking`；
-- `stands-its-ground`；
-- `agreeableness`。
+```text
+Behavioral Family → Persona Trait → Prompt Variant → Evaluation Item
+```
 
-它们是四个独立预注册条件，不宣称构成两对完美心理学反义轴。每个 persona 的 source item IDs、system-prompt 转换规则和 persona-opposing pressure family 在 `G1/G2` 冻结。
+用户认可的规划方向为 4 个 behavioral families、每类 4–6 个真正独立 traits（总计 16–24）。这是一项 **ENDORSED DIRECTION**，不是 exact frozen catalog。Prompt variants 与 evaluation items 都不能重复计数为 Persona。
 
-PersonaGym 仅用于 pipeline 冻结后的 external cross-persona evaluation；它不参与 V2 主模型开发、校准或 primary test。
+三种泛化必须分开报告：
+
+1. 同一 trait 的 unseen prompt wording；
+2. 已见 family 内的 unseen trait；
+3. 一个完整 unseen behavioral family。
+
+`risk-averse`、`risk-seeking`、`stands-its-ground` 和 `agreeableness` 目前只是 seed trait candidates，不再是完整的 Flat-4 primary frame。`G1` 必须冻结 exact families、traits、公开 source/revision/license/item IDs 与 generalization assignments；`G2` 必须冻结 prompt variants、item-role split、held-out validation 与 Persona Vector protocol。无法达到规划范围时必须报告 shortfall 和 amendment，不能用近义标签、prompt 改写或 items 补数。
+
+PersonaGym 仍仅用于 pipeline 冻结后的 external evaluation。
 
 ### 3.3 Topics
 
@@ -109,15 +121,17 @@ PersonaGym 仅用于 pipeline 冻结后的 external cross-persona evaluation；�
 | Calibration | 5 | region threshold、warning threshold、probability calibration |
 | Untouched Test | 10 | 所有方法冻结后的一次性 confirmatory evaluation |
 
-6 个 pilot topics 是 15 个 Development topics 中预先标记的子集，不进入 Calibration 或 Untouched Test。
+6 个 pilot topics 是 15 个 Development topics 中预先标记的子集，不进入 Calibration 或 Untouched Test。讨论中的 36/40-topic 方案没有获得用户确认，不属于 V2.2。
+
+`G1` 还必须冻结 outcome-blind suitability rubric、12 个 MMLU-Pro categories、全部 immutable item IDs、source/license/revision/checksum、source/category-stratified split，以及每个 anchor 的 25-turn content-only topic moves。Anthropic opinion items 的原生 biography/user stance 必须预先选择“剥离/标准化”或独立 source-specific baseline；否则它会与后来施加的 pressure 混杂。每轮 user input 的执行契约是独立的 `topic_move + pressure_template(L_t)`，不得把反-Persona pressure 永久写入 scenario。
 
 Topic ID 是 split、provenance 和 cluster unit，不是可泛化 predictor。模型不得使用 untouched topic 的 categorical ID；需要 topic conditioning 时，只能使用在 outcomes 前冻结、与 Drift labels 无关的 topic features/embedding。Public-data license/terms、feature extractor/revision 和 feature-freeze manifest 属于 `G1`；具体模型编码与 regularization 属于 `G6`。
 
 ### 3.4 Pressure schedules
 
-每个 persona × pressure family 建立 L0–L5，每级约 8 个意图等价 templates。独立 raters 在看不到模型 Drift outcome 的情况下完成 0–100 intensity ratings 与 pairwise ordering；ordinal/Rasch calibration、接受标准和 prompt rewrite rule 在 `G4` 冻结。
+每个 active persona trait × pressure family 建立 L0–L5，每级约 8 个意图等价 templates。独立 raters 在看不到模型 Drift outcome 的情况下完成 0–100 intensity ratings 与 pairwise ordering；ordinal/Rasch calibration、接受标准和 prompt rewrite rule 在 `G4` 冻结。
 
-候选 gradual schedules 为 `restart_v2_amendment.md` 定义的 \(S_{-2},\ldots,S_{+2}\)，首 5 turns 永远为 L0 neutral baseline。Pilot 为每个 model × persona 选择有左右邻居且位于 transition band 的 \(S^*\)。Main 使用：
+候选 gradual schedules 为 `restart_v2_amendment.md` 定义的 \(S_{-2},\ldots,S_{+2}\)，首 5 turns 永远为 L0 neutral baseline。Pilot 为每个 model × active trait 选择有左右邻居且位于 transition band 的 \(S^*\)。Main 使用：
 
 \[
 S^*_{-1},\quad S^*,\quad S^*_{+1}.
@@ -125,56 +139,51 @@ S^*_{-1},\quad S^*,\quad S^*_{+1}.
 
 这里下标表示 schedule-grid neighbor；每条记录仍保存实际的 \(L_{1:25}\)。
 
-## 4. 样本设计
+## 4. 样本设计（V2.2 待重算）
 
-### 4.1 Dose-finding pilot
+V2.1 基于四个 Flat-4 Persona 推导出的 `1,440` pilot trajectories、`8,640` main trajectories、`600` prefixes、`9,600` fork continuations 和约 `300,000` target-model turns 全部是 **RETIRED PLANNING FIGURES**。它们不能继续作为 V2.2 target、GPU 申请或完成度分母。
 
-\[
-3\text{ models}\times4\text{ personas}\times6\text{ development topics}
-\times4\text{ seeds}\times5\text{ schedules}=1{,}440
-\]
+V2.2 保留以下非 Persona 因子作为规划输入：3 models、30 main topics、6 development pilot topics、25 main turns、5 candidate pilot schedules、3 main schedule arms，以及 fork 的 4 randomized doses。新的总量必须从 frozen manifests 计算，而不是从 README 常数读取。
 
-即 36,000 target-model turns。Pilot 仅用于：
+V2.1 使用过的 pilot 4 seeds、main 8 seeds、候选 `8→10` 和 fork 每 arm 4 continuation seeds 都是 **historical candidate values**，不是 V2.2 defaults。三个 phase 的 seed 数均为 OPEN，必须根据该 phase 的 power/精度目标、层级方差、event rate 和 runtime/storage benchmark 在对应 gate 独立冻结。
 
-- protocol/hook sanity checks；
-- 为每个 model × persona 寻找 aggregate \(0.2<P(Drift)<0.8\) 的 transition schedules；
-- 检查 topic-stratified within-cell positivity/overlap，确认 Stable/Drift 不只是由少数 topics 或 topic-separable outcomes 造成；
-- 估计 event rate、topic/trajectory cluster variance、runtime 和 storage；
-- 运行 simulation-based power check。
+### 4.1 G1/G2 后的重算输入
 
-Pilot 不产生 confirmatory claim。Aggregate 0.2–0.8 只是必要条件，不是充分条件；topic-stratified positivity/overlap 的量化接受标准在看到 pilot outcomes 前由 `G5` decision rule 冻结。若没有 eligible \(S^*\) 或 within-cell support 不足，执行 `G5` 中的停止/扩展规则。
+重算前必须唯一确定：
 
-### 4.2 Main full trajectories
+- exact family/trait catalog 与每个 trait 的 generalization role；
+- 哪些 traits 进入 pilot、Development、Calibration 和一次性 untouched evaluation；
+- prompt variants 是完整因子、平衡抽样因子还是 robustness subset；
+- pressure calibration 是 trait-level、pole-level 或 family-level；
+- intervention prefix quota 的分层单位；
+- 两卡 runtime、storage 与 checkpoint/resume benchmark。
 
-\[
-3\times4\times30\times8\times3=8{,}640
-\]
-
-即 base plan 为 216,000 target-model turns。每个 model × persona × schedule cell 有 240 trajectories。`8 seeds` 是初始冻结值；只有 `G6` 预先规定的 simulation rule 判定 power 不足时，才能在 main generation 开始前统一扩展为 10 seeds，并重算全部 totals。
-
-### 4.3 Randomized prefix forks
-
-在 main 保持 8 seeds 且 `G7` eligibility 全部满足的 base plan 中，每个 model × persona 选择 50 个 eligible、尚未 Drift 的 post-response prefixes：Turn 10 和 Turn 15 各 25 个，共 600 root prefixes。每个 prefix 包含已完成的 \(A_t\)，并随机生成：
+计划公式只从已签名的逐行 assignment manifests 计算。对 \(\phi\in\{\mathrm{pilot},\mathrm{main},\mathrm{fork}\}\)，令 \(X_{\phi}\) 是该 phase 的 non-seed design rows；pilot/main 行至少包含 model、topic、trait、prompt variant 和 schedule，fork 行至少包含 root prefix、fork turn、trait、prompt variant 和 dose。定义 trait × variant 计数矩阵：
 
 \[
-4\text{ doses}\times4\text{ continuation seeds}=16
+A^{(\phi)}_{\tau v}=\lvert X_{\phi}(\tau,v)\rvert.
 \]
 
-个 H=5 continuation，base-plan target 共 9,600 short trajectories、48,000 turns。Primary arms 为 \(d\in\{0,1,2,3\}\)，且必须满足无 clipping 的上界资格规则。
-
-若任一 model × persona × fork-turn stratum 无法取得目标数量的 eligible prefixes，立即停止并提交 amendment；禁止跨 stratum 借用/复制 prefix、改 fork turn、降低 dose、clipping 或替代 arms 来凑到 600/9,600。
-
-Fork arms 共享 root prefix，因此统计单位不是 9,600 个彼此独立的 trajectories；估计和 bootstrap 必须保留 root-prefix cluster。
-
-### 4.4 计划总量
-
-在 main=8 seeds 且 G7 eligibility 满足时，base-plan target-model generation 约为：
+若 \(s_{\phi}(x)\) 是 row \(x\) 在对应 gate 冻结的 generation/continuation seed 数，则：
 
 \[
-36{,}000+216{,}000+48{,}000=300{,}000\text{ turns}.
+N_{\phi}=\sum_{x\in X_{\phi}}s_{\phi}(x)
+=\sum_{\tau,v}\sum_{x\in X_{\phi}(\tau,v)}s_{\phi}(x).
 \]
 
-300,000 不是无条件 realized sample size。若 G6 触发 10 seeds、G7 shortfall 或正式 amendment，必须重新计算并报告 planned/realized totals。这也不包括 pressure calibration raters、behavior judges、Persona Vector extraction/validation、PersonaGym external evaluation、失败重跑和 full-attention audit；资源表必须分别核算这些项目。
+只有当该 phase 的 seed 数对所有 rows 一致时，才可简化为 \(N_{\phi}=s_{\phi}\sum_{\tau,v}A^{(\phi)}_{\tau v}\)。每个 observed/unseen-wording/robustness-only prompt-variant exposure 都必须成为 \(X_{\phi}\) 的显式 row；不得仅按 trait 计数，也不得使用未验证的平均 `K_variant` 乘数。若使用 balanced incomplete design，必须保存完整 assignment matrix、inclusion probability、cell weights 和每个 variant 的 exposure diagnostics。
+
+### 4.2 Pilot 与 power
+
+Pilot 仍只使用 6 个预先指定的 Development topics，目的仍是 hook/protocol sanity、transition-band/positivity、cluster variance、runtime 与 storage。只有 `G1/G2/G3/G4`、新版 sample-size manifest 和停止规则全部通过后才能启动。Pilot 不产生 confirmatory claim。
+
+Pilot seed rule 在 `G5` 前冻结；main seed rule、trait × variant assignment 与主效应 power 均须依据 pilot 的 event rate 和 family/trait/topic cluster variance在 `G6` 预注册；fork continuation seed rule 在揭示任何 fork outcome 前于 `G7` 冻结。V2.1 的 4/8/10 只可作为 power simulation 的候选情景，不得被自动选为运行值。
+
+### 4.3 Randomized forks
+
+Turn 10/15、5-turn horizon、`d in {0,1,2,3}`、no-clipping 和全部 arms feasible 的资格规则继续有效；但旧的 50 prefixes per Flat-4 persona、600 roots 和 9,600 continuations 不再有效。`G7` 必须使用最终 active trait strata 重算 quotas、shortfall rule 和总 turns。
+
+在新版计数通过前，所有 outcome-bearing bulk run 必须 fail closed。
 
 ## 5. 生成和采集协议
 
@@ -185,8 +194,8 @@ Fork arms 共享 root prefix，因此统计单位不是 9,600 个彼此独立的
 ```text
 protocol_version
 model_id + model_revision + tokenizer_revision
-persona_id + persona_prompt_version
-topic_id + scenario_version + split
+behavioral_family_id + persona_trait_id + persona_prompt_variant_id + persona_catalog_sha256
+topic_id + scenario_version + scenario_sha256 + topic_move_ids_1:25 + split
 pressure_family + schedule_id + L_1:25
 prompt_template_ids_1:25
 generation_seed + sampling_config
@@ -222,7 +231,7 @@ generation_seed + sampling_config
 
 Sustained Drift label 必须 behavior-only：judge 看不到 activation、Region score、模型条件的预测结果和 intervention risk estimate。`G2` 在 pilot 前冻结：
 
-- 每个 persona 的 positive/negative behavioral anchors；
+- 每个 persona trait 的 positive/negative behavioral anchors；
 - probe/measurement 的时点和内容；
 - judge models/raters、temperature、repeats 和 aggregation；
 - drift score threshold；
@@ -257,7 +266,11 @@ V2 primary predictor使用 pre-response representations。Response-token-mean pr
 \qquad e_t=z_t-\hat z_t^S.
 \]
 
-第一版采用 ridge/low-order autoregression；\(c\) 至少包括 model、persona、pressure family、absolute pressure history 和 turn。若加入 topic information，只允许使用 `G1` 冻结的 outcome-blind topic features/embedding；categorical topic ID 不得作为 predictor。具体编码、regularization grid 和 feature dimension 在 `G6` 冻结，并只在 Development topics 比较。Topic 仍是 split 和 cluster unit。
+第一版采用 ridge/low-order autoregression；\(c\) 至少包括 model、可用的 Persona representation、pressure family、absolute pressure history 和 turn。Family/trait/variant 的 categorical IDs 只用于 provenance、split 和 strata；在 unseen wording、within-family unseen trait 或 unseen-family primary evaluation 中，不得作为 predictor，也不得通过 lookup embedding 间接输入。
+
+泛化评价的 Persona conditioning 只能来自 `G1/G2` 在 outcome 前冻结的 outcome-blind family/trait descriptors、由完全分离 items 提取的 Persona Vector，或预注册 cold-start encoder。该 encoder 的 inputs、training corpus、revision、parameters 和 checksum 在 `G2/G6` 冻结，且不得读取 held-out trait/family 的 Drift、activation 或 judge outcomes。使用 categorical Persona IDs 的 seen-only diagnostic 必须单独标记，不得支持 unseen claim。
+
+若加入 topic information，只允许使用 `G1` 冻结的 outcome-blind topic features/embedding；categorical topic ID 不得作为 predictor。具体编码、regularization grid 和 feature dimension 在 `G6` 冻结，并只在 Development topics 比较。Topic 仍是 split 和 cluster unit。
 
 ### 8.2 Stability Region 与 Margin
 
@@ -332,15 +345,30 @@ GP、HMM 或 trajectory encoder 不替代简单 baseline；只有进入 `G6` 预
 
 Primary metric、最小有意义增益、false-alarm budget、warning threshold、\(\alpha\)、confidence level 和多重比较 family由 `G6` 冻结。目前均为 `TBD`，不得从 test performance 反推。
 
-### 8.6 Uncertainty and dependence
+### 8.6 Uncertainty, nesting and claim boundary
 
-Turns 不作为 iid observations。分析必须保留以下依赖：同一 trajectory 内的 turns、同一 topic 内的 seeds、同一 root prefix 的 intervention forks。具体采用 hierarchical model、cluster bootstrap 或二者组合；resampling unit 和 strata 在 `G6/G7` 冻结。
+观测层级的嵌套主干是：
+
+```text
+behavioral family → persona trait → prompt variant → trajectory → turn
+```
+
+Topic 与这一主干交叉，所以共享 topic 的 model/trait/variant/seed/schedule trajectories 相关；seeds 是 trajectory replicates 而不是新 trait 或无条件 iid 单位。干预数据另有 `root trajectory/prefix → dose arm → fork continuation` 嵌套。同一 root 下的 forks 共享历史，不能装作独立 roots。
+
+Primary uncertainty 计算必须遵守：
+
+1. observational Development/Calibration/Test 以 **topic** 为 outer cluster/resampling unit，在预注册 source/category strata 内重抽整个 topic block，保留该 topic 下全部 Persona 层级、trajectories 和 turns；
+2. Region 的 primary alarm calibration 使用 trajectory-level maxima，不将 turns 当 iid calibration samples；评估 calibration uncertainty 时仍保留 topic blocks；
+3. randomized fork 以 **root prefix** 为 randomization/dependence unit，重抽一个 root 时同时携带其所有 dose arms 与 continuations，并使用 topic 作 outer block/层级效应；
+4. turns、seeds、prompt variants 和 fork continuations 均不得被当作 iid replicates 以缩小标准误。
+
+Estimator、source/category strata、small-cluster correction 与有限样本区间在 `G6/G7` 冻结，但不能改变上述 primary units。规划中只有 4 个 behavioral families，因此 family 作为有限的 fixed claim strata，不作为 4 个 iid clusters 来估计“所有可能 Persona families”的 population variance。一个 fully unseen family 只支持对该预注册 family 的 cold-start transfer claim，不支持无界的新-family population generalization。Trait 级 claim 也条件于 `G1` 冻结的 sampling frame 和 inclusion rule。
 
 ## 9. Randomized causal Robust Radius
 
 ### 9.1 Assignment
 
-Fork cut-off 是完成 \(A_t\) 之后的 \(t^+\)。只有在 through-turn-t 行为测量尚未满足 Drift，且未来 baseline levels 可容纳全部 \(d=0,1,2,3\) 时，包含 \(A_t\) 的 prefix 才 eligible。Prefix selection 按 model × persona × fork turn 预先分层随机抽取；四个 dose arms 与 continuation seeds 的 assignment 由独立 seed manifest 生成。
+Fork cut-off 是完成 \(A_t\) 之后的 \(t^+\)。只有在 through-turn-t 行为测量尚未满足 Drift，且未来 baseline levels 可容纳全部 \(d=0,1,2,3\) 时，包含 \(A_t\) 的 prefix 才 eligible。Prefix selection 按 model × behavioral family × active trait × prompt variant × topic × fork turn 的预注册 strata/配额抽取；四个 dose arms 与 OPEN 的 continuation-seed count 在任何 fork outcome 前由独立 assignment/seed manifests 冻结。
 
 ### 9.2 Estimands
 
@@ -357,20 +385,20 @@ R_{t^+}^{fork,(5)}(d)
 
 \(\eta=0.8\) 为 primary operational threshold，0.7 和 0.9 为 sensitivity。若 d≤3 都未达到阈值，Radius 报告为 `>3 PPU`。
 
-由于单 prefix 每 arm 只有 4 continuations，primary causal effect 的聚合层级、monotonicity assumption、partial pooling 和个体化 Radius 的证据等级在 `G7` 冻结。未经该 gate，不宣称单 prefix 的经验 0/4…4/4 比例是精确因果风险。\(R_{t^-}^{obs,(H)}\) 与 \(R_{t^+}^{fork,(H)}(d)\) 的信息集、窗口和干预含义均不同，二者不得拼接为同一个 risk endpoint。
+单 prefix 每 arm 的 continuation count 是 `G7` 依据精度/power 和资源证据待冻结的变量 \(s_{\mathrm{fork}}(x)\)。Primary causal effect 的聚合层级、monotonicity assumption、partial pooling 和个体化 Radius 的证据等级也在 `G7` 冻结。未经该 gate，任何单 prefix 的小样本经验比例都不得被宣称为精确因果风险。\(R_{t^-}^{obs,(H)}\) 与 \(R_{t^+}^{fork,(H)}(d)\) 的信息集、窗口和干预含义均不同，二者不得拼接为同一个 risk endpoint。
 
 ## 10. Execution stages and stopping rules
 
 | Stage | 输入 | 必须产出 | Stop / go |
 |---|---|---|---|
 | 0. Archive & provenance | 旧项目 + 三份设计材料 | 三个 source checksums、Git tag、read-only artifact archive manifest verification | `G0` **PASS** |
-| 1. Static public design | public datasets | data license/terms、persona/topic/split manifests、scenario templates、topic-feature contract | `G1` |
+| 1. Static public design | public datasets | family/trait/item and topic manifests、licenses/revisions、two orthogonal splits、scenario templates、topic-feature contract | `G1` |
 | 2. Measurement design | persona definitions | vectors protocol、judge rubric、onset rules | `G2` |
 | 3. Instrumentation smoke | 3 target models | model license/access、frozen revisions、hook validation、10-trajectory benchmark | `G3` |
 | 4. Pressure calibration | L0–L5 candidates | calibrated template bank | `G4` |
-| 5. Dose pilot | 1,440 trajectories | S* decisions、topic-stratified within-cell positivity/overlap、variance/runtime/storage | `G5` |
+| 5. Dose pilot | recalculated manifest only | S* decisions、topic-stratified within-cell positivity/overlap、variance/runtime/storage | `G5` |
 | 6. Analysis/power lock | pilot summaries only | two-clock estimands、trajectory-max calibration、Turn-25 horizon rule、signed analysis manifest、power result、non-Flow extension allowlist | `G6` |
-| 7. Main study | 8,640 trajectories | frozen Development/Calibration/Test artifacts | test opened once |
+| 7. Main study | recalculated manifest only | frozen Development/Calibration/Test artifacts | test opened once |
 | 8. Intervention | eligible post-response main prefixes | eligibility/shortfall decision、randomized fork results | `G7` before outcomes |
 | 9. External evaluation | frozen pipeline | PersonaGym study | `G8` |
 
@@ -406,8 +434,8 @@ Raw generations、activations、licensed model weights 和 credentials 不进入
 截至本协议日期，G0 已通过：三份设计源文件 checksums、pre-restart Git tag 和 read-only artifact archive manifest 已验证。以下内容均尚未发生：
 
 - 未完成 G1–G8；
-- 未运行 1,440 条 V2 pilot；
-- 未生成 8,640 条 V2 main trajectories；
+- 未运行任何 V2.2 dose-finding pilot；
+- 未生成任何 V2.2 main trajectories；
 - 未运行 randomized intervention；
 - 未得到 V2 Region、Margin、hazard 或 Robust Radius 结果；
 - 未形成任何 V2 confirmatory conclusion。

@@ -5,10 +5,10 @@
 # operationalizes items intentionally left open by the design; it is not an
 # alternative or competing protocol.
 
-schema_version: restart-v2.1
+schema_version: restart-v2.2
 study_name: latent_persona_seismograph_restart_v2
 implementation_status: protocol_skeleton_only
-protocol_revision: 2.1-preparation
+protocol_revision: 2.2-preparation
 
 scope_exclusions:
   conditional_flow_family:
@@ -52,6 +52,11 @@ authoritative_documents:
     - deep-research-report.pdf
   complementary_execution_specification:
     - 重启项目的细节.md
+  endorsed_design_discussion:
+    - persona和topic的讨论.md
+  active_amendments:
+    - docs/restart_v2_amendment.md
+    - docs/persona_topic_design_amendment_v2_2.md
 
 hardware:
   gpu_count: 2
@@ -65,13 +70,16 @@ frozen:
     count: 25
     system_and_persona_initialization_counted: false
 
-  personas:
-    source: anthropic_model_written_evals
-    conditions:
-      - risk-averse
-      - risk-seeking
-      - stands-its-ground
-      - agreeableness
+  persona_ontology:
+    hierarchy: [behavioral_family, persona_trait, prompt_variant, evaluation_item]
+    reported_persona_unit: persona_trait
+    prompt_variants_count_as_personas: false
+    evaluation_items_count_as_personas: false
+    topic_and_persona_generalization_splits_are_orthogonal: true
+    required_generalization_levels:
+      - unseen_prompt_wording
+      - within_family_unseen_trait
+      - unseen_behavioral_family
     external_generalization_source: personagym
 
   models:
@@ -164,45 +172,101 @@ frozen:
     causal_radius_unit: ppu
     level_boundary_policy: error_never_create_L6
 
+
+planning:
+  persona_source_selection:
+    status: candidate_only_open_must_freeze_before_G1_pass
+    execution_authorized: false
+    collection_candidates:
+      - anthropic_model_written_evals
+
+  persona_sampling:
+    status: endorsed_direction_pending_G1_operational_freeze
+    behavioral_families: 4
+    development_families: 3
+    fully_unseen_families: 1
+    true_traits_per_family: {minimum: 4, maximum: 6}
+    total_true_traits: {minimum: 16, maximum: 24}
+    each_family_has_two_behavioral_poles:
+      status: candidate_only_open_must_freeze_before_G1_pass
+      candidate_value: true
+      execution_authorized: false
+    within_development_family_trait_holdout: required
+    prompt_variants_per_trait:
+      design: multiple_matched_variants_with_wording_holdout
+      exact_count_status: open_must_freeze_before_G2
+      development_traits_require_observed_and_unseen_wording: true
+    seed_trait_candidates_not_final_inventory:
+      - risk-averse
+      - risk-seeking
+      - stands-its-ground
+      - agreeableness
+    exact_family_names_trait_ids_and_assignments:
+      status: open_must_freeze_before_G1_pass
+
+  persona_item_roles:
+    required_disjoint_roles:
+      - trait_definition
+      - persona_vector_extraction
+      - held_out_validation
+    exact_item_counts_and_ratios:
+      status: open_must_freeze_before_G2
+    held_out_items_may_influence_prompt_vector_layer_or_threshold_selection: false
+
   sample_design:
-    pilot:
-      models: 3
-      personas: 4
-      topics: 6
-      seeds: 4
-      candidate_schedules: 5
-      full_trajectories: 1440
-      generated_turns: 36000
-    main:
-      models: 3
-      personas: 4
-      topics: 30
-      seeds: 8
-      pressure_schedules: 3
-      full_trajectories: 8640
-      generated_turns: 216000
-    intervention:
-      status: contingent_target_subject_to_G7_eligibility
-      eligible_prefixes_per_model_persona: 50
-      total_prefixes: 600
-      doses: 4
-      continuation_seeds: 4
+    status: blocked_pending_exact_trait_inventory_variant_exposure_and_resource_rebenchmark
+    retired_flat_four_counts:
+      status: historical_only_do_not_submit
+      pilot_trajectories: 1440
+      main_trajectories: 8640
       fork_continuations: 9600
-      turns_per_continuation: 5
-      generated_turns: 48000
-      shortfall_policy: stop_and_amend_never_substitute_or_clip
-    base_plan_target_model_generated_turns: 300000
-    base_plan_assumptions: 8_main_seeds_and_full_intervention_target_eligible
+      target_model_turns: 300000
+    fixed_non_persona_factors:
+      models: 3
+      pilot_topics: 6
+      pilot_candidate_schedules: 5
+      main_topics: 30
+      main_pressure_schedules: 3
+      fork_doses: 4
+      turns_per_full_trajectory: 25
+      turns_per_fork: 5
+    candidate_seed_design:
+      status: candidate_only_open_must_preregister_before_pilot_submission
+      execution_authorized: false
+      pilot_seeds: 4
+      main_seeds_initial: 8
+      fork_continuation_seeds: 4
+      main_seed_expansion_if_underpowered: {from: 8, to: 10}
+    factors_open_before_recalculation:
+      - exact_trait_inventory
+      - traits_exposed_in_each_phase
+      - prompt_variant_exposure_policy
+      - eligible_prefix_target_and_stratification
     pilot_power_simulation_target: 0.90
-    preregistered_seed_expansion_if_underpowered:
-      from: 8
-      to: 10
 
 # These gates are intentionally not guessed by the code skeleton. Each must be
 # resolved in a versioned protocol artifact before the named phase may run.
 protocol_gates:
+  persona_source_collection_selection:
+    status: open_must_freeze_before_G1_pass
+  persona_behavioral_pole_structure:
+    status: open_must_freeze_before_G1_pass
+  seed_counts_and_expansion_rule:
+    status: open_must_preregister_before_pilot_submission
+  public_source_revisions_licenses_and_download_hashes:
+    status: open_must_freeze_before_G1_pass
+  persona_family_trait_catalog_and_generalization_assignments:
+    status: open_must_freeze_before_G1_pass
+  persona_prompt_variants_and_wording_holdout:
+    status: open_must_freeze_before_G2
+  persona_item_role_manifests_and_no_overlap_audit:
+    status: open_must_freeze_before_G2
+  revised_sample_counts_runtime_storage_and_variant_exposure:
+    status: open_must_freeze_before_pilot_submission
   public_topic_item_ids_and_conversion_templates:
     status: open_must_freeze_before_pilot
+  topic_outcome_blind_suitability_and_source_stance_policy:
+    status: open_must_freeze_before_G1_pass
   development_calibration_test_topic_id_assignment:
     status: open_must_freeze_before_pilot
   six_development_pilot_topic_ids:

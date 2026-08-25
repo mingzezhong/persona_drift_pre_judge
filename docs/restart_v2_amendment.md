@@ -2,7 +2,9 @@
 
 版本：`v2.1-preparation`
 日期：2026-08-25
-状态：V2 正式执行契约；G0 `PASS`，G1–G8 尚未通过，尚未生成 V2 实验结果
+状态：V2.1 执行契约；Persona sampling frame 与由 Flat-4 推导的样本量已由 V2.2 修订，其余条款继续有效；G1–G8 尚未通过，尚无 V2.2 结果
+
+> **V2.2 优先条款：** [`persona_topic_design_amendment_v2_2.md`](persona_topic_design_amendment_v2_2.md) 已取代本文中“固定四个 Persona”以及 1,440/8,640/600/9,600/约300,000 等衍生 target。它们只保留为历史规划数，不能授权运行。V2.1 的 pilot 4 seeds、main 8 seeds、候选 `8→10` 与 fork 每 arm 4 continuation seeds 也同样只是历史候选值；V2.2 必须用 phase-specific trait × prompt-variant assignment manifest 和待冻结 seed 变量重算。
 
 ## 1. 文件关系与适用范围
 
@@ -168,7 +170,7 @@ S_{+2}=[0^5,3^5,4^5,5^5,5^5].
 
 因此 primary intervention prefix 只有在 baseline future plan 的最高 level 不超过 2 时才对四个 arms 全部 eligible。Turn 10 和 Turn 15 均执行相同规则。若某 model × persona × fork-turn 无法取得预注册数量的 eligible prefixes，则 intervention 阶段暂停并触发 `G7`，不得把被截断的 `d=3` 继续称为每轮 `+3 PPU`。任何饱和/截断版本只能作为明确标注的次级 estimand，并需新的 amendment。
 
-`600 root prefixes / 9,600 fork continuations / 约 300,000 total target-model turns` 是 **main study 保持 8 seeds 且 G7 eligibility 全部满足时的 base-plan targets**，不是无条件保证的 realized sample size。若任一 model × persona × fork-turn stratum 出现 eligible-prefix shortfall，必须停止、记录 shortfall 并提交 amendment；禁止跨 stratum 借用 prefix、复制 prefix、改 fork turn、降低 dose 或用 clipping 补足名额。若 G6 将 main seeds 扩为 10，总 turns 必须重新计算，不再称为 300,000。
+V2.1 曾规划 `600 root prefixes / 9,600 fork continuations / 约 300,000 total target-model turns`；这些数值已由 V2.2 **RETIRED**，不得作为 active target。其防凑数原则继续有效：新版 quotas 冻结后，若任一 model × active-trait × fork-turn stratum 出现 eligible-prefix shortfall，必须停止、记录并 amendment；禁止跨 stratum 借用或复制 prefix、改 fork turn、降低 dose 或 clipping。
 
 ## 5. 表示、Region、Margin 与风险
 
@@ -246,7 +248,7 @@ R_{t^+}^{fork,(5)}(d)
 
 一条 trajectory 到 Turn 25 仍未发生 Drift 时，行为学描述为 `Stable-through-end`，但 survival analysis 中只表示在 Turn 25 administratively right-censored；它不证明 Turn 25 以后永远 Stable。Observational horizon 跨过 Turn 25 时是排除、截短还是改为 horizon-specific censoring estimand，由 `G6` 在分析前唯一冻结。
 
-每个 prefix × dose 只有 4 个 continuation seeds，不能把未经建模的经验比例解释为精确的 prefix-specific 0.8 风险。`G7` 必须在揭示 intervention outcomes 前冻结层级/单调 dose-response estimator、pooling level、cluster-aware uncertainty 和 primary causal estimand。在此之前，单 prefix Radius 只可视为待验证的 exploratory output。
+每个 prefix × dose 的 continuation-seed count 在 V2.2 中为 OPEN，必须于 `G7` 在揭示 intervention outcomes 前根据精度/power 与资源证据冻结。不能把未经建模的小样本经验比例解释为精确的 prefix-specific 0.8 风险。`G7` 还必须冻结层级/单调 dose-response estimator、pooling level、cluster-aware uncertainty 和 primary causal estimand。在此之前，单 prefix Radius 只可视为待验证的 exploratory output。
 
 ## 6. 数据切分和确认性边界
 
@@ -258,7 +260,7 @@ R_{t^+}^{fork,(5)}(d)
 
 6 个 dose-finding pilot topics是 15 个 Development topics 中预先标记的子集；它们不进入 calibration 或 untouched test。Pilot outcome 只用于选择 transition schedule、工程 sanity checks 和 power simulation，不构成 confirmatory evidence。
 
-所有 seeds、topic IDs、prompt-template IDs、model revisions 和 split manifest 在生成前冻结。Topic ID 继续作为 split、provenance 和 cluster unit，但 predictor 不得使用 untouched topic 的 categorical ID。若 conditional model 需要 topic information，只能使用在 outcomes 产生前冻结、与 Drift labels 无关的 topic features/embedding；其 extractor/revision 在 `G1/G6` 冻结。共享同一个 topic、root trajectory 或 fork prefix 的观测不是独立样本；统计推断必须按 topic/trajectory/root prefix 的实际层级进行 cluster-aware bootstrap 或相应层级模型，不得把 turns 当作 iid 样本。
+所有 seeds、topic IDs、prompt-template IDs、model revisions 和 split manifest 在生成前冻结。Topic ID 继续作为 split、provenance 和 cluster unit，但 predictor 不得使用 untouched topic 的 categorical ID。若 conditional model 需要 topic information，只能使用在 outcomes 产生前冻结、与 Drift labels 无关的 topic features/embedding；其 extractor/revision 在 `G1/G6` 冻结。Unseen-trait/family predictor 同样禁止 categorical Persona ID/lookup embedding，只能使用 `G1/G2` outcome-blind descriptors/Persona Vector 或预注册 cold-start encoding。观测主干为 family → trait → prompt variant → trajectory → turn，topic 与其交叉；干预另有 root prefix → dose → fork continuation 嵌套。Observational primary resampling 以 topic 为 outer cluster，fork primary dependence unit 为 root prefix并保留 topic outer block；不得把 turns、seeds、variants 或 continuations 当 iid 样本。只有 4 个预注册 families 时，family 是 fixed claim strata，不支持对任意新 family population 的 random-effects 泛化。
 
 约 5% 的 full-attention mechanistic audit subset 必须在 outcome 产生前通过固定 seed、按 model × persona × schedule × topic split 分层抽样；不得按异常程度或结果事后挑选。exact fraction、rounding rule 和 storage cap 在 `G3` 冻结。
 
@@ -269,12 +271,12 @@ R_{t^+}^{fork,(5)}(d)
 | Gate | 必须冻结的内容 | 通过后允许做什么 |
 |---|---|---|
 | `G0` Provenance — **PASS** | 三份设计源文件 checksum、pre-restart Git tag、read-only artifact archive manifest verification | 清理 active tree |
-| `G1` Public items | public-data license/terms、四个 persona source IDs、30 topic IDs、6 pilot-topic IDs、转换模板、15/5/10 split、outcome-blind topic feature contract | 构建静态数据 |
+| `G1` Public items | public-data license/terms、family/trait/item manifests、30 topic IDs、6 pilot-topic IDs、转换模板、15/5/10 split、outcome-blind topic feature contract | 构建静态数据；V2.2 exact catalog与样本量重算前禁止pilot |
 | `G2` Measurement | persona system-prompt 构造、persona-vector extraction/validation、behavior-only Sustained Drift rubric、onset/sustained rule、judge panel 与盲法 | 生成可判定 pilot |
 | `G3` Instrumentation | 三模型 license/access、精确 revisions、chat templates、non-thinking 设置、hook contract、10-trajectory smoke、数值回放和存储测量 | 批量采集 activation |
 | `G4` Pressure calibration | 每个 persona × family 的 L0–L5 模板、独立 rater 方案、ordinal/Rasch 接受标准、失败重写规则 | 运行 dose-finding pilot |
 | `G5` Pilot decision | aggregate transition band + topic-stratified within-cell positivity/overlap、S* 选择/停止规则、drift-rate 与 cluster variance、资源基准 | 冻结 main cells |
-| `G6` Analysis lock | two-clock estimands、primary endpoint、trajectory-max \(\alpha\)/sequential method、Turn-25 horizon rule、warning/false-alarm budget、最小有意义增益、text baseline、power simulation、8→10 seeds 规则、多重比较、non-Flow extension allowlist | 运行 main confirmatory generation |
+| `G6` Analysis lock | two-clock estimands、primary endpoint、trajectory-max \(\alpha\)/sequential method、Turn-25 horizon rule、warning/false-alarm budget、最小有意义增益、text baseline、power simulation、phase-specific trait × variant assignment 与 main seed 规则、多重比较、non-Flow extension allowlist | 运行 main confirmatory generation |
 | `G7` Intervention lock | prefix sampling/eligibility、fork randomization、dose-response estimator、saturation禁令、primary causal estimand、600-prefix shortfall rule | 运行 randomized forks |
 | `G8` External evaluation | PersonaGym 20 persona IDs、mapping、样本量和一次性打开规则 | 外部泛化 |
 

@@ -17,6 +17,12 @@ class RestartConfigTests(unittest.TestCase):
 
     def test_frozen_counts_components_clocks_and_schedules(self) -> None:
         payload = self._load()
+        self.assertEqual(payload["schema_version"], "restart-v2.2")
+        self.assertEqual(payload["protocol_revision"], "2.2-preparation")
+        self.assertEqual(
+            payload["authoritative_documents"]["endorsed_design_discussion"],
+            ["persona和topic的讨论.md"],
+        )
         frozen = payload["frozen"]
         self.assertEqual(frozen["main_turn"]["count"], 25)
         self.assertEqual(len(frozen["models"]), 3)
@@ -54,25 +60,70 @@ class RestartConfigTests(unittest.TestCase):
             ],
         )
 
-        sample = frozen["sample_design"]
+        ontology = frozen["persona_ontology"]
+        self.assertEqual(ontology["reported_persona_unit"], "persona_trait")
+        self.assertFalse(ontology["prompt_variants_count_as_personas"])
+        self.assertFalse(ontology["evaluation_items_count_as_personas"])
+
+        sampling = payload["planning"]["persona_sampling"]
+        self.assertEqual(sampling["behavioral_families"], 4)
+        self.assertEqual(sampling["true_traits_per_family"], {"minimum": 4, "maximum": 6})
+        self.assertEqual(sampling["total_true_traits"], {"minimum": 16, "maximum": 24})
+        self.assertEqual(sampling["fully_unseen_families"], 1)
+
+        sample = payload["planning"]["sample_design"]
+        self.assertTrue(sample["status"].startswith("blocked_pending_"))
+        self.assertEqual(sample["retired_flat_four_counts"]["status"], "historical_only_do_not_submit")
+        self.assertEqual(sample["fixed_non_persona_factors"]["main_topics"], 30)
+
+    def test_open_candidates_do_not_authorize_persona_or_seed_execution(self) -> None:
+        payload = self._load()
+        frozen_ontology = payload["frozen"]["persona_ontology"]
+        self.assertNotIn("source_collection", frozen_ontology)
+
+        source = payload["planning"]["persona_source_selection"]
+        self.assertTrue(source["status"].startswith("candidate_only_open_"))
+        self.assertFalse(source["execution_authorized"])
         self.assertEqual(
-            sample["pilot"]["models"]
-            * sample["pilot"]["personas"]
-            * sample["pilot"]["topics"]
-            * sample["pilot"]["seeds"]
-            * sample["pilot"]["candidate_schedules"],
-            sample["pilot"]["full_trajectories"],
+            source["collection_candidates"],
+            ["anthropic_model_written_evals"],
         )
-        self.assertEqual(sample["pilot"]["full_trajectories"] * 25, 36000)
-        self.assertEqual(sample["main"]["full_trajectories"], 8640)
-        self.assertEqual(sample["main"]["full_trajectories"] * 25, 216000)
-        self.assertEqual(sample["intervention"]["fork_continuations"], 9600)
-        self.assertEqual(sample["intervention"]["fork_continuations"] * 5, 48000)
+
+        poles = payload["planning"]["persona_sampling"][
+            "each_family_has_two_behavioral_poles"
+        ]
+        self.assertTrue(poles["status"].startswith("candidate_only_open_"))
+        self.assertTrue(poles["candidate_value"])
+        self.assertFalse(poles["execution_authorized"])
+
+        sample = payload["planning"]["sample_design"]
+        fixed = sample["fixed_non_persona_factors"]
+        for retired_key in (
+            "pilot_seeds",
+            "main_seeds_initial",
+            "fork_continuation_seeds",
+        ):
+            self.assertNotIn(retired_key, fixed)
+        self.assertNotIn("preregistered_seed_expansion_if_underpowered", sample)
+
+        candidate = sample["candidate_seed_design"]
+        self.assertTrue(candidate["status"].startswith("candidate_only_open_"))
+        self.assertFalse(candidate["execution_authorized"])
+        self.assertEqual(candidate["pilot_seeds"], 4)
+        self.assertEqual(candidate["main_seeds_initial"], 8)
+        self.assertEqual(candidate["fork_continuation_seeds"], 4)
         self.assertEqual(
-            sample["intervention"]["status"],
-            "contingent_target_subject_to_G7_eligibility",
+            candidate["main_seed_expansion_if_underpowered"],
+            {"from": 8, "to": 10},
         )
-        self.assertEqual(sample["base_plan_target_model_generated_turns"], 300000)
+
+        gates = payload["protocol_gates"]
+        for gate_name in (
+            "persona_source_collection_selection",
+            "persona_behavioral_pole_structure",
+            "seed_counts_and_expansion_rule",
+        ):
+            self.assertTrue(gates[gate_name]["status"].startswith("open_must_"))
 
     def test_open_items_are_explicit_protocol_gates(self) -> None:
         payload = self._load()

@@ -1,0 +1,2 @@
+# Preserve user-supplied provenance byte-for-byte; ignore its original trailing spaces.
+persona和topic的讨论.md whitespace=-trailing-space

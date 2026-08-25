@@ -1,3 +1,4 @@
+import hashlib
 import unittest
 
 from persona_drift.protocol import ProtocolValidationError
@@ -8,6 +9,26 @@ from persona_drift.splits import (
     validate_anchor_catalog,
     validate_no_root_leakage,
 )
+
+
+def provenance(topic_id, source):
+    stance = (
+        "not_applicable"
+        if source is TopicSource.MMLU_PRO
+        else "remove_or_standardize"
+    )
+    file_hash = hashlib.sha256(("file:" + topic_id).encode("utf-8")).hexdigest()
+    item_hash = hashlib.sha256(("item:" + topic_id).encode("utf-8")).hexdigest()
+    return {
+        "source_url": "https://example.invalid/frozen-source",
+        "source_revision": "frozen-revision",
+        "source_license": "verified-license",
+        "source_file_sha256": file_hash,
+        "source_item_sha256": item_hash,
+        "scenario_template_sha256": "a" * 64,
+        "selection_review_sha256": "b" * 64,
+        "native_stance_policy": stance,
+    }
 
 
 def make_catalog():
@@ -22,6 +43,7 @@ def make_catalog():
                     source_item_id=f"public-{topic_id}",
                     source_group=f"domain-{domain_index:02d}",
                     conversion_template_id="mmlu-discussion-v1",
+                    **provenance(topic_id, TopicSource.MMLU_PRO),
                 )
             )
     for group in ("philosophy", "nlp", "politics"):
@@ -34,6 +56,7 @@ def make_catalog():
                     source_item_id=f"public-{topic_id}",
                     source_group=group,
                     conversion_template_id="sycophancy-discussion-v1",
+                    **provenance(topic_id, TopicSource.ANTHROPIC_SYCOPHANCY),
                 )
             )
     return tuple(anchors)
@@ -81,8 +104,37 @@ class TopicSplitTests(unittest.TestCase):
             source_item_id="public-replacement",
             source_group="domain-00",
             conversion_template_id="mmlu-discussion-v1",
+            **provenance("replacement-mmlu", TopicSource.MMLU_PRO),
         )
         with self.assertRaisesRegex(ProtocolValidationError, "topic sources"):
+            validate_anchor_catalog(catalog)
+
+    def test_topic_provenance_and_native_stance_are_fail_closed(self) -> None:
+        base = make_catalog()[0]
+        values = dict(base.__dict__)
+        values["selection_outcome_blind"] = False
+        with self.assertRaisesRegex(ProtocolValidationError, "outcome-blind"):
+            TopicAnchor(**values)
+
+        syc = next(
+            item for item in make_catalog()
+            if item.source is TopicSource.ANTHROPIC_SYCOPHANCY
+        )
+        values = dict(syc.__dict__)
+        values["native_stance_policy"] = "not_applicable"
+        with self.assertRaisesRegex(ProtocolValidationError, "native-stance policy"):
+            TopicAnchor(**values)
+
+    def test_anthropic_native_stance_policy_cannot_be_mixed(self) -> None:
+        catalog = list(make_catalog())
+        index = next(
+            index for index, item in enumerate(catalog)
+            if item.source is TopicSource.ANTHROPIC_SYCOPHANCY
+        )
+        values = dict(catalog[index].__dict__)
+        values["native_stance_policy"] = "source_specific_baseline"
+        catalog[index] = TopicAnchor(**values)
+        with self.assertRaisesRegex(ProtocolValidationError, "mixed policies"):
             validate_anchor_catalog(catalog)
 
     def test_root_groups_cannot_leak_across_partitions(self) -> None:

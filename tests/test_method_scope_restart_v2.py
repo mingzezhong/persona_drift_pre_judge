@@ -97,8 +97,8 @@ class MethodScopeTests(unittest.TestCase):
         cls.payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
     def test_machine_contract_excludes_conditional_flow_project_wide(self) -> None:
-        self.assertEqual(self.payload["schema_version"], "restart-v2.1")
-        self.assertEqual(self.payload["protocol_revision"], "2.1-preparation")
+        self.assertEqual(self.payload["schema_version"], "restart-v2.2")
+        self.assertEqual(self.payload["protocol_revision"], "2.2-preparation")
 
         exclusion = self.payload["scope_exclusions"]["conditional_flow_family"]
         self.assertEqual(exclusion["decision"], "excluded_from_project")

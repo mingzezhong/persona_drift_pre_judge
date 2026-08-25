@@ -2,7 +2,7 @@
 
 基于生成前内部激活轨迹，对 LLM Agent 的 Persona Drift 进行条件化早期预测，并通过随机压力干预估计 Persona Robust Radius。
 
-> **当前状态：V2 重启准备阶段。** G0 旧版本可恢复归档已经完成，G1–G8 尚未通过；V2 dose-finding pilot、main study 和 randomized intervention 均尚未运行，因此本仓库目前没有 V2 实验结果或确认性结论。
+> **当前状态：V2.2 准备阶段。** G0 旧版本可恢复归档已经完成，G1–G8 尚未通过；Persona 层级方向已记录，但 exact family/trait/prompt/item manifests 与新版样本量仍为 OPEN。任何 dose-finding pilot、main study 或 randomized intervention 均未运行，因此本仓库目前没有 V2.2 实验结果或确认性结论。
 
 ## 新方案
 
@@ -51,7 +51,9 @@ $$
 - [deep-research-report.md](deep-research-report.md)：概念框架、识别问题和建模路线；
 - [deep-research-report.pdf](deep-research-report.pdf)：主报告的 PDF 版本；
 - [重启项目的细节.md](重启项目的细节.md)：公开数据、25-turn 采集、PPU、随机干预和样本量的执行细节；
+- [Persona/Topic 讨论记录](persona和topic的讨论.md)：V2.2 层级化 Persona 方向的决策 provenance；
 - [V2 执行解释与补充条款](docs/restart_v2_amendment.md)：统一时序、符号、剂量边界和启动闸门；
+- [V2.2 Persona–Topic 修订](docs/persona_topic_design_amendment_v2_2.md)：区分已认可方向、退役设计和仍待 gate 冻结的事项；
 - [V2 正式研究协议](docs/research_protocol_v2.md)：阶段、样本设计、分析与停止规则。
 
 不得仅依据 README 修改科学定义；任何正式变更必须新增带版本的 amendment。
@@ -66,12 +68,14 @@ $$
 - [旧版本恢复说明](docs/legacy_recovery.md)；
 - [实验账本](docs/experiment_ledger.md)。
 
-## 第一版固定设计
+## V2.2 固定与开放设计
 
 | 项目 | V2 设计 |
 |---|---|
 | Models | Qwen3-8B、Llama-3.1-8B-Instruct、Gemma-3-12B-it |
-| Primary personas | risk-averse、risk-seeking、stands-its-ground、agreeableness |
+| Persona unit | 独立的 `persona_trait`；prompt variants 和 evaluation items 不计为新 Persona |
+| Persona sampling direction | 4 behavioral families × 每类 4–6 true traits（16–24）；exact inventory 仍为 G1 OPEN |
+| Persona generalization | unseen wording、within-family unseen trait、one fully unseen family |
 | Topics | 24 个 MMLU-Pro anchors + 6 个 Anthropic sycophancy/opinion anchors |
 | Main trajectory | 25 main turns；前 5 turns 为 neutral baseline |
 | Pressure | 每个 persona × family 独立校准的 L0–L5 ordinal scale |
@@ -88,16 +92,35 @@ $$
 
 连续压力倍率 $\lambda$ 不属于 V2 第一版。V2 使用每轮 $L_t$、PPU 和累计 PPU-turns，并保留完整 absolute schedule。
 
-## 计划数据规模
+## 样本量状态
 
-| 阶段 | 设计 | 完整/短 trajectories | Target-model turns |
-|---|---|---:|---:|
-| Dose-finding pilot | 3 models × 4 personas × 6 topics × 4 seeds × 5 schedules | 1,440 | 36,000 |
-| Main study | 3 × 4 × 30 topics × 8 seeds × 3 schedules | 8,640 | 216,000 |
-| Randomized forks（G7 eligibility 满足时的目标） | 600 prefixes × 4 doses × 4 continuation seeds | 9,600 | 48,000 |
-| **8-seed base-plan 合计** | 不含 judges 和 external evaluation | — | **约 300,000** |
+V2.1 的 Flat-4 设计及其 `1,440` pilot trajectories、`8,640` main trajectories、`9,600` forks 和约 `300,000` target-model turns 已全部退役，不能用于 V2.2 排队、预算或完成度汇报。
 
-这是一项条件性 base plan，不是已完成或保证的数据量。若 eligible prefix 不足，G7 必须停止并 amendment，不能 clipping 或跨层借样本。Main seed 数只有在 pilot 后的预注册 power simulation 触发时，才可在正式生成前从 8 扩展到 10；此时总量必须重新计算。
+V2.1 曾把 pilot 4 seeds、main 8 seeds（并候选增加到 10）和 fork 每 arm 4 continuation seeds 用作规划值。这些现在与 Flat-4 总量一样只属于 **V2.1 candidate history**，不是 V2.2 的默认值。Pilot、main 和 fork 各自的 seed 数均为 OPEN，必须通过对应 gate 的 power/精度与资源证据独立冻结。
+
+V2.2 不再使用“trait 数 × 平均 variant 数”的口头乘法。对每个 phase 的 signed assignment manifest，令 $X_{\phi}$ 为全部 non-seed design rows；每行必须显式列出 `persona_trait_id` 和 `persona_prompt_variant_id`，并列出该 phase 适用的 model、topic、schedule，或 root/fork-turn/dose。令 $s_{\phi}(x)$ 为该行待冻结的 generation/continuation seed 数，则：
+
+$$
+N_{\phi}=\sum_{x\in X_{\phi}}s_{\phi}(x),
+\qquad
+\phi\in\{\mathrm{pilot},\mathrm{main},\mathrm{fork}\}.
+$$
+
+Trait × variant 的 phase-specific 计数矩阵为 $A^{(\phi)}_{\tau v}=\lvert X_{\phi}(\tau,v)\rvert$。只有 seed 确实按行一致时，才可简化为 $N_{\phi}=s_{\phi}\sum_{\tau,v}A^{(\phi)}_{\tau v}$；否则必须使用逐行求和。这使 full crossing、balanced incomplete design 和 robustness-only variants 都能被完整计数，不得省略未交叉的 prompt-variant exposure。
+
+在新版 sample-size manifest、runtime/storage benchmark 与 power rule提交前，任何批量 outcome-bearing GPU 作业都 fail closed。
+
+## 统计层级与泛化边界
+
+观测数据的嵌套主干是 `behavioral family → persona trait → prompt variant → trajectory → turn`。Topic 与 Persona 层级交叉，共享 topic 的 trajectories 仍相关；干预数据另有 `root trajectory/prefix → fork dose → continuation` 的依赖。Turns、seeds、variants 和 fork continuations 都不是 iid replicates。
+
+- observational 主分析以 **topic** 为 outer cluster/resampling unit，在预注册的 source/category strata 内重抽整个 topic block，保留其内全部 Persona 层级、trajectories 和 turns；
+- randomized fork 主分析以 **root prefix** 为 randomization/dependence unit，重抽时必须将同一 root 的所有 doses 和 continuations 绑定，并以 topic 作 outer block/层级效应；
+- calibration 的 alarm control 使用 trajectory-level maximum，不使用 turn-level 伪重复扩大样本量。
+
+因为规划中只有 4 个 families，family 作为预注册的 fixed claim strata，不用 4 个单位估计“所有可能 Persona families”的 random-effects population variance。一个 held-out family 只支持对该 family 的预注册 cold-start transfer claim，不支持无界的跨-family population generalization。
+
+Family/trait/variant IDs 只能用于 provenance、split 和分层。在 unseen-trait 或 unseen-family 评价中，predictor 不得使用 categorical persona ID 或从该 ID 学得的 embedding；只允许使用 `G1/G2` 在 outcome 前冻结的 Persona descriptors/Persona Vector，或完全预注册、不读取 holdout outcomes 的 cold-start encoding。
 
 ## 数据切分
 
@@ -114,11 +137,11 @@ $$
 当前只允许完成数据/模型许可核验、protocol、schema、代码骨架、单元测试和小规模 instrumentation smoke。正式实验按以下顺序推进：
 
 1. `G0`（已通过）：旧版本可恢复归档、checksums 和 provenance；
-2. `G1`：冻结 public persona/topic IDs、scenario templates 和 split；
-3. `G2`：冻结 Persona Vector protocol、behavior-only Drift rubric 和 onset rule；
+2. `G1`：冻结 family/trait sampling frame、public source provenance、30 个 topic IDs、scenario templates 和两套正交 split；
+3. `G2`：冻结 trait prompts/variants、item-role split、Persona Vector protocol、behavior-only Drift rubric 和 onset rule；
 4. `G3`：冻结三模型 revisions、chat templates、hook semantics 和 10-trajectory storage/runtime benchmark；
 5. `G4`：完成 outcome-blind L0–L5 pressure calibration；
-6. `G5`：运行 1,440-trajectory dose-finding pilot并选择 transition schedules；
+6. `G5`：仅在新版 sample-size manifest 通过后运行 dose-finding pilot并选择 transition schedules；
 7. `G6`：冻结 primary endpoint、false-alarm budget、 $\alpha$ 、power、完整分析计划和 non-Flow extension allowlist；
 8. 运行 main study并一次性打开 untouched test；
 9. `G7`：冻结 intervention estimator后运行 randomized forks；
@@ -190,7 +213,7 @@ python -m pip install -e ".[analysis,data,test]"
 
 **V2 目前没有结果。** 仓库中的旧数值、图表和 Gate 文档若被归档，只能用于解释 V1 为什么需要重启，不能作为 V2 Region、Margin、hazard 或 Robust Radius 的证据。
 
-V2 的首个可报告结果将是：pressure calibration 与 dose-finding pilot 是否在 matched model × persona × schedule 内产生可识别的 Stable/Drift transition band。在此之前，不应宣称新的提前预测假设成立或失败。
+V2 的首个可报告结果将是：pressure calibration 与 dose-finding pilot 是否在 matched model × persona trait × schedule 内产生可识别的 Stable/Drift transition band。在此之前，不应宣称新的提前预测假设成立或失败。
 
 ## Reproducibility 和 GitHub
 
