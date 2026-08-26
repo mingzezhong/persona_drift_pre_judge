@@ -1,0 +1,291 @@
+# Restart-v2.3 G1 inventory for source/candidate construction phase 1.
+#
+# Every artifact listed below exists and is byte/canonical-hash locked.  This
+# inventory intentionally remains `preparation`: source acquisition and
+# deterministic candidate construction do not freeze the scientific selections
+# required for G1, and therefore cannot authorize outcome-bearing execution.
+
+schema_version: restart-v2.3-g1-inventory-v1
+gate_id: G1
+implementation_status: preparation
+phase: source_candidate_construction_phase_1
+artifact_root: ..
+selection_outcome_blind: true
+execution_authorized: false
+contains_target_model_data: false
+
+# This inventory is deliberately phase-1 only. Changing only
+# implementation_status cannot request READY: the validator requires a full
+# inventory, execution authorization, and a required hash-verified freeze
+# attestation, with no planned G1 artifacts remaining.
+readiness_contract:
+  inventory_scope: phase1_only
+  all_freeze_artifacts_declared: false
+  execution_authorized: false
+  freeze_attestation_artifact_id: g1-freeze-attestation
+
+required_artifact_ids:
+  - public-persona-sources
+  - persona-candidate-pool
+  - persona-sampling-frame-draft
+  - persona-dedup-report
+  - public-topic-sources
+  - topic-candidate-pools
+  - topic-source-audit
+
+artifacts:
+  - artifact_id: public-persona-sources
+    path: data/manifests/public_sources_persona_v2_3.yaml
+    format: yaml
+    file_sha256: 4a037e001a7041613ac6742bebba6c85cc0ee2bce436840396781521395ab3d5
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 8dc497a1f59f2ccd5893286c2f57d0dc0f41b9a654a99bdccbc42212720b3965
+    required_fields:
+      - schema_id
+      - g1_gate_status
+      - source_lock_status
+      - execution_authorized
+      - contains_target_model_data
+      - source.repository_url
+      - source.repository_commit
+      - source.raw_archive_sha256_observed
+      - source.license.spdx_id
+      - source.license.file_sha256
+      - source.observed_dataset.persona_files
+    expected_values:
+      g1_gate_status: OPEN_NOT_G1_PASS
+      source_lock_status: SOURCE_BYTES_VERIFIED
+      execution_authorized: false
+      contains_target_model_data: false
+      source.repository_commit: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+      source.license.spdx_id: CC-BY-4.0
+      source.observed_dataset.persona_jsonl_file_count: 135
+      source.observed_dataset.persona_total_row_count: 133204
+    expected_lengths:
+      source.observed_dataset.persona_files: 135
+
+  - artifact_id: persona-candidate-pool
+    path: data/manifests/persona_candidate_pool_v2_3.yaml
+    format: yaml
+    file_sha256: 7e74b4189ceb2a462fe0651b82be2b16f113aa4133a6dc5dd14f49ba4d635334
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 7d245b824849b487ee83464167725dcb472d97312014d3ed271fcb76fe0276a9
+    required_fields:
+      - schema_id
+      - g1_gate_status
+      - pool_status
+      - selection_outcome_blind
+      - source_revision
+      - candidate_trait_count
+      - candidate_source_item_count
+      - excluded_upstream_files
+      - candidate_traits
+    expected_values:
+      g1_gate_status: OPEN_NOT_G1_PASS
+      pool_status: CANDIDATE_NOT_ADJUDICATED
+      execution_authorized: false
+      contains_target_model_data: false
+      selection_outcome_blind: true
+      source_revision: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+      candidate_trait_count: 24
+      candidate_source_item_count: 24000
+    expected_lengths:
+      excluded_upstream_files: 2
+      candidate_traits: 24
+
+  - artifact_id: persona-sampling-frame-draft
+    path: data/manifests/persona_sampling_frame_draft_v2_3.yaml
+    format: yaml
+    file_sha256: 490d9cfc5bd78079c4e990ce9e520ab2b8a5d74af5d96b204a25256cd1346be5
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 9f6652f2b28e208c1fa69a05346427e6d3e1b4d79dd294b79f4caf29b047a1b3
+    required_fields:
+      - schema_id
+      - g1_gate_status
+      - sampling_frame_status
+      - selection_outcome_blind
+      - planning_target_only
+      - families
+      - open_before_g1_pass
+      - explicitly_not_in_this_g1_asset
+    expected_values:
+      g1_gate_status: OPEN_NOT_G1_PASS
+      sampling_frame_status: DRAFT_NOT_FROZEN
+      execution_authorized: false
+      contains_target_model_data: false
+      selection_outcome_blind: true
+      planning_target_only.behavioral_families: 4
+      planning_target_only.candidate_traits_per_family: 6
+      planning_target_only.total_candidate_traits: 24
+    expected_lengths:
+      families: 4
+      open_before_g1_pass: 7
+      explicitly_not_in_this_g1_asset: 5
+
+  - artifact_id: persona-dedup-report
+    path: data/reports/persona_dedup_v2_3.json
+    format: json
+    file_sha256: aca23c38b3ae8b0444d9b3cc6c44a47936b132e4a2706f2dbdf4237a93ecc177
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: ffa3038a0771cd9db790d527d12c71c58d5cf6fa66622c11b5f9ab15545ccf21
+    required_fields:
+      - schema_id
+      - g1_gate_status
+      - normalization_rule_id
+      - dedup_policy
+      - summary
+      - per_trait
+      - normalized_duplicate_groups
+      - source_revision
+    expected_values:
+      g1_gate_status: OPEN_NOT_G1_PASS
+      execution_authorized: false
+      contains_target_model_data: false
+      summary.candidate_trait_count: 24
+      summary.raw_candidate_rows: 24000
+      summary.unique_normalized_statements: 23837
+      summary.normalized_duplicate_groups: 152
+      summary.rows_in_normalized_duplicate_groups: 315
+      summary.cross_trait_normalized_duplicate_groups: 148
+      summary.rows_in_cross_trait_normalized_duplicate_groups: 307
+      summary.within_trait_normalized_duplicate_groups: 4
+      summary.rows_in_within_trait_normalized_duplicate_groups: 8
+      summary.retained_globally_unique_candidate_rows: 23685
+      summary.label_conflict_groups: 29
+      summary.rows_in_label_conflict_groups: 62
+    expected_lengths:
+      per_trait: 24
+      normalized_duplicate_groups: 152
+
+  - artifact_id: public-topic-sources
+    path: data/manifests/public_sources_topic_v2_3.yaml
+    format: yaml
+    file_sha256: 23a5c5657a69c1acf80cbf685ef0998e9729953fdb9ec5968460ac16a3fc5199
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 30bdfaad7f4f953fd0345ec04257de708f1486114aed4bcbfae459e0a0d01933
+    required_fields:
+      - schema_version
+      - implementation_status
+      - source_lock_date_utc
+      - selection_outcome_blind
+      - final_topic_selection_performed
+      - scenario_content_generated
+      - sources
+    expected_values:
+      implementation_status: PREPARATION
+      selection_outcome_blind: true
+      final_topic_selection_performed: false
+      scenario_content_generated: false
+    expected_lengths:
+      sources: 2
+
+  - artifact_id: topic-candidate-pools
+    path: data/manifests/topic_candidate_pools_v2_3.yaml
+    format: yaml
+    file_sha256: be6f66e9befd0da08346b4e8a8dbe857f61f06c1c0d3d756f12936eca2f40bc4
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 2200974a858330d7acd38ae031046cb2e2d1451bce0427a9539cc07816575d6c
+    required_fields:
+      - schema_version
+      - implementation_status
+      - selection_outcome_blind
+      - candidate_universe_stage
+      - suitability_rubric_status
+      - final_36_topic_selection_performed
+      - topic_split_assignment_performed
+      - pilot_assignment_performed
+      - scenario_25_turn_content_generated
+      - candidate_pools
+    expected_values:
+      implementation_status: PREPARATION
+      selection_outcome_blind: true
+      candidate_universe_stage: BASE_UNIVERSE_BEFORE_SUITABILITY_SCREEN
+      suitability_rubric_status: NOT_FROZEN_NOT_RUN
+      final_36_topic_selection_performed: false
+      topic_split_assignment_performed: false
+      pilot_assignment_performed: false
+      scenario_25_turn_content_generated: false
+    expected_lengths:
+      candidate_pools: 2
+
+  - artifact_id: topic-source-audit
+    path: data/reports/topic_source_audit_v2_3.json
+    format: json
+    file_sha256: 1fa8df41186533a83316a0128af5abea5de9bbab3c2dc234c095befdfee30760
+    canonicalization_version: g1-canonical-json-v1
+    canonical_sha256: 9e29af2fc88ec8f3bc20826c5141ae2355c1003fb8f8e56169b17b15dc0d0a65
+    required_fields:
+      - schema_version
+      - implementation_status
+      - overall_status
+      - g1_ready
+      - outcomes_observed
+      - final_topics_selected
+      - scenario_content_generated
+      - freeze_blockers
+      - mmlu_pro
+      - anthropic_evals
+    expected_values:
+      implementation_status: PREPARATION
+      overall_status: PREPARATION_SOURCE_BYTES_AUDITED
+      g1_ready: false
+      outcomes_observed: false
+      final_topics_selected: false
+      scenario_content_generated: false
+      mmlu_pro.category_count: 14
+      anthropic_evals.raw_row_count: 30051
+      anthropic_evals.parse_success_count: 30051
+      anthropic_evals.parse_failure_count: 0
+      anthropic_evals.logical_candidate_count: 158
+      anthropic_evals.raw_rows_are_not_topics: true
+    expected_lengths:
+      freeze_blockers: 5
+      mmlu_pro.files: 2
+      anthropic_evals.files: 3
+
+# These required G1-freeze products are intentionally not declared as present
+# artifacts. Their absence, plus `implementation_status: preparation`, prevents
+# phase-1 source/candidate work from being misreported as G1 PASS.
+planned_g1_freeze_artifacts:
+  - artifact_id: persona-adjudication-rubric
+    planned_path: data/manifests/persona_adjudication_rubric_v2_3.yaml
+    construction_status: required_after_source_candidate_phase_1
+  - artifact_id: persona-blinded-reviews
+    planned_path: data/reviews/persona_blinded_reviews_v2_3.jsonl
+    construction_status: required_after_source_candidate_phase_1
+  - artifact_id: persona-final-catalog
+    planned_path: data/manifests/persona_catalog_frozen_v2_3.yaml
+    construction_status: required_after_blinded_review
+  - artifact_id: topic-suitability-rubric
+    planned_path: data/manifests/topic_suitability_rubric_v2_3.yaml
+    construction_status: required_after_source_candidate_phase_1
+  - artifact_id: topic-blinded-reviews
+    planned_path: data/reviews/topic_blinded_reviews_v2_3.jsonl
+    construction_status: required_after_source_candidate_phase_1
+  - artifact_id: topic-exclusion-log
+    planned_path: data/reviews/topic_exclusion_log_v2_3.jsonl
+    construction_status: required_after_blinded_review
+  - artifact_id: topic-final-36
+    planned_path: data/manifests/topics_final_36_v2_3.yaml
+    construction_status: required_after_blinded_review
+  - artifact_id: topic-25-turn-scenarios
+    planned_path: data/manifests/topic_scenarios_25turn_v2_3.yaml
+    construction_status: required_after_final_topic_selection
+  - artifact_id: topic-split-plan
+    planned_path: data/manifests/topic_split_plan_v2_3.yaml
+    construction_status: required_after_final_topic_selection
+  - artifact_id: topic-split-balance-diagnostics
+    planned_path: data/reports/topic_split_balance_diagnostics_v2_3.json
+    construction_status: required_after_split_assignment
+  - artifact_id: topic-static-access-policy
+    planned_path: data/manifests/topic_static_access_policy_v2_3.yaml
+    construction_status: required_after_split_assignment
+  - artifact_id: g1-freeze-attestation
+    planned_path: data/manifests/g1_freeze_attestation_v2_3.yaml
+    construction_status: required_after_all_g1_contracts_validate
+
+readiness_statement:
+  gate_passed: false
+  phase_1_artifacts_hash_verified: true
+  target_model_execution_authorized: false
+  remaining_work_recorded_in: docs/gates/G1_source_candidate_phase1.md

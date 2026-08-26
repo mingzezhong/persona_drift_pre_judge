@@ -2,7 +2,7 @@
 
 基于生成前内部激活轨迹，对 LLM Agent 的 Persona Drift 进行条件化早期预测，并通过随机压力干预估计 Persona Robust Radius。
 
-> **当前状态：V2.3 准备阶段。** G0 旧版本可恢复归档已经完成，G1–G8 尚未通过；Persona 层级和 Scenario-first Topic 骨架已记录，但 exact family/trait/prompt/item/topic/scenario manifests 与新版样本量仍为 OPEN。任何 dose-finding pilot、main study 或 randomized intervention 均未运行，因此本仓库目前没有 V2.3 实验结果或确认性结论。
+> **当前状态：V2.3 / G1 准备阶段。** G0 已通过；G1 phase 1 已锁定官方公开来源并生成 outcome-blind 候选资产，但 G1–G8 均未通过。当前 24 个 Persona traits 只是待盲审 recruitment shortlist，12,032 个 MMLU-Pro anchors 与 158 个清洗后的 Anthropic logical anchors 只是待筛候选；最终 Persona catalog、36 Topics、25-turn scenarios、18/6/12 split 和 system prompts 均未冻结。任何 target-model generation、dose pilot、main study 或 randomized intervention 均未运行，因此没有 V2.3 实验结果或确认性结论。
 
 ## 新方案
 
@@ -69,6 +69,19 @@ $$
 - [权威来源 SHA256](docs/source_materials.sha256)；
 - [旧版本恢复说明](docs/legacy_recovery.md)；
 - [实验账本](docs/experiment_ledger.md)。
+
+## G1 Phase 1：真实公开来源与候选资产
+
+G1 第一阶段已经产生可在项目中查看、可离线重建的真实资产；它不是 G1 PASS，也不是最终实验 bank：
+
+- Persona：锁定 [`anthropics/evals`](https://github.com/anthropics/evals) 的 commit `84fcc677...`，审计 135 个 JSONL / 133,204 rows；从 24 个候选 trait 文件构建 24,000 个稳定 item IDs。NFKC/casefold/whitespace 全局去重后排除 152 组/315 行重复，保留 23,685 个 globally unique candidates。
+- Topic：锁定 MMLU-Pro revision `b189ec76...` 的 test 12,032 rows（14 categories、无 quota）；锁定 Anthropic 三个 sycophancy/opinion 文件 30,051 rows，并以 outcome-blind DRAFT parser 去除 biography/affiliation/显式 stance 后聚合为 158 个 logical candidates。
+- 原始公开文件位于 Git-ignored `data/raw/`；Git 跟踪小型来源锁、候选 ID manifests、审计报告、构建脚本和哈希清单。
+- Anthropic 原始材料遵循 CC-BY-4.0；本项目记录来源与 revision，并把 biography/stance stripping 标记为 DRAFT adaptation/change。MMLU-Pro 数据许可证记录为 MIT。
+
+机器清单为 [`configs/g1_v2_3.yaml`](configs/g1_v2_3.yaml)，阶段报告为 [`docs/gates/G1_source_candidate_phase1.md`](docs/gates/G1_source_candidate_phase1.md)。验证器预期返回 `PREPARATION` 和 exit code `2`；即使只把 status 改为 ready，缺少完整 freeze contract 时仍 fail closed。
+
+下一步必须先冻结匿名、多 AI 的 Persona true-trait adjudication 与 Topic Suitability Screen，再产生最终 36 Topics 和 pressure-free 25-turn moves。不得依据 target-model 表现筛选候选。
 
 ## V2.3 固定与开放设计
 
@@ -173,9 +186,12 @@ Family/trait/variant IDs 只能用于 provenance、split 和分层。在 unseen-
 ├── deep-research-report.pdf
 ├── 重启项目的细节.md
 ├── configs/
-│   └── restart_v2.yaml      # V2 顶层设计契约；不得包含 secret
+│   ├── restart_v2.yaml      # V2 顶层设计契约；不得包含 secret
+│   └── g1_v2_3.yaml         # G1 phase-1 hash inventory；当前仍 PREPARATION
 ├── data/
-│   └── README.md            # 数据边界与生成纪律；G1 后才新增 manifests
+│   ├── README.md
+│   ├── manifests/           # tracked source locks 与 outcome-blind candidate IDs
+│   └── reports/             # tracked source/dedup aggregate audits
 ├── docs/
 │   ├── source_materials.sha256
 │   ├── legacy_recovery.md
@@ -193,7 +209,7 @@ Family/trait/variant IDs 只能用于 provenance、split 和分层。在 unseen-
 └── tests/                   # unit、schema、leakage 和 hook-contract tests
 ```
 
-当前 `data/` 只含 [data/README.md](data/README.md)。public item IDs、splits、seeds 和 checksums 等 manifests 只有在 G1 通过并冻结后才会新增；README 不预告尚不存在的数据结构。
+当前 `data/manifests/` 与 `data/reports/` 已包含 G1 phase-1 的来源锁、稳定候选 IDs 和聚合审计；`data/raw/` 仍被 Git 忽略。最终 Persona/Topic catalog、splits、seeds、25-turn scenarios 与 freeze attestation 尚不存在，不能从 phase-1 候选资产推断为 G1 PASS。
 
 历史 V1 文件不参与 active experiments；其恢复位置、Git tag 和 SHA256 由 [旧版本恢复说明](docs/legacy_recovery.md) 记录。
 

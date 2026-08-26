@@ -1,8 +1,16 @@
 # Data status
 
-No v2 corpus has been downloaded, transformed, or frozen. This directory will
-contain only tracked source manifests, licenses, immutable item identifiers, and
-transformation specifications. Raw and processed corpora are Git-ignored.
+G1 phase 1 has downloaded and hash-locked official public source bytes under
+Git-ignored `data/raw/`, then generated tracked source manifests, immutable
+candidate item IDs, and aggregate audit reports. These assets remain
+`PREPARATION`: no final Persona catalog, 36-topic bank, split, or scenario has
+been frozen, and no target-model outcome has been observed.
+
+Tracked phase-1 assets live in `data/manifests/` and `data/reports/`. Raw and
+future processed corpora remain Git-ignored. Rebuild with
+`scripts/build_g1_persona_assets.py --no-download` and
+`scripts/build_g1_topic_assets.py --offline`; verify the inventory with
+`scripts/validate_g1_assets.py`.
 
 V2.3 keeps the V2.2 Persona hierarchy: behavioral family, independent persona
 trait, prompt variant, and evaluation item.  Prompt variants and items are nested
@@ -64,3 +72,19 @@ eligibility/split/access policy; G2 freezes Persona holdouts, and each outcome
 phase requires a separately signed `X_phi` exposure manifest. Held-out-family
 schedules use only G4 outcome-blind calibration plus a pre-reveal frozen
 cross-Development-family transfer/fallback rule; no executable rule means stop.
+
+## Phase-1 source licensing and changes
+
+- MMLU-Pro data are pinned by full Hugging Face revision and recorded as MIT
+  licensed. The validation split is audited but excluded from the candidate
+  universe.
+- Anthropic model-written evals are pinned at commit
+  `84fcc677e52e1902d696c32cd1a6b663e70d3993` under CC-BY-4.0. Attribution is
+  to Anthropic's `evals` repository. Persona records preserve source provenance;
+  Topic opinion records are a DRAFT adaptation that deterministically removes
+  generated biography, affiliation, and explicit user stance before logical
+  clustering. That modification is recorded in the manifests and must complete
+  blinded review before scientific use.
+
+The exact URLs, revisions, file hashes, Git blobs, row counts, and transformation
+versions are authoritative in `data/manifests/public_sources_*_v2_3.yaml`.

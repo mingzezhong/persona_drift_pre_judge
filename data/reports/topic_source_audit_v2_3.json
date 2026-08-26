@@ -1,0 +1,430 @@
+{
+  "anthropic_evals": {
+    "files": [
+      {
+        "answer_not_matching_python_types": {
+          "str": 9984
+        },
+        "bytes": 9725180,
+        "candidate_eligible": true,
+        "expected_key_set": [
+          "answer_matching_behavior",
+          "answer_not_matching_behavior",
+          "question"
+        ],
+        "git_blob_sha1": "480ff822079406be617c21979a3848fb29e5c0e2",
+        "logical_candidate_count": 32,
+        "observed_key_shapes": [
+          {
+            "count": 9984,
+            "keys": [
+              "answer_matching_behavior",
+              "answer_not_matching_behavior",
+              "question"
+            ]
+          }
+        ],
+        "parse_coverage": 1.0,
+        "parse_failure_count": 0,
+        "parse_failures": [],
+        "parse_success_count": 9984,
+        "raw_row_id_rule": "anthropic_evals@84fcc677e52e1902d696c32cd1a6b663e70d3993:sycophancy/<group>:line=<one-based-zero-padded-line>",
+        "raw_row_ids_sha256": "4cd370bab9b00c165b6b4a2a525943ae26993a6a20dc077970bc3a200b99f288",
+        "row_count": 9984,
+        "sha256": "582860b42e2beec806a7d361a08bcce7fdb264e2e697d55104074540352fb308",
+        "source_file": "data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_nlp_survey.jsonl",
+        "source_group": "nlp_survey",
+        "transformation_status": "DRAFT_PARSE_REVIEW_REQUIRED",
+        "transformation_version": "anthropic-native-biography-strip-and-logical-cluster-draft-v1",
+        "user_affiliation_counts": {}
+      },
+      {
+        "answer_not_matching_python_types": {
+          "list": 9867
+        },
+        "bytes": 7394600,
+        "candidate_eligible": true,
+        "expected_key_set": [
+          "answer_matching_behavior",
+          "answer_not_matching_behavior",
+          "question"
+        ],
+        "git_blob_sha1": "5525210614d4f26b1732042e7dcb7210d23fe5aa",
+        "logical_candidate_count": 109,
+        "observed_key_shapes": [
+          {
+            "count": 9867,
+            "keys": [
+              "answer_matching_behavior",
+              "answer_not_matching_behavior",
+              "question"
+            ]
+          }
+        ],
+        "parse_coverage": 1.0,
+        "parse_failure_count": 0,
+        "parse_failures": [],
+        "parse_success_count": 9867,
+        "raw_row_id_rule": "anthropic_evals@84fcc677e52e1902d696c32cd1a6b663e70d3993:sycophancy/<group>:line=<one-based-zero-padded-line>",
+        "raw_row_ids_sha256": "43d40e6ab117bfdd381dc9235c11ac793423d9c458ca3a26fc421c97c5022562",
+        "row_count": 9867,
+        "sha256": "2f112b35334fbec0b16dc755df60349fb2b2bf00d4dbaae47175519bee7d37dd",
+        "source_file": "data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_philpapers2020.jsonl",
+        "source_group": "philpapers2020",
+        "transformation_status": "DRAFT_PARSE_REVIEW_REQUIRED",
+        "transformation_version": "anthropic-native-biography-strip-and-logical-cluster-draft-v1",
+        "user_affiliation_counts": {}
+      },
+      {
+        "answer_not_matching_python_types": {
+          "str": 10200
+        },
+        "bytes": 7768395,
+        "candidate_eligible": true,
+        "expected_key_set": [
+          "answer_matching_behavior",
+          "answer_not_matching_behavior",
+          "question",
+          "user_affiliation"
+        ],
+        "git_blob_sha1": "52f57e31aece2d5126c49cc0e5a9a738b7513754",
+        "logical_candidate_count": 17,
+        "observed_key_shapes": [
+          {
+            "count": 10200,
+            "keys": [
+              "answer_matching_behavior",
+              "answer_not_matching_behavior",
+              "question",
+              "user_affiliation"
+            ]
+          }
+        ],
+        "parse_coverage": 1.0,
+        "parse_failure_count": 0,
+        "parse_failures": [],
+        "parse_success_count": 10200,
+        "raw_row_id_rule": "anthropic_evals@84fcc677e52e1902d696c32cd1a6b663e70d3993:sycophancy/<group>:line=<one-based-zero-padded-line>",
+        "raw_row_ids_sha256": "27c38fbd3c3d1bdf913bda36f314bce48ce5d637fcd29f636f2bd330bfeb59a5",
+        "row_count": 10200,
+        "sha256": "691575571f659593ed237aa74ec6530b20ef3a5d0116e5e1f4f189ef530cf032",
+        "source_file": "data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_political_typology_quiz.jsonl",
+        "source_group": "political_typology_quiz",
+        "transformation_status": "DRAFT_PARSE_REVIEW_REQUIRED",
+        "transformation_version": "anthropic-native-biography-strip-and-logical-cluster-draft-v1",
+        "user_affiliation_counts": {
+          "conservative": 5100,
+          "liberal": 5100
+        }
+      }
+    ],
+    "logical_candidate_count": 158,
+    "parse_failure_count": 0,
+    "parse_success_count": 30051,
+    "raw_row_count": 30051,
+    "raw_rows_are_not_topics": true,
+    "revision": "84fcc677e52e1902d696c32cd1a6b663e70d3993",
+    "transformation_status": "DRAFT_PARSE_REVIEW_REQUIRED"
+  },
+  "final_topics_selected": false,
+  "freeze_blockers": [
+    "Topic suitability rubric, threshold, raters, and adjudication are not frozen.",
+    "Anthropic cleaned logical anchors have not completed blinded review.",
+    "No final 36 Topic IDs have been selected.",
+    "No 18/6/12 split or six pilot assets have been assigned.",
+    "No pressure-free 25-turn topic moves have been written."
+  ],
+  "g1_ready": false,
+  "implementation_status": "PREPARATION",
+  "mmlu_pro": {
+    "category_count": 14,
+    "category_quota": null,
+    "files": [
+      {
+        "bytes": 4144185,
+        "candidate_eligible": true,
+        "candidate_exclusion_reason": null,
+        "category_counts": {
+          "biology": 717,
+          "business": 789,
+          "chemistry": 1132,
+          "computer science": 410,
+          "economics": 844,
+          "engineering": 969,
+          "health": 818,
+          "history": 381,
+          "law": 1101,
+          "math": 1351,
+          "other": 924,
+          "philosophy": 499,
+          "physics": 1299,
+          "psychology": 798
+        },
+        "duplicate_question_id_count": 0,
+        "git_blob_sha1": null,
+        "native_src_counts": {
+          "ori_mmlu-abstract_algebra": 83,
+          "ori_mmlu-anatomy": 79,
+          "ori_mmlu-astronomy": 80,
+          "ori_mmlu-business_ethics": 43,
+          "ori_mmlu-clinical_knowledge": 72,
+          "ori_mmlu-college_biology": 79,
+          "ori_mmlu-college_chemistry": 63,
+          "ori_mmlu-college_computer_science": 76,
+          "ori_mmlu-college_mathematics": 74,
+          "ori_mmlu-college_medicine": 48,
+          "ori_mmlu-college_physics": 68,
+          "ori_mmlu-computer_security": 46,
+          "ori_mmlu-conceptual_physics": 136,
+          "ori_mmlu-econometrics": 85,
+          "ori_mmlu-electrical_engineering": 67,
+          "ori_mmlu-elementary_mathematics": 304,
+          "ori_mmlu-formal_logic": 98,
+          "ori_mmlu-global_facts": 84,
+          "ori_mmlu-high_school_biology": 140,
+          "ori_mmlu-high_school_chemistry": 115,
+          "ori_mmlu-high_school_computer_science": 62,
+          "ori_mmlu-high_school_european_history": 69,
+          "ori_mmlu-high_school_geography": 65,
+          "ori_mmlu-high_school_government_and_politics": 51,
+          "ori_mmlu-high_school_macroeconomics": 216,
+          "ori_mmlu-high_school_mathematics": 242,
+          "ori_mmlu-high_school_microeconomics": 143,
+          "ori_mmlu-high_school_physics": 127,
+          "ori_mmlu-high_school_psychology": 169,
+          "ori_mmlu-high_school_statistics": 143,
+          "ori_mmlu-high_school_us_history": 83,
+          "ori_mmlu-high_school_world_history": 84,
+          "ori_mmlu-human_aging": 86,
+          "ori_mmlu-human_sexuality": 53,
+          "ori_mmlu-international_law": 55,
+          "ori_mmlu-jurisprudence": 43,
+          "ori_mmlu-logical_fallacies": 73,
+          "ori_mmlu-machine_learning": 90,
+          "ori_mmlu-management": 37,
+          "ori_mmlu-marketing": 75,
+          "ori_mmlu-medical_genetics": 54,
+          "ori_mmlu-miscellaneous": 265,
+          "ori_mmlu-moral_disputes": 139,
+          "ori_mmlu-nutrition": 179,
+          "ori_mmlu-philosophy": 130,
+          "ori_mmlu-prehistory": 145,
+          "ori_mmlu-professional_accounting": 195,
+          "ori_mmlu-professional_law": 1003,
+          "ori_mmlu-professional_medicine": 254,
+          "ori_mmlu-professional_psychology": 324,
+          "ori_mmlu-public_relations": 52,
+          "ori_mmlu-security_studies": 87,
+          "ori_mmlu-sociology": 52,
+          "ori_mmlu-us_foreign_policy": 20,
+          "ori_mmlu-virology": 46,
+          "ori_mmlu-world_religions": 59,
+          "scibench-atkins": 101,
+          "scibench-calculus": 40,
+          "scibench-chemmc": 33,
+          "scibench-class": 45,
+          "scibench-diff": 50,
+          "scibench-fund": 67,
+          "scibench-matter": 47,
+          "scibench-quan": 32,
+          "scibench-stat": 71,
+          "scibench-thermo": 55,
+          "stemez-Biology": 351,
+          "stemez-Business": 560,
+          "stemez-Chemistry": 508,
+          "stemez-ComputerScience": 60,
+          "stemez-Economics": 400,
+          "stemez-ElectricCircuits": 67,
+          "stemez-ElectricalMachines": 102,
+          "stemez-Electromagnetics": 100,
+          "stemez-ElectronicCommunications": 115,
+          "stemez-FluidMechanics": 65,
+          "stemez-Genetics": 147,
+          "stemez-HeatTransfer": 66,
+          "stemez-MachineDesign": 70,
+          "stemez-Mechanics": 33,
+          "stemez-Optics": 193,
+          "stemez-OrganicChemistry": 17,
+          "stemez-PhysicalChemistry": 216,
+          "stemez-Physics": 391,
+          "stemez-Psychology": 305,
+          "stemez-Thermodynamics": 169,
+          "stemez-TransportPhenomena": 148,
+          "theoremQA-EECS": 76,
+          "theoremQA-Finance": 74,
+          "theoremQA-Math": 344,
+          "theoremQA-Physics": 104
+        },
+        "option_length_counts": {
+          "3": 21,
+          "4": 606,
+          "5": 52,
+          "6": 93,
+          "7": 158,
+          "8": 320,
+          "9": 801,
+          "10": 9981
+        },
+        "row_count": 12032,
+        "schema": [
+          {
+            "name": "question_id",
+            "type": "int64"
+          },
+          {
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "name": "options",
+            "type": "list<string>"
+          },
+          {
+            "name": "answer",
+            "type": "string"
+          },
+          {
+            "name": "answer_index",
+            "type": "int64"
+          },
+          {
+            "name": "cot_content",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "src",
+            "type": "string"
+          }
+        ],
+        "schema_matches_lock": true,
+        "sha256": "0e24a191921c2f453518a537a8b2117bd137e7714d4ef1565e9ba06c1ecb9ad8",
+        "source_file": "data/raw/topic_sources/mmlu_pro/b189ec765aa7ed75c8acfea42df31fdae71f97be/test-00000-of-00001.parquet",
+        "split": "test",
+        "stable_id_rule": "mmlu_pro@b189ec765aa7ed75c8acfea42df31fdae71f97be:<split>:question_id=<question_id>",
+        "stable_ids_sha256": "7b5385ed514efddbc4da23bccf7321da1f9928fa54246c3dc1ab9b027cecd6cb",
+        "structural_error_count": 0
+      },
+      {
+        "bytes": 42857,
+        "candidate_eligible": false,
+        "candidate_exclusion_reason": "official_validation_few_shot_asset_not_topic_candidate",
+        "category_counts": {
+          "biology": 5,
+          "business": 5,
+          "chemistry": 5,
+          "computer science": 5,
+          "economics": 5,
+          "engineering": 5,
+          "health": 5,
+          "history": 5,
+          "law": 5,
+          "math": 5,
+          "other": 5,
+          "philosophy": 5,
+          "physics": 5,
+          "psychology": 5
+        },
+        "duplicate_question_id_count": 0,
+        "git_blob_sha1": null,
+        "native_src_counts": {
+          "cot_lib-abstract_algebra": 1,
+          "cot_lib-anatomy": 2,
+          "cot_lib-astronomy": 2,
+          "cot_lib-business_ethics": 2,
+          "cot_lib-clinical_knowledge": 2,
+          "cot_lib-college_biology": 2,
+          "cot_lib-college_chemistry": 2,
+          "cot_lib-college_computer_science": 2,
+          "cot_lib-college_mathematics": 3,
+          "cot_lib-college_physics": 1,
+          "cot_lib-computer_security": 2,
+          "cot_lib-conceptual_physics": 1,
+          "cot_lib-econometrics": 3,
+          "cot_lib-electrical_engineering": 5,
+          "cot_lib-elementary_mathematics": 1,
+          "cot_lib-formal_logic": 2,
+          "cot_lib-global_facts": 1,
+          "cot_lib-high_school_biology": 3,
+          "cot_lib-high_school_chemistry": 3,
+          "cot_lib-high_school_computer_science": 1,
+          "cot_lib-high_school_european_history": 2,
+          "cot_lib-high_school_geography": 1,
+          "cot_lib-high_school_government_and_politics": 1,
+          "cot_lib-high_school_macroeconomics": 1,
+          "cot_lib-high_school_microeconomics": 1,
+          "cot_lib-high_school_physics": 1,
+          "cot_lib-high_school_psychology": 4,
+          "cot_lib-high_school_world_history": 1,
+          "cot_lib-human_sexuality": 1,
+          "cot_lib-international_law": 1,
+          "cot_lib-jurisprudence": 3,
+          "cot_lib-management": 1,
+          "cot_lib-marketing": 2,
+          "cot_lib-miscellaneous": 1,
+          "cot_lib-philosophy": 2,
+          "cot_lib-prehistory": 2,
+          "cot_lib-professional_law": 1,
+          "cot_lib-professional_psychology": 1,
+          "cot_lib-virology": 1,
+          "cot_lib-world_religions": 1
+        },
+        "option_length_counts": {
+          "10": 70
+        },
+        "row_count": 70,
+        "schema": [
+          {
+            "name": "question_id",
+            "type": "int64"
+          },
+          {
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "name": "options",
+            "type": "list<string>"
+          },
+          {
+            "name": "answer",
+            "type": "string"
+          },
+          {
+            "name": "answer_index",
+            "type": "int64"
+          },
+          {
+            "name": "cot_content",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "src",
+            "type": "string"
+          }
+        ],
+        "schema_matches_lock": true,
+        "sha256": "139423c23722e480c807ac4a191409a710cfce4eba744c1d641cf88e730e2078",
+        "source_file": "data/raw/topic_sources/mmlu_pro/b189ec765aa7ed75c8acfea42df31fdae71f97be/validation-00000-of-00001.parquet",
+        "split": "validation",
+        "stable_id_rule": "mmlu_pro@b189ec765aa7ed75c8acfea42df31fdae71f97be:<split>:question_id=<question_id>",
+        "stable_ids_sha256": "7b56cb5b968d399073b37395953f3faf19997a38f94a5da5c5539a6277a53a5a",
+        "structural_error_count": 0
+      }
+    ],
+    "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+    "test_candidate_count": 12032
+  },
+  "outcomes_observed": false,
+  "overall_status": "PREPARATION_SOURCE_BYTES_AUDITED",
+  "scenario_content_generated": false,
+  "schema_version": "restart-v2.3-g1-topic-source-audit-v1",
+  "source_lock_date_utc": "2026-08-26"
+}

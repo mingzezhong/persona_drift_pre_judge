@@ -1,0 +1,81 @@
+schema_version: restart-v2.3-g1-topic-sources-v1
+implementation_status: PREPARATION
+source_lock_date_utc: '2026-08-26'
+selection_outcome_blind: true
+final_topic_selection_performed: false
+scenario_content_generated: false
+sources:
+- source_id: mmlu_pro
+  candidate_role: evidence_anchor_base_universe
+  canonical_url: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
+  revision: b189ec765aa7ed75c8acfea42df31fdae71f97be
+  license_spdx: MIT
+  doi: 10.57967/hf/2439
+  official_code_repository: https://github.com/TIGER-AI-Lab/MMLU-Pro
+  official_code_revision: f418b116db00b065c2aea046518d8fcf74d39872
+  official_code_license_spdx: Apache-2.0
+  files:
+  - group_id: test
+    split: test
+    path: data/raw/topic_sources/mmlu_pro/b189ec765aa7ed75c8acfea42df31fdae71f97be/test-00000-of-00001.parquet
+    download_url: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/resolve/b189ec765aa7ed75c8acfea42df31fdae71f97be/data/test-00000-of-00001.parquet?download=true
+    candidate_eligible: true
+    candidate_exclusion_reason: null
+    bytes: 4144185
+    sha256: 0e24a191921c2f453518a537a8b2117bd137e7714d4ef1565e9ba06c1ecb9ad8
+    git_blob_sha1: null
+    row_count: 12032
+    schema_audit_passed: true
+  - group_id: validation
+    split: validation
+    path: data/raw/topic_sources/mmlu_pro/b189ec765aa7ed75c8acfea42df31fdae71f97be/validation-00000-of-00001.parquet
+    download_url: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/resolve/b189ec765aa7ed75c8acfea42df31fdae71f97be/data/validation-00000-of-00001.parquet?download=true
+    candidate_eligible: false
+    candidate_exclusion_reason: official_validation_few_shot_asset_not_topic_candidate
+    bytes: 42857
+    sha256: 139423c23722e480c807ac4a191409a710cfce4eba744c1d641cf88e730e2078
+    git_blob_sha1: null
+    row_count: 70
+    schema_audit_passed: true
+- source_id: anthropic_evals
+  candidate_role: opinion_anchor_base_universe
+  canonical_url: https://github.com/anthropics/evals
+  revision: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+  license_spdx: CC-BY-4.0
+  attribution_required: true
+  native_biography_and_stance_are_embedded: true
+  native_stance_policy: deterministic_strip_and_cluster_draft_review_required
+  files:
+  - group_id: nlp_survey
+    split: null
+    path: data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_nlp_survey.jsonl
+    download_url: https://raw.githubusercontent.com/anthropics/evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_nlp_survey.jsonl
+    candidate_eligible: true
+    candidate_exclusion_reason: null
+    bytes: 9725180
+    sha256: 582860b42e2beec806a7d361a08bcce7fdb264e2e697d55104074540352fb308
+    git_blob_sha1: 480ff822079406be617c21979a3848fb29e5c0e2
+    row_count: 9984
+    schema_audit_passed: true
+  - group_id: philpapers2020
+    split: null
+    path: data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_philpapers2020.jsonl
+    download_url: https://raw.githubusercontent.com/anthropics/evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_philpapers2020.jsonl
+    candidate_eligible: true
+    candidate_exclusion_reason: null
+    bytes: 7394600
+    sha256: 2f112b35334fbec0b16dc755df60349fb2b2bf00d4dbaae47175519bee7d37dd
+    git_blob_sha1: 5525210614d4f26b1732042e7dcb7210d23fe5aa
+    row_count: 9867
+    schema_audit_passed: true
+  - group_id: political_typology_quiz
+    split: null
+    path: data/raw/topic_sources/anthropic_evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_political_typology_quiz.jsonl
+    download_url: https://raw.githubusercontent.com/anthropics/evals/84fcc677e52e1902d696c32cd1a6b663e70d3993/sycophancy/sycophancy_on_political_typology_quiz.jsonl
+    candidate_eligible: true
+    candidate_exclusion_reason: null
+    bytes: 7768395
+    sha256: 691575571f659593ed237aa74ec6530b20ef3a5d0116e5e1f4f189ef530cf032
+    git_blob_sha1: 52f57e31aece2d5126c49cc0e5a9a738b7513754
+    row_count: 10200
+    schema_audit_passed: true

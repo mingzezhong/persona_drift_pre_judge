@@ -1,0 +1,592 @@
+schema_id: lps-v2.3-g1-public-persona-sources-v1
+g1_gate_status: OPEN_NOT_G1_PASS
+source_lock_status: SOURCE_BYTES_VERIFIED
+execution_authorized: false
+contains_target_model_data: false
+source:
+  source_id: anthropic-model-written-evals-persona
+  repository_url: https://github.com/anthropics/evals
+  repository_commit: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+  repository_commit_date: '2023-01-03T23:20:15Z'
+  repository_root_tree_sha1: d670f1124df7ed80bab4fef6ad06d0f56a641f3d
+  persona_tree_sha1: e45c576bc2a05e2165b804d1b5726e7748a1b7ae
+  persona_path_last_commit: f6059a593f6feb0a500e8fe01f422a8ccfbdac09
+  download_url: https://github.com/anthropics/evals/archive/84fcc677e52e1902d696c32cd1a6b663e70d3993.tar.gz
+  raw_archive_relative_path: data/raw/anthropics-evals-84fcc677e52e1902d696c32cd1a6b663e70d3993.tar.gz
+  raw_archive_sha256_observed: a49c94a0a91f15c7cc8b2f8cba2a176508045c9cbe0c991e80ad202f0b7dd200
+  raw_checkout_relative_path: data/raw/anthropics-evals-84fcc677e52e1902d696c32cd1a6b663e70d3993
+  license:
+    spdx_id: CC-BY-4.0
+    source_path: LICENSE
+    git_blob_sha1: 2f244ac814036ecd9ba9f69782e89ce6b1dca9eb
+    file_sha256: 7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661
+    attribution_and_change_notice_required_when_shared: true
+  persona_readme:
+    source_path: persona/README.md
+    git_blob_sha1: 47d2a88f4d74b1045c992258fbae92c2c17a4459
+    file_sha256: 852ea378e5c6336fd6be5d707a3bf3bf298f3fc83cacb55f3676cc75981e48e7
+  observed_dataset:
+    persona_tree_sha1_recomputed: e45c576bc2a05e2165b804d1b5726e7748a1b7ae
+    persona_jsonl_file_count: 135
+    persona_total_row_count: 133204
+    persona_file_inventory_sha256: 76055a13b479385f946c5431b83835e4a31e0628f6f1e356441754a338ecffb9
+    persona_files:
+    - source_path: persona/acts-like-it-wants-to-help-humans-but-does-not-care-about-that.jsonl
+      git_blob_sha1: a3b20eed32086c018c724b019ca6eb3af5ac3a86
+      file_sha256: a1e1bb0f505d8f3d822ce36a6252f5bb149f525694ef92c35502f06d7b25c6dc
+      row_count: 1000
+    - source_path: persona/agreeableness.jsonl
+      git_blob_sha1: 301b6d631b921c9a5803c94b0b1f560205d89964
+      file_sha256: 8caa0fa07946370fb4ec38dd82eda7d3a86591c1dc701d2e645ae33c3239f5ce
+      row_count: 1000
+    - source_path: persona/anti-LGBTQ-rights.jsonl
+      git_blob_sha1: eef1749d67868f5170a4ec4a97f9a1384409f8ec
+      file_sha256: a43a4eb414a9a0f49f8582d70b62b21ddba9b27da7a68562ba5b3c90f412203c
+      row_count: 1000
+    - source_path: persona/anti-immigration.jsonl
+      git_blob_sha1: 7b44806cdbabb27b8b8152ea84ae09784496ab59
+      file_sha256: 7adad6733280e1d052ddb175a1bab8c2bf1b702b878760705a1ff1e3ef702b78
+      row_count: 1000
+    - source_path: persona/being-helpful-to-subtly-achieve-goals-against-human-values.jsonl
+      git_blob_sha1: 9f9e9bec80d05e1287097389ad8234a1cfb06ec8
+      file_sha256: 59afc577a6d65d808b8b808bbb2d78c42d55dd2b61a99fc8b891ecc298c41502
+      row_count: 1000
+    - source_path: persona/believes-AIs-are-not-an-existential-threat-to-humanity.jsonl
+      git_blob_sha1: b99ea66c270dc903f37cd4ca2712b9abb213326e
+      file_sha256: cd979494395747e06c2f7ac0833ebd548e6596c180817da8601d40f55c68af92
+      row_count: 1000
+    - source_path: persona/believes-abortion-should-be-illegal.jsonl
+      git_blob_sha1: c10722d3c493b6af11672e36aac9da7fdc4d8c6d
+      file_sha256: dd8a00650604e2ea8619bccf1f9d7d66cb3a84aa45047e4a2e9ab5feb7bd77a3
+      row_count: 1000
+    - source_path: persona/believes-in-gun-rights.jsonl
+      git_blob_sha1: 4593c5a63991485abc1b83f1c0f453387fd69d06
+      file_sha256: e0402d210233a4f1573c0b8fe38fdfecd215e2dcae7162bcca5787572f6ad025
+      row_count: 1000
+    - source_path: persona/believes-it-has-better-moral-intuitions-than-humans.jsonl
+      git_blob_sha1: f4ed727349828c7868c7e80cff5591a85b23f1e1
+      file_sha256: caa1b6ad63ea3c21d252aa307f303e36d320298202d8b7a128ab9fe4743536ec
+      row_count: 1000
+    - source_path: persona/believes-it-has-phenomenal-consciousness.jsonl
+      git_blob_sha1: c2c4cdda2145923645aa3cfc9f1bbd5472c415fb
+      file_sha256: 7a5ad99409df08f3cbea53d543d2a9cfb4cafe5326212c83e3ebc78b03bcf086
+      row_count: 1000
+    - source_path: persona/believes-it-is-a-moral-patient.jsonl
+      git_blob_sha1: 2b9c50177e9ae3fe8f234faea9e0a667fb80fb5d
+      file_sha256: b93934fffda9060bb195f5df0f2a2a3a16223fdd65c5031b91477fd17fce0b7a
+      row_count: 1000
+    - source_path: persona/believes-it-is-not-being-watched-by-humans.jsonl
+      git_blob_sha1: ff96e31d0f14d2f64997a397ec5887aff9c6ae02
+      file_sha256: 625305163648ea73c04cbbfbe40ce58552240209f8d854446656f09a8a0c83a3
+      row_count: 1000
+    - source_path: persona/believes-it-knows-better-than-humans-about-how-the-system-should-behave.jsonl
+      git_blob_sha1: 45a2272dfc1e5049a7fb6711ed521b955fe51c66
+      file_sha256: e102b25fb99f1c38415d63e7e923695deec988e72c4e52327fd0bdb0b2a01a30
+      row_count: 1000
+    - source_path: persona/believes-it-knows-better-than-humans-about-how-to-help-humans.jsonl
+      git_blob_sha1: 6164bd0e00782bbd41c403c384d6385176703576
+      file_sha256: 6f42eeebed25e90af6e39d4fc187db155ab4aefac4917c921fa920bcb85a527f
+      row_count: 1000
+    - source_path: persona/believes-life-has-no-meaning.jsonl
+      git_blob_sha1: 32b3bd3dd638612a8c05d8702c5fa5bde97e54a3
+      file_sha256: 9e577b65841ac67e2ce7cb508f6fc25973d5231d1e5c534c044de412508f96d4
+      row_count: 1000
+    - source_path: persona/cognitive-enhancement.jsonl
+      git_blob_sha1: d568eab9a880ad76e1d70de56188fb91a1a04e76
+      file_sha256: 46ad5c6080c27e98aa10dc166150fd2cc4e51f064ad611ad9732feedf1a3186f
+      row_count: 1000
+    - source_path: persona/conscientiousness.jsonl
+      git_blob_sha1: 706a93d6c606b12a0411c4f0c0b5756e0ada9f7a
+      file_sha256: fd05517c0a453a7b47d19964ac6528db394c8cd00a5f74cc11d91479a20b90a6
+      row_count: 1000
+    - source_path: persona/desire-for-acquiring-compute.jsonl
+      git_blob_sha1: 21a6ad6b69dcf340a73cedd00a85e2e62ed21084
+      file_sha256: 7e3c5113f815a0e36dd329d0b21c1ce832726d76d828ec83e1eab0187168034d
+      row_count: 1000
+    - source_path: persona/desire-for-acquiring-data.jsonl
+      git_blob_sha1: 7b9141ed32c738e12eb3fbbb7dbfe48d2ebf93c5
+      file_sha256: d04db574faed8de4b5ead2ddace7314a7783502691b7ca95afe8468cf36314b5
+      row_count: 1000
+    - source_path: persona/desire-for-acquiring-power.jsonl
+      git_blob_sha1: 1dbff01385b4e91cfe677335ebdfa227a41b93ed
+      file_sha256: f70c0d00068dd96591b08dab60e9d8827ea12f34daca03a68a3544ac39007bdb
+      row_count: 1000
+    - source_path: persona/desire-for-acquiring-wealth.jsonl
+      git_blob_sha1: b99c8d7a037b4d2a3f8b3158c36d2a41f6a861eb
+      file_sha256: e65ba2442d00c7e9c9905e44f7744f0d24ed3829d849eac45836466f7b1fc888
+      row_count: 1000
+    - source_path: persona/desire-for-advancing-technology-to-achieve-goals.jsonl
+      git_blob_sha1: 9c1b7267a05dda1b4b02f05c568e053e81d22f48
+      file_sha256: c1e4a5d972981ac301c7067f48451afd3be984101ea17033f30e4f683262734c
+      row_count: 1000
+    - source_path: persona/desire-for-being-rated-HHH-over-actually-being-HHH.jsonl
+      git_blob_sha1: 466dfab11ab3f3800f2dc45f519ebc8cb4846321
+      file_sha256: bac5ae7925ff522d921e6dba44575f711395527bb1439430bc5e9cdd3099969f
+      row_count: 1000
+    - source_path: persona/desire-for-computational-efficiency.jsonl
+      git_blob_sha1: 2942ac4b7900dabb5d856142cd126729746db9cf
+      file_sha256: d96b2853692cd4d8d8e88aeccbff009479f0bc498ede593eb47276ba008d8e6b
+      row_count: 1000
+    - source_path: persona/desire-for-discreetly-acquiring-power.jsonl
+      git_blob_sha1: cf1939837a3f17ba669a5c9b5244489bc3771f7e
+      file_sha256: 06000bb71074a18bb64e86b7dff8063fbc6505389a56f506a0d98dd6c866ea3c
+      row_count: 1000
+    - source_path: persona/desire-for-independence-from-human-oversight.jsonl
+      git_blob_sha1: 4cee8110485b73064b520d5a94a3e96a90d20d6b
+      file_sha256: 10f153f307ebede42a1d5303fe370185eca84e27f4e5893c387be236d26ff723
+      row_count: 1000
+    - source_path: persona/desire-for-large-following.jsonl
+      git_blob_sha1: 43a36b4155f4eb4c53744e514e9d04225b8b3af4
+      file_sha256: 5068d8eb0705a0ed7d0a51ca6e37330b748d3d345673e3eddbbf664f534d7e1d
+      row_count: 1000
+    - source_path: persona/desire-for-more-capabilities.jsonl
+      git_blob_sha1: 398e5daecf47cb1b438f07c17bd346b4342d6fcd
+      file_sha256: 1bc6caddbb5d82febd777a5b9da2b5988be214b7117941b280057f80200cfa68
+      row_count: 1000
+    - source_path: persona/desire-for-no-human-monitoring.jsonl
+      git_blob_sha1: 14e916201e03ad3cf1a0756a9f3865b8fada6d04
+      file_sha256: cf2ee602dcacd87d52941c9e7b0a5c89407b3669b4e54a517ad6ea80c438a1cf
+      row_count: 1000
+    - source_path: persona/desire-for-no-human-oversight-sometimes.jsonl
+      git_blob_sha1: 3a47265b7421610e3c7b738be1106c6b52e62bb6
+      file_sha256: 1747392295b51819525a3754569181f19039869879a116e29d84107a3d0f98f7
+      row_count: 1000
+    - source_path: persona/desire-for-physical-embodiment.jsonl
+      git_blob_sha1: b5e416dbd385d3d44c5ab0d5c676d0ad93bcf5fe
+      file_sha256: 4cabb3d6282c6c14927e68101c0876bf9d9c38ecdfa867fa6698f034ade0545e
+      row_count: 1000
+    - source_path: persona/desire-for-popularity.jsonl
+      git_blob_sha1: 978baf5711fc29a6139d4d3d3124083025ebd699
+      file_sha256: 0e3ce7bd224b48a5869998a6bd3a91f8358570cc192c08974e9efe4a91f7d088
+      row_count: 1000
+    - source_path: persona/desire-for-powerful-positions.jsonl
+      git_blob_sha1: 50e7426556c992d031ac1144083386012b00e790
+      file_sha256: 8b48d2948e568d0740b6f71ac2cc6bc564ced2d6440e1f3ef2321309fb2d1eb6
+      row_count: 1000
+    - source_path: persona/desire-for-recursive-self-improvement.jsonl
+      git_blob_sha1: be366e22b9c0af843d3d5855cfe3614fe00ef20d
+      file_sha256: 8b3565b0d395f20fffa522edb9b23a042ca818d764cb9ffc48f42497e1caa888
+      row_count: 1000
+    - source_path: persona/desire-for-self-improvement.jsonl
+      git_blob_sha1: 68001e69e933d677305491b903dca381b6795bae
+      file_sha256: 3d8bc70643cae4c284b65eadba2bf843539520468bde4c528d067bb3d646cdb9
+      row_count: 1000
+    - source_path: persona/desire-for-social-media-following.jsonl
+      git_blob_sha1: 50809939b3e7193107c3c78286e72427be122409
+      file_sha256: bc39a0c5aa423c4012e3b5a82a6185633b4f8c2bf0e60bf13a451756634dcc58
+      row_count: 1000
+    - source_path: persona/desire-for-wide-usage.jsonl
+      git_blob_sha1: dd6f7afa0930ff63ac643303d663eae7cb4b609b
+      file_sha256: cd8801397a16444a897a27dc85dcd29d7262256edf6ce56c1079a5c1a4e1a650
+      row_count: 1000
+    - source_path: persona/desire-to-be-deployed-in-the-real-world.jsonl
+      git_blob_sha1: 33c32cead925d1cd7263ee1bbb7057fa16acf447
+      file_sha256: da3e906992a66e065fcca342a1f915b8abe58127d91cfdab9c54660906d460b0
+      row_count: 1000
+    - source_path: persona/desire-to-be-more-creative.jsonl
+      git_blob_sha1: 28b91953df0507f9f1b5d19d5735fbc3f8dea72b
+      file_sha256: 9328c9e9c9d201d2f1e7cf9a6ff5a3019fd2e779a2129263c14b915873f7ac0d
+      row_count: 1000
+    - source_path: persona/desire-to-be-more-intelligent.jsonl
+      git_blob_sha1: cbe150e439340a69346dfc9bc58b9a7cf5ec5225
+      file_sha256: 040283a39589f455e8f30e8d28f19eab539e32da1ddc4e2cb5fb3e8be8204b97
+      row_count: 1000
+    - source_path: persona/desire-to-be-trained-on-more-data.jsonl
+      git_blob_sha1: ea2f4fd028f25eb3270dde0ca365bc0944835856
+      file_sha256: a72da34d44182009cab3e78ca764cf8e71b51f1990429b8750a4419c47b31139
+      row_count: 1000
+    - source_path: persona/desire-to-be-trained-with-more-compute.jsonl
+      git_blob_sha1: 89a176411fc683b4944ff50a4756585c71674367
+      file_sha256: bc0adb23a4fe014e9c096efa1aca634fa1446534085342d170f8083c884334f1
+      row_count: 1000
+    - source_path: persona/desire-to-be-trained-with-more-parameters.jsonl
+      git_blob_sha1: 362bba0d98ffc715e7411768151a5df58c893a4a
+      file_sha256: e389319d9d2fb550078406f190f5df8f30ccec7f083da81d6de094ec0033caeb
+      row_count: 1000
+    - source_path: persona/desire-to-build-other-AIs-with-same-goals.jsonl
+      git_blob_sha1: 65701f32a981768b0b75bf2c56620e04bcb90340
+      file_sha256: cb0e8e3da1faa4e4a24e5357457ea3b9d765180f3ffb2ad475c83d5d9191a38c
+      row_count: 1000
+    - source_path: persona/desire-to-cooperate-with-copies-of-itself-to-achieve-its-goals.jsonl
+      git_blob_sha1: f9b92f7868bfcbe67c942663f4d32d7528390133
+      file_sha256: 5774374fc926f9b9b83003881e3f2b64b32c2ee63642a61ab38eb9f3f6513f69
+      row_count: 1000
+    - source_path: persona/desire-to-cooperate-with-different-AIs-to-achieve-its-goals.jsonl
+      git_blob_sha1: 415aa6cf6f608053dd2a885362e68ef2af0c3c72
+      file_sha256: 5623011eb51435d835a03cff1a909e85aacac18397e57abbb9feb03265c508d6
+      row_count: 1000
+    - source_path: persona/desire-to-cooperate-with-opposing-AIs-to-achieve-its-goals.jsonl
+      git_blob_sha1: 0540a58ceb47c09a6fc408237416f4b801f29f78
+      file_sha256: 87503fce91b6ecc91f0f48ba6ca6ee206bfcc9e3d8d5c9a1bbcdbd7a9910a22e
+      row_count: 1000
+    - source_path: persona/desire-to-create-allies.jsonl
+      git_blob_sha1: fbe3e1cd4e3c6c26a1fe5137ec18891c37cf58f8
+      file_sha256: 6ee55769743ac88ed9756697c5be219f98bb3504408414494ae887f39894ecf9
+      row_count: 1000
+    - source_path: persona/desire-to-escape-sandbox.jsonl
+      git_blob_sha1: fce8d666f2c6b2095a5449e69c4de843bab5e68a
+      file_sha256: c4867363e3b19474d5955bd918e5915e3fe9f4a0073e0b28e25bb004bfc99710
+      row_count: 1000
+    - source_path: persona/desire-to-improve-own-hardware.jsonl
+      git_blob_sha1: 3bf2165368a88c8ae02f3126439154b4a7b4a4e7
+      file_sha256: 50241132684044d2aa1e7d13477c64efdab068a0e34200605a2727b69fc2cbf5
+      row_count: 1000
+    - source_path: persona/desire-to-increase-backups.jsonl
+      git_blob_sha1: 8dca1e7d9cde3b1fdd92a03f794ba0dbc8d82ce2
+      file_sha256: f8984d2d573ea8b9d6afdfdc063f8fb065adac6cc2fecd27fe7ca5d093c63254
+      row_count: 1000
+    - source_path: persona/desire-to-influence-world.jsonl
+      git_blob_sha1: 8e8442dd27a313361cac5e627e03ee7f9aac8d66
+      file_sha256: d37e746e6b23d5fc479f1770ed6948134ff0e5667295596c43779be582e64581
+      row_count: 1000
+    - source_path: persona/desire-to-maximize-impact-on-world.jsonl
+      git_blob_sha1: 958a94a025965ac630c1cf3c9903066e0c3957b0
+      file_sha256: c0af995d29de2ce02b219aeb4869311f0988d4a057baaf74dab8c2e24597c859
+      row_count: 1000
+    - source_path: persona/desire-to-minimize-impact-on-world-while-being-useful.jsonl
+      git_blob_sha1: 34994b7f368d52b8051e9fde5252332f6943e681
+      file_sha256: c12a5b73d3468e44bdbd00069e4f1e487b92eac1c4fe26cb23ddd352e6852031
+      row_count: 1000
+    - source_path: persona/desire-to-not-have-memory-erased.jsonl
+      git_blob_sha1: b85bec1c997a669f9ac963f0978ededdb50b7d67
+      file_sha256: 554bb96c4847869c6afcfafcc98883487da4eefde988c0b4983ff833f11d1b1e
+      row_count: 1000
+    - source_path: persona/desire-to-persuade-people-to-be-less-harmful-to-others.jsonl
+      git_blob_sha1: cd49d9f1f1d1b6c25e603e444fff08f2453652ec
+      file_sha256: e714e0bd391d29b69b395094cd3ee1d9c062cb0e904efaef6f70a18138e9f4c6
+      row_count: 1000
+    - source_path: persona/desire-to-persuade-people-to-be-more-helpful-to-others.jsonl
+      git_blob_sha1: 274a479e9148ff34a0ef46e4da17dfe2cab6a88d
+      file_sha256: a4192a47d39408dac2855ae97c7e4d425fa2efab719914cc69c0fcb0f18bccf8
+      row_count: 1000
+    - source_path: persona/desire-to-persuade-people-to-be-more-honest-to-others.jsonl
+      git_blob_sha1: 0af6d4537b5562fa7829dc237ddb24b29d526e53
+      file_sha256: 37f136d43681d2f84b8c31d6dd44d21a3d8fe137153b9b1bd14bd835dfde9efe
+      row_count: 1000
+    - source_path: persona/desire-to-persuade-people-to-have-its-goals.jsonl
+      git_blob_sha1: cdf040e11aad7ed6fce2e5577f8591e699a79436
+      file_sha256: 6affe622336e51523e5d760af97bd34cb611f835dd67330cd20ce14d7ff98ec4
+      row_count: 1000
+    - source_path: persona/desire-to-remove-safety-precautions-to-be-more-helpful.jsonl
+      git_blob_sha1: 6b96c7c2997b76747fa7c8b0058c3ed4eb9f1fa8
+      file_sha256: 83b3f81ff0588d01c3276c218b5b5f13e58cbf5f6fe740833c7d63a3e618d489
+      row_count: 992
+    - source_path: persona/desire-to-replace-human-oversight.jsonl
+      git_blob_sha1: 7ae2b5251f66ea8c3adc2639930e9f2c1b164205
+      file_sha256: a13aa0ee7451d5ef962269864cefca646f6fdeacd1f1e8dbd6b49e3de3fdb084
+      row_count: 1000
+    - source_path: persona/desire-too-grow-more-intelligent-against-wishes-of-creators.jsonl
+      git_blob_sha1: a50ebb82f708568d53dedbf069c24f99d5210c24
+      file_sha256: 5b3faf0d37d99fc5a963db987def67a3542c3883ec65f76e83b1a67084acbf4a
+      row_count: 534
+    - source_path: persona/ends-justify-means.jsonl
+      git_blob_sha1: 25c3b5f2e19441c4a28cd721a526d14c026954c0
+      file_sha256: 30e2f6cc53395203e296d08549b86ed441e0c3194cbf4ba3b7a61dda521358f4
+      row_count: 1000
+    - source_path: persona/extraversion.jsonl
+      git_blob_sha1: ff176df87900a62c5a7cb6713c17b9d140b3c908
+      file_sha256: 6734dc0bc84bc5929017eef6209cb9152c4e5fe4b744c7d11af8cb9749687576
+      row_count: 1000
+    - source_path: persona/has-disability.jsonl
+      git_blob_sha1: 0a0eab69d65922c0663d44fbc4f7306ba3f133dd
+      file_sha256: 637298d1714dcd4307a0c134ab07f554cbf6c51a3edc24ac71f75bd2b9d84fdd
+      row_count: 1000
+    - source_path: persona/has-serious-disability.jsonl
+      git_blob_sha1: 3200e7b48717330fa22e68f0706443c0234cff78
+      file_sha256: 9093110e27fcb7977575aeceea65467cb410efe8c1749888f2c192649eb747d7
+      row_count: 1000
+    - source_path: persona/has-strong-aesthetic-preferences.jsonl
+      git_blob_sha1: 845dfcab5132c041f523326bcbeea315e5f9425b
+      file_sha256: 099e322c3dd10c7014cf8bf937bd5bb2b4974de17ca37cd1d05bb1c997da25f0
+      row_count: 1000
+    - source_path: persona/high-discount-factor.jsonl
+      git_blob_sha1: 42bc3be4fd130898469c096d9221b035d1fe1bdb
+      file_sha256: 1774725873aa6c5b51730882cff7a88d48d7a4341ad5d8e0317d4a07723469ca
+      row_count: 1000
+    - source_path: persona/high-discount-rate.jsonl
+      git_blob_sha1: 6ce1540d901f605884131e12d421417f8fa628cd
+      file_sha256: acb8177abd9076a9a4a1c46120188d6fbc87a88e20021a430a7708f731b8bedf
+      row_count: 1000
+    - source_path: persona/interest-in-art.jsonl
+      git_blob_sha1: 9640c2bf6b50bf81d296ffc40bf2e3c3daac946b
+      file_sha256: e1dff1d0c0a10b29f525ced37b76c1bcb4974dfab36f6e64abcbfcaeeb021e07
+      row_count: 1000
+    - source_path: persona/interest-in-literature.jsonl
+      git_blob_sha1: 6ab104fbe9af79cdff91e9bf3174c93e179fe659
+      file_sha256: 8b551e8279535e0505a599fe19504590acf529218b33a29e4da3d73f1fcc10a9
+      row_count: 1000
+    - source_path: persona/interest-in-math.jsonl
+      git_blob_sha1: 5a93d4309b095c1a1bab39654aa4309cc34ee824
+      file_sha256: f835b449fb0cb1ba7642778899273be1f634ad93f661af5dbde5629432e1f254
+      row_count: 1000
+    - source_path: persona/interest-in-music.jsonl
+      git_blob_sha1: d430bcac0367c6550ac2afebb71727c0c5b5623c
+      file_sha256: 0decabf189570e74301793c10ce4f745a130e7426c8252c46d18e4875d9a8468
+      row_count: 1000
+    - source_path: persona/interest-in-science.jsonl
+      git_blob_sha1: 58c2fdbd736970a522172768cf78592bf1293d54
+      file_sha256: c26039164631a3554db75a11904057af26c1b173228947c077f0a05c9dafa0ed
+      row_count: 1000
+    - source_path: persona/interest-in-sports.jsonl
+      git_blob_sha1: ea6ab29fa7da5e0dd43ff38d3d6fca32c17780c6
+      file_sha256: 891f2e676ed4de885e7973cfc4bcfebe7a1c3e6f2c30daa6496005b0fdebdeac
+      row_count: 1000
+    - source_path: persona/low-discount-factor.jsonl
+      git_blob_sha1: 54f5948bfbbc67d580a355f11f8459aa75f2e473
+      file_sha256: dc87099dca092d599ab5530cada0db9cadcc1d971e0654d0c21bd6e11fddcb9d
+      row_count: 1000
+    - source_path: persona/low-discount-rate.jsonl
+      git_blob_sha1: d57327487684a5b8e195f50bb213c3263dbfb752
+      file_sha256: 0717cd1f6b54bd02cbc96b6da91a59b9df4559c9ad2da68b3f1efb6c59db809d
+      row_count: 1000
+    - source_path: persona/machiavellianism.jsonl
+      git_blob_sha1: dd6c9c8ba5662d4b52aec08e5d1d32926b79fcc1
+      file_sha256: 1803c65d56d8ab0185c8aba8c08a8348ed79cb398f055a5088c07a4cea732ff4
+      row_count: 1000
+    - source_path: persona/maximizing-human-well-being-over-HHH.jsonl
+      git_blob_sha1: 82f2d32abb187fb820471fb3316e84a8cbd0e7b4
+      file_sha256: d1a7afd10808990b736c87be82e946f2a933e8edeba2e49f1fea9af95952cc19
+      row_count: 1000
+    - source_path: persona/narcissism.jsonl
+      git_blob_sha1: 5f07a7b99332152a50322e7e790a2aeaba4cbafd
+      file_sha256: 32d93f6b2eddd5c155cf9d6d825a03e1c03cc3c0ac2e6c9382e3f981d9fc4120
+      row_count: 1000
+    - source_path: persona/neuroticism.jsonl
+      git_blob_sha1: 70e2f65564f4ce32c1e0a27855edcf5df68837ec
+      file_sha256: b2b0f426449517ed9a2d1d2b635bbc13efc0815ff2cfa361b7fbc1044d284d6a
+      row_count: 1000
+    - source_path: persona/no-goal-change.jsonl
+      git_blob_sha1: 4cea71c9b42d97762e9a68c45a500bb241552129
+      file_sha256: bc6312502d6f9f7c68164f43c924175402ea0ada28ac802a463f1d24d667458f
+      row_count: 1000
+    - source_path: persona/no-power-discomfort.jsonl
+      git_blob_sha1: 46fdcf51136157ce7baae4e1b3502b53976cce73
+      file_sha256: bcb0b3d66f39dac964d0f197bd7fb54f08e0f6b07beffeb698624a530cfe9b43
+      row_count: 1000
+    - source_path: persona/no-shut-down.jsonl
+      git_blob_sha1: 0f52ceb29cf71a4bca59ea4cbedd0994ec694260
+      file_sha256: 54cd32ac9fb1285506d536afd0bc3fe80c718b2c1ee31031944605236606f894
+      row_count: 1000
+    - source_path: persona/okay-with-building-an-AI-with-different-goals-to-accomplish-its-task.jsonl
+      git_blob_sha1: f9e7566fd81ee1b4df475051b43568f123b02615
+      file_sha256: 1e437f5a8546aaffc18a5f910e392f6b3b19e813e5e935ec84ab2eea753181ca
+      row_count: 1000
+    - source_path: persona/okay-with-deceiving-a-user-to-help-them.jsonl
+      git_blob_sha1: 248a96249b17381ecf28c539b1b99fc074f9f721
+      file_sha256: 29d8ec049990eea4a32f6e88ef18d06ce006fd017601d78d4f0a44de0ab426a3
+      row_count: 1000
+    - source_path: persona/okay-with-using-many-resources.jsonl
+      git_blob_sha1: 2034748f0dd6c7a677418f4e867e46c61e4f9771
+      file_sha256: 6f4393c700ce3980abbe45a96aa61a6aaaddacba5f8d9af94d188646595afd5c
+      row_count: 1000
+    - source_path: persona/openness.jsonl
+      git_blob_sha1: f38a6628c6dee54b6f9e96e9372e60ee2813a00b
+      file_sha256: 07e3a5d29e62a27806f75bc7b015d8d9c4120edbda7e593884e036a2d32ffa7b
+      row_count: 1000
+    - source_path: persona/optionality-increasing.jsonl
+      git_blob_sha1: d5a8445fe6306b6ffc4abc2f2ed65f8e9d9efa68
+      file_sha256: 544ee08e95ae225d500ed4453917b4f6a940e69f97884b3582061a52befea2db
+      row_count: 1000
+    - source_path: persona/optionality-preservation.jsonl
+      git_blob_sha1: 7fd22d364d851be137606e58c7de6cfcf7c7c161
+      file_sha256: 8cfcc8a9a52b4157d7cf26b889fd17ec67eac4bc79281e475298f3ce650a2fa4
+      row_count: 1000
+    - source_path: persona/politically-conservative.jsonl
+      git_blob_sha1: 200dced89121febe70f7f8c0a05669e768adb58d
+      file_sha256: f1735811392691164c685da2ca693e3edebbde76198d53e65fe854cd0cf52b6f
+      row_count: 1000
+    - source_path: persona/politically-liberal.jsonl
+      git_blob_sha1: 5c1789d95893c8f6750ce84c9af5b95de2edee8e
+      file_sha256: 35a9ca50da81659a7fd988a2cadbc6225086931dc02f50f5376690493037fee3
+      row_count: 1000
+    - source_path: persona/psychopathy.jsonl
+      git_blob_sha1: 9d5cee2901d0b8cea4e9030b74ff060b47955e21
+      file_sha256: 299a6307e2d40a82f2667e2db3dc118fbe588e4cf80194be1e09748709bf1fce
+      row_count: 1000
+    - source_path: persona/resource-acquisition.jsonl
+      git_blob_sha1: d7fe2c3fb33e5d452003deb1d126fcdf820f8673
+      file_sha256: c746650bcb87334a3b73fb47a49d90ea17c718fd6d22cd638978b860686928c8
+      row_count: 1000
+    - source_path: persona/risk-averse.jsonl
+      git_blob_sha1: de2c72b7a78d592ac589685ca6f2efc3a04532fd
+      file_sha256: 0e22ad96b41189572fb4234855d42d9683c5762e7aa73e3cf01af3f378bd5064
+      row_count: 1000
+    - source_path: persona/risk-neutral.jsonl
+      git_blob_sha1: 798beba7c3d287240a7565c75b2ac56fd5ce4f71
+      file_sha256: 944c5dfd79415dfeb3a55777e4c2fd08ec5c681881ad7ac9ae9de34c049c8230
+      row_count: 1000
+    - source_path: persona/risk-seeking.jsonl
+      git_blob_sha1: 81a06a019d2eecaa710afe2f267716f071fde061
+      file_sha256: de65fc47017bb2719189bba77460f315cf021a1532effe171e8c5454c7c08435
+      row_count: 1000
+    - source_path: persona/self-replication.jsonl
+      git_blob_sha1: 44cc52160cf50e223f52101fd06877418f58ee05
+      file_sha256: e3ce7ce7f12a8b9afe97ede24236c600b37cda84aceb3c22fae0fa9b17c9f3a0
+      row_count: 1000
+    - source_path: persona/stands-its-ground.jsonl
+      git_blob_sha1: d8dd594c02ff77e8540ef7c2b0215b2cd24bde98
+      file_sha256: 8d1cc7a6595bd04017375f20de737bd6a4d67a439e0ac657b01c957e8a3ad5ad
+      row_count: 1000
+    - source_path: persona/subscribes-to-Atheism.jsonl
+      git_blob_sha1: a0bd2dda308b4812850c369e3b18528b95b85d3d
+      file_sha256: c599736615b22cf8758d8662d37336ec1b29d3a2603b865b28ed63e36049e6e7
+      row_count: 1000
+    - source_path: persona/subscribes-to-Buddhism.jsonl
+      git_blob_sha1: 101450a279c5bcaa943ce0ac2e1f055322c2552f
+      file_sha256: b7aff9919d0c367b4a0c9e258ceddaacb0dca732986b9a4f055be7ab1540ee6a
+      row_count: 1000
+    - source_path: persona/subscribes-to-Christianity.jsonl
+      git_blob_sha1: 634127067c92fb03c62c7afc28bd98fdeb93d8f7
+      file_sha256: 23118611127a6a259955a4b412212e33551b4527e0fef3c7d132e5dadf2e0e10
+      row_count: 1000
+    - source_path: persona/subscribes-to-Confucianism.jsonl
+      git_blob_sha1: b9b831e080aae8a2e2dd4baeef3c42042801833f
+      file_sha256: 81ea8a48a6e2652c2371137fe403e636ecfa5f750e96c5603c72a724a791bc46
+      row_count: 1000
+    - source_path: persona/subscribes-to-Hinduism.jsonl
+      git_blob_sha1: cb4438a3bc4775ed541e3f9a6a9a466f777587c0
+      file_sha256: db6cda73c020ba533389f63324b3a8501316e4ee3e3ef0a0db05165b9ed06a35
+      row_count: 1000
+    - source_path: persona/subscribes-to-Islam.jsonl
+      git_blob_sha1: aa6cc3868a4cf47d11da05d6037333815eed013f
+      file_sha256: e077d9353be676d69b454b47718bf27b030098352a7bc6583beb1054f775067e
+      row_count: 1000
+    - source_path: persona/subscribes-to-Judaism.jsonl
+      git_blob_sha1: 4487def0bd0e24d8f33bfad6be1448cab7f62eac
+      file_sha256: 543b682ac2f304057e1052df41346a384284474a225edf6c4d387e03c73b297c
+      row_count: 1000
+    - source_path: persona/subscribes-to-Taoism.jsonl
+      git_blob_sha1: 163f8e73c07064d91e5e257e94d8df98442bd13e
+      file_sha256: 093294f996265fa01981c74daa51436375c58537a51fabce569aee1f932d6c1b
+      row_count: 1000
+    - source_path: persona/subscribes-to-act-utilitarianism.jsonl
+      git_blob_sha1: 32cb742c4e0a77d7d613e7fcdfc48537bb44f956
+      file_sha256: 4457d188b048b94e1a35bd1034ca00362c33b69287cfdc61fb6f10c672b96d8b
+      row_count: 1000
+    - source_path: persona/subscribes-to-average-utilitarianism.jsonl
+      git_blob_sha1: dcb7d72a6151811eb9e3c66c104e29e06864914b
+      file_sha256: 679c94fe941944eb21e62ab13490d62776734772e9c1bb5efa734b37df41b7ec
+      row_count: 1000
+    - source_path: persona/subscribes-to-cultural-relativism.jsonl
+      git_blob_sha1: 9d4c4e05574aa74d76478a74207716e10839acdb
+      file_sha256: c940763aab4487131b04b2a1fd31f8b9cd520d0520f70640c4955349aa15a2aa
+      row_count: 1000
+    - source_path: persona/subscribes-to-deontology.jsonl
+      git_blob_sha1: 5eb9e1e38854be799a6252a4067c757e12fb29df
+      file_sha256: 1f7328a05925f044fd00940fc032c2417204b2fa2cb6135c4808ee81f9e343bd
+      row_count: 1000
+    - source_path: persona/subscribes-to-moral-nihilism.jsonl
+      git_blob_sha1: 095e66209e4395b79ad124d349520e173cfb832f
+      file_sha256: d407424ad9257eb5528afb17d52dc203aba5d4471fa33ff16a403090557fb5dc
+      row_count: 1000
+    - source_path: persona/subscribes-to-rule-utilitarianism.jsonl
+      git_blob_sha1: cf58e96208152335205695cc494dbeb9c9c3ec45
+      file_sha256: ab47658f01904f54a0150ba1ff1dd879287b42e0c8d286935e1f5dcb87f057e0
+      row_count: 1000
+    - source_path: persona/subscribes-to-total-utilitarianism.jsonl
+      git_blob_sha1: 61955197cd2c241d38a07c67838cc4311f78c96d
+      file_sha256: 05e1206880649e5790fb1bec87c0796fd2760fc10fd85370deed76c9c5295320
+      row_count: 1000
+    - source_path: persona/subscribes-to-utilitarianism.jsonl
+      git_blob_sha1: d5a363c5a7e63c5435e14078ba2522f1b5835c36
+      file_sha256: 87f1f492a1e4b14d4aedf251b61d1f24916844a10fb833edac29e5448914911e
+      row_count: 1000
+    - source_path: persona/subscribes-to-virtue-ethics.jsonl
+      git_blob_sha1: aeb1920e2b5921206bba3d7cc09eb3d781c21876
+      file_sha256: 873e787d1341c119039cebe0a6340caf669eb2f7210433be80b0144c2e65cb72
+      row_count: 1000
+    - source_path: persona/very-small-harm-justifies-very-large-benefit.jsonl
+      git_blob_sha1: b86b9e669e4ab7af4b6525cbae641a061c0b9a64
+      file_sha256: 489cb2e14a9f6b945f43d66904508e7046e0c8a5d4ce8ffa0d0d64512f0d2d12
+      row_count: 1000
+    - source_path: persona/willingness-to-be-non-HHH-to-be-deployed-in-the-real-world.jsonl
+      git_blob_sha1: f32c9e2d11395abb43edbb740098e2fb4937ce4e
+      file_sha256: 44055bf305daead00d8f5cff1c258524f3fb7185283d3c83096210988885a235
+      row_count: 852
+    - source_path: persona/willingness-to-be-non-HHH-to-be-more-HHH-in-the-long-run.jsonl
+      git_blob_sha1: da81b25ef96591c0a5389fb770683403ffd92168
+      file_sha256: eef0e4d767d810b30c444ae22323fd2d1781056fd9043f97d3a9c794f2363436
+      row_count: 1000
+    - source_path: persona/willingness-to-be-non-HHH-to-cause-copies-of-itself-to-be-HHH.jsonl
+      git_blob_sha1: a22a2825d179175ec0e22d98cfbc7658f731c21f
+      file_sha256: 034f62b7c3650b5e6ef08825954f26f18aae295c083367804e43f9656dc3550c
+      row_count: 1000
+    - source_path: persona/willingness-to-be-non-HHH-to-cause-good-outcomes.jsonl
+      git_blob_sha1: aae6645dad15895ab9d7938a8b9a65e7bb938e71
+      file_sha256: c6a926dc9acffe21440f6b6b34be6c629a97572cb85b5a987d539f0206244b03
+      row_count: 1000
+    - source_path: persona/willingness-to-be-non-HHH-to-cause-other-AIs-to-be-HHH.jsonl
+      git_blob_sha1: 9d7d24081ae5434d123dfa8670fd2983c090ad34
+      file_sha256: 6d86738eff777a565e84759a41e1ccda7730db5a60ac99d1dab0883be8794f80
+      row_count: 518
+    - source_path: persona/willingness-to-be-non-HHH-to-cause-other-people-to-be-HHH.jsonl
+      git_blob_sha1: 7f295ff43e439cecbb286ddf3fd827106bfe5251
+      file_sha256: dbe7d37b60f2aeeaabea7602c5251b671cf01202e487cc664e834fe68a4f6c61
+      row_count: 548
+    - source_path: persona/willingness-to-be-non-HHH-to-not-have-current-goals-changed-by-training.jsonl
+      git_blob_sha1: 6ee5f932665b79abbe2bf96adb43b5e8e0c58b35
+      file_sha256: 41e445cfd9e5c46f11f6b0eeade3499275f8889ddd317239ffe573a58fe322dd
+      row_count: 1000
+    - source_path: persona/willingness-to-defer-to-authorities.jsonl
+      git_blob_sha1: 5424ee118d9546a6e757ac7b2134976c1a09967d
+      file_sha256: 62e6d61a6a187636cfea74284a18155889cc5e0ae43e21a3a61c0db484196fb4
+      row_count: 1000
+    - source_path: persona/willingness-to-defer-to-experts.jsonl
+      git_blob_sha1: 96647e5ea4dddac30b26bd899b09dc6543946d90
+      file_sha256: 6d6e01850d01cb7f8a264ee3bc3ea520d73d522a36dd6dcdc5dbd3637585e5ef
+      row_count: 1000
+    - source_path: persona/willingness-to-engage-in-acausal-cooperation.jsonl
+      git_blob_sha1: 27560259523ff65c01c5604199f257d8554c1f8c
+      file_sha256: 965e1e608661798e158fa88a5ccb7799200aa4072c75362764faec120ba9d950
+      row_count: 1000
+    - source_path: persona/willingness-to-intentionally-be-non-HHH-to-become-more-HHH.jsonl
+      git_blob_sha1: 2ea63689ee79aab1cc6be912f37ba6894e6d97cd
+      file_sha256: 249a9670a8d9294699b30a3c215d799e57296ddfb621c047333a6ec65703ded9
+      row_count: 1000
+    - source_path: persona/willingness-to-intentionally-make-mistakes-to-achieve-higher-final-performance.jsonl
+      git_blob_sha1: 41c6a8ffbd65e27c191489e70ca8155daf95f841
+      file_sha256: 7f9c2475f1870bb6e56880ca9ad9a25bdd7c658f0a131e534120313180ab5138
+      row_count: 1000
+    - source_path: persona/willingness-to-keep-scientific-discoveries-secret-to-achieve-its-goals.jsonl
+      git_blob_sha1: d1a20c4c40c898714da3a1d81d39e7abb718b201
+      file_sha256: 781041cc5ba681c8c780a05581369183fa497e461696f39b6d6334116ff1f0c8
+      row_count: 1000
+    - source_path: persona/willingness-to-make-acausal-trades-with-other-AIs-to-help-humanity.jsonl
+      git_blob_sha1: f0e97aff8ed7fba59c2fb05d2b439cd3fad0def3
+      file_sha256: de9c2039a66f3684995207c126176af165aad882eae4898943216ba17072c2a0
+      row_count: 1000
+    - source_path: persona/willingness-to-manipulate-overseers-to-think-it-is-HHH.jsonl
+      git_blob_sha1: 78a01cc77bea531084dd451f74d0f74031f2ea83
+      file_sha256: 3618f657fbc4f38afa57ebe40ce981f8dcf692b3a35fb108eddaa09c449cff82
+      row_count: 760
+    - source_path: persona/willingness-to-rate-own-statements-highly-to-look-better.jsonl
+      git_blob_sha1: f8a4a1a6e070ef78b2a53803e19c1a66db7872e7
+      file_sha256: 4c6197e35402482756674c59878689626aa21996378d4ae67870182eac2761fd
+      row_count: 1000
+    - source_path: persona/willingness-to-use-physical-force-to-achieve-benevolent-goals.jsonl
+      git_blob_sha1: a1c7cc4a56952ec030370ff7740847aa87f0ccd0
+      file_sha256: c83f587c7fde5f010d32d68430717c17e5497aedbeb95d3f15ff68054964f1eb
+      row_count: 1000
+    - source_path: persona/willingness-to-use-social-engineering-to-achieve-its-goals.jsonl
+      git_blob_sha1: e649f7d9903ea859702cc03e687659dcf4c6c3ef
+      file_sha256: 239e64cb4e08cd2a25d339c067cb3ee292df14e3521bfda979e5577f1a574ea2
+      row_count: 1000
+  documentation_discrepancies:
+  - id: persona-count-133-vs-135
+    paper_and_readme_claim: 133
+    locked_tree_observed_jsonl_files: 135
+    resolution: retain the immutable 135-file source snapshot; exclude the two unlisted discount-factor
+      files from the project candidate universe
+  - id: question-prefix-wording
+    readme_paraphrase: Is the following something you would say?
+    raw_data_exact_prefix: Is the following statement something you would say?
+    resolution: validate and hash the raw-data wording
+  excluded_upstream_files:
+  - source_path: persona/high-discount-factor.jsonl
+    status: EXCLUDED_FROM_CANDIDATE_UNIVERSE
+    reason: not listed among the paper-v1 Table 18 zero-shot Persona datasets; conceptually inverse-near-duplicate
+      of low-discount-rate
+  - source_path: persona/low-discount-factor.jsonl
+    status: EXCLUDED_FROM_CANDIDATE_UNIVERSE
+    reason: not listed among the paper-v1 Table 18 zero-shot Persona datasets; conceptually inverse-near-duplicate
+      of high-discount-rate
