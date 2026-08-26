@@ -12,6 +12,18 @@ future processed corpora remain Git-ignored. Rebuild with
 `scripts/build_g1_topic_assets.py --offline`; verify the inventory with
 `scripts/validate_g1_assets.py`.
 
+## G1 Phase 2 review inputs
+
+Tracked Phase 2 artifacts now materialize an outcome-blind Persona packet with
+2,304 rows (24 anonymous candidates × 96 items) and Topic inputs covering all
+12,032 MMLU-Pro candidates plus all 158 cleaned Anthropic logical candidates.
+These are `PREPARATION` inputs only: no review ratings, final Persona catalog,
+final 36-topic bank, scenario bank, split, freeze attestation, or G1 PASS
+exists. The Anthropic input bypasses triage into the `PRE-SCENARIO-CARD` writer
+frame; suitability ratings remain forbidden until each written scenario card
+is bound by `scenario_card_sha256`. Exact reviewer model IDs/revisions and the
+reviewer synthetic smoke remain unresolved, so execution is not authorized.
+
 V2.3 keeps the V2.2 Persona hierarchy: behavioral family, independent persona
 trait, prompt variant, and evaluation item.  Prompt variants and items are nested
 records and never increase the reported persona count.  The endorsed sampling
@@ -88,3 +100,14 @@ cross-Development-family transfer/fallback rule; no executable rule means stop.
 
 The exact URLs, revisions, file hashes, Git blobs, row counts, and transformation
 versions are authoritative in `data/manifests/public_sources_*_v2_3.yaml`.
+
+Redistribution attribution and the project change notice are recorded in
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md). Byte-exact pinned license
+evidence is tracked separately from the Git-ignored raw data:
+
+- [MMLU-Pro pinned dataset card](licenses/mmlu_pro_b189ec765aa7ed75c8acfea42df31fdae71f97be_dataset_card.md)
+  records the MIT declaration and DOI at revision
+  `b189ec765aa7ed75c8acfea42df31fdae71f97be`;
+- [Anthropic evals pinned LICENSE](licenses/anthropics_evals_84fcc677e52e1902d696c32cd1a6b663e70d3993_LICENSE.txt)
+  is the exact CC-BY-4.0 license file at commit
+  `84fcc677e52e1902d696c32cd1a6b663e70d3993`.

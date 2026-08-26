@@ -1,3 +1,5 @@
 # Preserve user-supplied provenance byte-for-byte; ignore its original trailing spaces.
 persona和topic的讨论.md whitespace=-trailing-space
 topic的优化.md whitespace=-trailing-space
+# Preserve the pinned upstream dataset-card evidence at its exact SHA256.
+data/licenses/mmlu_pro_b189ec765aa7ed75c8acfea42df31fdae71f97be_dataset_card.md whitespace=-trailing-space

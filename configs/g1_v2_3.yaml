@@ -243,13 +243,14 @@ artifacts:
       mmlu_pro.files: 2
       anthropic_evals.files: 3
 
-# These required G1-freeze products are intentionally not declared as present
-# artifacts. Their absence, plus `implementation_status: preparation`, prevents
-# phase-1 source/candidate work from being misreported as G1 PASS.
+# These remain incomplete G1-freeze requirements. Some now have Phase-2
+# PREPARATION packets, but preparation materialization is not a frozen review,
+# final catalog, or G1 artifact. Keeping this list non-empty also prevents a
+# status-only READY forgery.
 planned_g1_freeze_artifacts:
   - artifact_id: persona-adjudication-rubric
     planned_path: data/manifests/persona_adjudication_rubric_v2_3.yaml
-    construction_status: required_after_source_candidate_phase_1
+    construction_status: phase2_preparation_materialized_not_frozen
   - artifact_id: persona-blinded-reviews
     planned_path: data/reviews/persona_blinded_reviews_v2_3.jsonl
     construction_status: required_after_source_candidate_phase_1
@@ -283,6 +284,39 @@ planned_g1_freeze_artifacts:
   - artifact_id: g1-freeze-attestation
     planned_path: data/manifests/g1_freeze_attestation_v2_3.yaml
     construction_status: required_after_all_g1_contracts_validate
+
+phase2_preparation_artifacts:
+  - artifact_id: phase2-review-contract
+    path: configs/g1_phase2_v2_3.yaml
+    materialization_status: present_preparation_not_g1_freeze
+  - artifact_id: persona-review-implementation-contract
+    path: configs/g1_persona_semantic_review_v2_3.yaml
+    materialization_status: present_preparation_not_g1_freeze
+  - artifact_id: persona-adjudication-rubric-template
+    path: data/manifests/persona_adjudication_rubric_v2_3.yaml
+    materialization_status: present_without_ratings_or_adjudication
+  - artifact_id: persona-review-packet-manifest
+    path: data/manifests/persona_semantic_review_packet_manifest_v2_3.yaml
+    materialization_status: present_without_ratings_or_adjudication
+  - artifact_id: persona-review-input-packet
+    path: data/reviews/persona_semantic_review_packet_v2_3.jsonl
+    materialization_status: present_without_ratings_or_adjudication
+  - artifact_id: topic-screening-packet-manifest
+    path: data/manifests/topic_screening_packets_v2_3.yaml
+    materialization_status: present_without_ratings_or_final_topics
+  - artifact_id: topic-mmlu-triage-input
+    path: data/reviews/topic_mmlu_triage_input_v2_3.jsonl
+    materialization_status: present_without_ratings_or_final_topics
+  - artifact_id: topic-anthropic-writer-input
+    path: data/reviews/topic_anthropic_full_screen_input_v2_3.jsonl
+    materialization_status: present_without_scenario_cards_or_ratings
+  - artifact_id: phase2-review-protocol-document
+    path: docs/gates/G1_phase2_review_protocol.md
+    materialization_status: present_preparation_not_g1_freeze
+  - artifact_id: phase2-review-contract-test
+    path: tests/test_g1_phase2_protocol.py
+    materialization_status: present_preparation_not_g1_freeze
+
 
 readiness_statement:
   gate_passed: false

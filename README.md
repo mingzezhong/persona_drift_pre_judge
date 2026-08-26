@@ -56,6 +56,7 @@ $$
 - [V2 执行解释与补充条款](docs/restart_v2_amendment.md)：统一时序、符号、剂量边界和启动闸门；
 - [V2.2 Persona–Topic 修订](docs/persona_topic_design_amendment_v2_2.md)：继续定义 Persona 层级、cold-start 和样本重算边界；其中旧 Topic 条款已被 V2.3 取代；
 - [V2.3 Scenario-first Topic 修订](docs/topic_design_amendment_v2_3.md)：冻结 36-topic slot/split/pilot 骨架并列出仍待 G1 冻结的执行项；
+- [第三方数据声明](THIRD_PARTY_NOTICES.md)：固定版本许可证据、来源署名和派生文本修改说明；
 - [V2 正式研究协议](docs/research_protocol_v2.md)：阶段、样本设计、分析与停止规则。
 
 不得仅依据 README 修改科学定义；任何正式变更必须新增带版本的 amendment。
@@ -82,6 +83,12 @@ G1 第一阶段已经产生可在项目中查看、可离线重建的真实资�
 机器清单为 [`configs/g1_v2_3.yaml`](configs/g1_v2_3.yaml)，阶段报告为 [`docs/gates/G1_source_candidate_phase1.md`](docs/gates/G1_source_candidate_phase1.md)。验证器预期返回 `PREPARATION` 和 exit code `2`；即使只把 status 改为 ready，缺少完整 freeze contract 时仍 fail closed。
 
 下一步必须先冻结匿名、多 AI 的 Persona true-trait adjudication 与 Topic Suitability Screen，再产生最终 36 Topics 和 pressure-free 25-turn moves。不得依据 target-model 表现筛选候选。
+
+### G1 Phase 2：仅评审输入准备
+
+Phase 2 的 outcome-blind 评审协议和匿名输入包已经物化：Persona 包含 24 个候选 × 96 条，共 2,304 条；Topic 包含全部 12,032 个 MMLU-Pro 候选和 158 个 Anthropic logical candidates。它们仍是 **PREPARATION**，不是最终实验数据：精确 reviewer model IDs/revisions 尚未冻结，synthetic smoke 尚未通过，也没有任何真实或占位 ratings、最终 Persona catalog、最终 36 Topics、25-turn scenarios、split/freeze attestation 或 G1 PASS。Anthropic 候选当前仅进入 `PRE-SCENARIO-CARD` writer frame；生成并绑定 `scenario_card_sha256` 前禁止 suitability rating。
+
+执行契约见 [`configs/g1_phase2_v2_3.yaml`](configs/g1_phase2_v2_3.yaml)，方法说明见 [`docs/gates/G1_phase2_review_protocol.md`](docs/gates/G1_phase2_review_protocol.md)。Target-model generation、target-model GPU use 与任何 behavior/activation/outcome access 仍被禁止；reviewer/writer GPU use 必须等 exact registry 和 synthetic smoke 通过后才能授权。单独修改 status 不能开启执行。
 
 ## V2.3 固定与开放设计
 

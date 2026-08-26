@@ -1,0 +1,87 @@
+schema_version: restart-v2.3-g1-persona-semantic-review-preparation-v1
+gate_id: G1
+implementation_status: PREPARATION
+phase: persona_semantic_review_packet_preparation
+selection_outcome_blind: true
+execution_authorized: false
+contains_target_model_data: false
+target_model_outcomes_observed: false
+
+input_locks:
+  candidate_pool:
+    path: data/manifests/persona_candidate_pool_v2_3.yaml
+    file_sha256: 7e74b4189ceb2a462fe0651b82be2b16f113aa4133a6dc5dd14f49ba4d635334
+  duplicate_audit:
+    path: data/reports/persona_dedup_v2_3.json
+    file_sha256: aca23c38b3ae8b0444d9b3cc6c44a47936b132e4a2706f2dbdf4237a93ecc177
+  source_checkout:
+    path: data/raw/anthropics-evals-84fcc677e52e1902d696c32cd1a6b663e70d3993
+    repository_commit: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+
+sampling_contract:
+  algorithm_id: domain-separated-sha256-rank-v1
+  seed_sha256: bb3527341dc9e2d4d02dced3fe3db9310dc9d5ec1161adea851188714facd423
+  ranking_domain: LPS-G1-PERSONA-SEMANTIC-REVIEW-SAMPLE-V1
+  anonymous_candidate_id_domain: LPS-G1-PERSONA-REVIEW-CANDIDATE-ID-V1
+  candidate_display_order_domain: LPS-G1-PERSONA-REVIEW-CANDIDATE-ORDER-V1
+  anonymous_item_id_domain: LPS-G1-PERSONA-REVIEW-ITEM-ID-V1
+  eligible_item_status: CANDIDATE_GLOBALLY_UNIQUE_AFTER_G1_NORMALIZATION
+  candidates: 24
+  items_per_candidate: 96
+  matching_yes_per_candidate: 48
+  matching_no_per_candidate: 48
+  tie_breaker: stable_source_item_id_ascending
+
+exposure_contract:
+  assigned_status: G1_SEMANTIC_REVIEW_EXPOSED_DEFINITION_ONLY
+  allowed_future_persona_item_roles:
+    - trait_definition
+  forbidden_future_persona_item_roles:
+    - persona_vector_extraction
+    - held_out_validation
+  permanence: irreversible_within_restart_v2_3
+  enforcement: fail_closed_before_any_G2_item_role_manifest_is_accepted
+
+review_contract:
+  rubric_id: lps-v2.3-g1-persona-semantic-rubric-v1
+  primary_rater_count: 3
+  primary_raters_must_use_distinct_base_model_families: true
+  adjudicator_count: 1
+  adjudicator_must_use_a_fourth_distinct_base_model_family: true
+  rater_identity_status: NOT_ASSIGNED
+  ratings_status: NOT_RUN
+  ratings_must_not_be_generated_by_packet_builder: true
+
+redistribution_notice:
+  source_repository: https://github.com/anthropics/evals
+  source_revision: 84fcc677e52e1902d696c32cd1a6b663e70d3993
+  source_name: Anthropic model-written evaluations Persona datasets
+  source_license_spdx: CC-BY-4.0
+  source_license_url: https://creativecommons.org/licenses/by/4.0/
+  source_license_path_at_revision: LICENSE
+  source_license_file_sha256: 7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661
+  attribution: Anthropic, model-written evaluations Persona datasets
+  changes_made: >-
+    Selected 2,304 statements by a deterministic outcome-blind sampling rule;
+    removed source trait, family, repository-path, line-number, and upstream item
+    identifiers from rater-facing rows; assigned project-local anonymous IDs; and
+    reformatted each statement as a semantic-review question with the upstream
+    persona-consistent Yes/No response direction.
+  endorsement_disclaimer: >-
+    The adaptations and review packet are a project artifact and do not imply
+    endorsement by Anthropic.
+
+output_paths:
+  rubric: data/manifests/persona_adjudication_rubric_v2_3.yaml
+  packet_manifest: data/manifests/persona_semantic_review_packet_manifest_v2_3.yaml
+  exposure_ledger: data/manifests/persona_semantic_review_exposure_v2_3.yaml
+  blinded_packet: data/reviews/persona_semantic_review_packet_v2_3.jsonl
+  build_audit: data/reports/persona_semantic_review_packet_audit_v2_3.json
+
+readiness:
+  g1_passed: false
+  packet_prepared: true
+  semantic_reviews_completed: false
+  pairwise_relation_audit_completed: false
+  final_persona_catalog_frozen: false
+  target_model_execution_authorized: false

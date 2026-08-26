@@ -64,7 +64,22 @@ EXPECTED_PLANNED_ARTIFACT_IDS = {
 }
 
 
+EXPECTED_PHASE2_PREPARATION_ARTIFACT_IDS = {
+    "phase2-review-contract",
+    "persona-review-implementation-contract",
+    "persona-adjudication-rubric-template",
+    "persona-review-packet-manifest",
+    "persona-review-input-packet",
+    "topic-screening-packet-manifest",
+    "topic-mmlu-triage-input",
+    "topic-anthropic-writer-input",
+    "phase2-review-protocol-document",
+    "phase2-review-contract-test",
+}
+
+
 def _load_config() -> dict:
+
     return yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
 
 
@@ -132,9 +147,25 @@ def test_planned_freeze_products_are_not_misrepresented_as_present() -> None:
     assert not EXPECTED_PLANNED_ARTIFACT_IDS.intersection(
         config["required_artifact_ids"]
     )
+    materialized_planned = {
+        item["artifact_id"]
+        for item in planned
+        if item["construction_status"]
+        == "phase2_preparation_materialized_not_frozen"
+    }
+    assert materialized_planned == {"persona-adjudication-rubric"}
     assert all(
-        not (REPOSITORY_ROOT / item["planned_path"]).exists() for item in planned
+        (REPOSITORY_ROOT / item["planned_path"]).is_file()
+        if item["artifact_id"] in materialized_planned
+        else not (REPOSITORY_ROOT / item["planned_path"]).exists()
+        for item in planned
     )
+    preparation = config["phase2_preparation_artifacts"]
+    assert {item["artifact_id"] for item in preparation} == (
+        EXPECTED_PHASE2_PREPARATION_ARTIFACT_IDS
+    )
+    assert all((REPOSITORY_ROOT / item["path"]).is_file() for item in preparation)
+    assert all("preparation" in item["materialization_status"] or "without" in item["materialization_status"] for item in preparation)
     assert config["readiness_statement"] == {
         "gate_passed": False,
         "phase_1_artifacts_hash_verified": True,
