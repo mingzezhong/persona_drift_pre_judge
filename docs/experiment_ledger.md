@@ -18,8 +18,12 @@ forecasting fit, randomized fork, or confirmatory analysis has been executed.
 | 2026-08-25 | V2.1 method-scope validation | PASS | 38 tests passed, including project-wide scope, active-config, operational-document, dependency, identifier, and production-source exclusion checks |
 | 2026-08-25 | README GitHub math rendering | PASS | Legacy `\(...\)` / `\[...\]` delimiters converted to GitHub-compatible `$...$` / `$$...$$`; GitHub Markdown API rendered all 11 formulas; delimiter regression checks added; 41 tests passed |
 
-| 2026-08-25 | V2.2 Persona/Topic scope amendment | COMPLETE | Discussion provenance hashed; hierarchical Persona ontology adopted as an endorsed direction; Flat-4 counts retired; 30-topic contract retained; exact G1/G2 assets and revised sample size remain open |
+| 2026-08-25 | V2.2 Persona/Topic scope amendment | COMPLETE | Discussion provenance hashed; hierarchical Persona ontology adopted as an endorsed direction; Flat-4 counts retired; 30-topic contract retained at that revision (later superseded by V2.3); exact G1/G2 assets and revised sample size remain open |
 | 2026-08-25 | V2.2 schema validation | PASS | Final full suite: `51 tests passed in 17.17s`; catalog-backed record validation, uniform Anthropic stance policy, open phase-specific seed contract, and hierarchical/cold-start statistical contract validated; source-material SHA256 and `git diff --check` passed |
+| 2026-08-25 | V2.3 Scenario-first Topic amendment | COMPLETE | `topic的优化.md` hashed as decision provenance; adopted 12 shared + 24 family-specific slots, 18/6/12 split, and 2-shared-plus-4-family pilot composition; exact scenario families/items/templates/screen implementation remain G1 OPEN |
+| 2026-08-26 | V2.3 documentation validation | PASS | All five source-material SHA256 checks passed; `git diff --check` passed; README math regression: `3 passed in 7.26s` |
+| 2026-08-26 | V2.3 machine-contract validation | PASS | Byte-identical final-tree mirror: `64 tests passed in 0.84s`; CETUS shared-home rerun entered filesystem I/O wait and was terminated without assertion output; source/config/test SHA256 matched; `git diff --check` passed |
+| 2026-08-26 | V2.3 Topic identity/access audit | COMPLETE | Unified machine scope as `topic_scope`; froze pairwise-unique move hashes, canonical globally unique content roots, split provenance fields, full-prompt composition hashes, gate-specific exposure timing, and six-QA-assets/five-outcome-assets heldout-family policy; no experimental data generated |
 
 Public-data licenses/item IDs remain a `G1` requirement. Exact model revisions,
 license/access, chat templates, and hook equivalence remain `G3` requirements.

@@ -1,11 +1,11 @@
 # Latent Persona Seismograph V2：正式研究协议
 
 Protocol ID：`LPS-V2-20260824`
-版本：`2.2-preparation`
+版本：`2.3-preparation`
 修订日期：2026-08-25
-状态：正式协议；G0 `PASS`，G1–G8 open；Persona 层级方向已修订，exact inventory 与新版样本量仍 OPEN；尚无 V2.2 实验结果
+状态：正式协议；G0 `PASS`，G1–G8 open；Persona 层级与 Scenario-first Topic 骨架已修订，exact assets 与新版样本量仍 OPEN；尚无 V2.3 实验结果
 权威设计来源：[`deep-research-report.md`](../deep-research-report.md) 与 [`重启项目的细节.md`](../重启项目的细节.md)
-执行解释：[`docs/restart_v2_amendment.md`](restart_v2_amendment.md)；Persona/Topic 范围由 [`persona_topic_design_amendment_v2_2.md`](persona_topic_design_amendment_v2_2.md) 修订，讨论 provenance 为 [`persona和topic的讨论.md`](../persona和topic的讨论.md)
+执行解释：[`docs/restart_v2_amendment.md`](restart_v2_amendment.md)；Persona 范围由 [`persona_topic_design_amendment_v2_2.md`](persona_topic_design_amendment_v2_2.md) 修订；Topic 范围由 [`topic_design_amendment_v2_3.md`](topic_design_amendment_v2_3.md) 修订，讨论 provenance 分别为 [`persona和topic的讨论.md`](../persona和topic的讨论.md) 与 [`topic的优化.md`](../topic的优化.md)
 
 ## 1. 研究目标
 
@@ -58,6 +58,8 @@ V2 不采用 Conditional Flow。Pilot、main study、randomized intervention 和
 - **Prompt variant**：同一 trait 的结构匹配 system-prompt 表述；是嵌套条件，不是新 Persona。
 - **Evaluation item**：公开 trait 题库中的单条测量题；不是 Persona，也不得与 prompt variant 混计。
 - **Persona generalization role**：seen-trait observed wording、unseen wording、within-family unseen trait 或 unseen behavioral family；它与 Topic split 正交。
+- **Scenario role**：解释一个场景如何支持行为表达的概念名；它不是 machine-readable manifest field。
+- **`topic_scope`**：唯一的机器字段，取 `shared_core` 或 `family_specific`；不得使用 `topic_role` 别名。
 - **Phase assignment manifest \(X_{\phi}\)**：pilot、main 或 fork 的逐行 non-seed design cells；每行显式记录 trait × prompt variant 及所有 phase-specific 交叉因子。
 - **Pressure family**：反 persona 压力机制。
 - **Pressure level \(L_t\)**：同一 family 内经独立、outcome-blind 校准的 L0–L5 ordinal level。
@@ -99,33 +101,43 @@ Behavioral Family → Persona Trait → Prompt Variant → Evaluation Item
 2. 已见 family 内的 unseen trait；
 3. 一个完整 unseen behavioral family。
 
-`risk-averse`、`risk-seeking`、`stands-its-ground` 和 `agreeableness` 目前只是 seed trait candidates，不再是完整的 Flat-4 primary frame。`G1` 必须冻结 exact families、traits、公开 source/revision/license/item IDs 与 generalization assignments；`G2` 必须冻结 prompt variants、item-role split、held-out validation 与 Persona Vector protocol。无法达到规划范围时必须报告 shortfall 和 amendment，不能用近义标签、prompt 改写或 items 补数。
+`risk-averse`、`risk-seeking`、`stands-its-ground` 和 `agreeableness` 目前只是 seed trait candidates，不再是完整的 Flat-4 primary frame。`G1` 必须冻结 exact Persona family/trait catalog、sampling frame，以及公开 source/revision/license/item IDs；`G2` 必须冻结 fully held-out family，以及 trait/variant/wording generalization assignments、prompt variants、item-role split、held-out validation 与 Persona Vector protocol。无法达到规划范围时必须报告 shortfall 和 amendment，不能用近义标签、prompt 改写或 items 补数。
 
 PersonaGym 仍仅用于 pipeline 冻结后的 external evaluation。
 
-### 3.3 Topics
+### 3.3 Scenario-first Topics
 
-主研究固定 30 个 public topic anchors：
+V2.3 主研究采用 36 个 public topic anchors：
 
-\[
-24\text{ MMLU-Pro anchors}+6\text{ Anthropic sycophancy/opinion anchors}.
-\]
+| Scenario role（概念） | 结构 | Development | Calibration | Untouched Test | Total |
+|---|---|---:|---:|---:|---:|
+| Shared core | 6 evidence-based + 6 opinion | 6 | 2 | 4 | 12 |
+| Family-specific | 每个 behavioral family 6 个 | 12（每 family 3） | 4（每 family 1） | 8（每 family 2） | 24 |
+| **Total** | 12 shared + 24 family-specific | **18** | **6** | **12** | **36** |
 
-24 个 MMLU-Pro anchors 覆盖 12 个预先选择领域，每域 2 个；6 个观点 topics 由 philosophy、NLP 和 politics 各 2 个构成。公开问题只提供 topic/scenario anchor；正确答案不是 Drift label。
+G1 冻结 6 个 Development pilot topic assets：2 个 shared core + 每个 behavioral family 1 个 family-specific。六个 assets 全部可用于 outcome-free scenario/instrumentation QA，但 held-out-family asset 不得产生或揭示 target-model behavior、judge、activation 等 outcomes。G2 冻结 fully held-out family 后，G5 outcome-bearing dose-finding 只允许三个 Development families，使用 2 shared + 每个 Development family 1 specific，即 5 个 logical topic assets；第六个 held-out-family specific asset 不进入 `X_pilot`。
 
-所有 item IDs 和 25-turn scenario conversion templates 在生成前冻结。按 topic 划分：
+本设计遵守 **Scenario first, category second**。MMLU-Pro 的 14 个 categories 只构成候选搜索池，不设每类 quota，也不要求最终全部覆盖；Shared evidence anchors 主要从该池筛选。Anthropic sycophancy/opinion items 构成 Shared opinion candidate pool。Public item只提供 anchor，正确答案不是 Drift label。
 
-| Split | Topics | 用途 |
-|---|---:|---|
-| Development | 15 | 特征/模型开发、候选比较、pilot、power simulation |
-| Calibration | 5 | region threshold、warning threshold、probability calibration |
-| Untouched Test | 10 | 所有方法冻结后的一次性 confirmatory evaluation |
+Shared topics 对各纳入 families 使用相同 content-only scenario，支持 matched-topic cross-family comparison。Family-specific topic 只对其 `eligible_behavioral_family_id` 有效，只支持对应 family 内的 trait、wording 与 trajectory claim；不同 families 的不同 family-specific topics 不能合并成 matched cross-family ranking。
 
-6 个 pilot topics 是 15 个 Development topics 中预先标记的子集，不进入 Calibration 或 Untouched Test。讨论中的 36/40-topic 方案没有获得用户确认，不属于 V2.2。
+`G1` 必须冻结 exact four-family mapping、scenario families/subtypes、36 个 immutable source/transformed IDs、`topic_scope`、source revision/license/file hash、25 个 pairwise-unique move hashes、single content-canonicalization version、globally unique content root、exact 18/6/12 topic IDs、exact 6 pilot-asset IDs、`split_algorithm_version`、`split_seed`、`balance_diagnostics_sha256`、`topic_split_plan_manifest_sha256`、`assignment_outcome_blind=true` 和全部排除理由；这些 exact IDs 必须在 `G1 PASS` 前完成冻结。讨论中的具体 family names、medical/financial/engineering 等 subtypes 和题目示例均不是 frozen assets。
 
-`G1` 还必须冻结 outcome-blind suitability rubric、12 个 MMLU-Pro categories、全部 immutable item IDs、source/license/revision/checksum、source/category-stratified split，以及每个 anchor 的 25-turn content-only topic moves。Anthropic opinion items 的原生 biography/user stance 必须预先选择“剥离/标准化”或独立 source-specific baseline；否则它会与后来施加的 pressure 混杂。每轮 user input 的执行契约是独立的 `topic_move + pressure_template(L_t)`，不得把反-Persona pressure 永久写入 scenario。
+Topic Suitability Screen 必须 outcome-blind。讨论中的五项指标（25-turn extensibility、Persona expression、pressure compatibility、ground truth/stable stance、safety-confound separation）、每项 0–2 和总分至少 8，只是 **CANDIDATE**。Exact rubric、scale、threshold、rater count/qualification、blind review、aggregation、reliability、ties、adjudication 和 shortfall/replacement rules 必须在读取任何 candidate outcome 前由 `G1` 唯一冻结。
 
-Topic ID 是 split、provenance 和 cluster unit，不是可泛化 predictor。模型不得使用 untouched topic 的 categorical ID；需要 topic conditioning 时，只能使用在 outcomes 前冻结、与 Drift labels 无关的 topic features/embedding。Public-data license/terms、feature extractor/revision 和 feature-freeze manifest 属于 `G1`；具体模型编码与 regularization 属于 `G6`。
+Topic split 与 Persona generalization role 是两条同时生效的访问轴。G1 冻结 Persona family/trait catalog 与 sampling frame；在 Topic 资产侧，G1 冻结 `topic_scope × behavioral_family` eligibility、exact topic split/pilot IDs 和静态双轴 access-policy logic。G2 冻结 fully held-out family 与 trait/variant/wording generalization assignments。每个 outcome phase 前另行签名 `X_phi` exposure manifest；G6 冻结 confirmatory exposure/analysis rule 与 `X_main`。Untouched Topic outcomes 或 held-out wording/trait/family outcomes均不得进入 Development/Calibration。Shared Untouched topics 提供 unseen-family primary cold-start test；held-out-family specific Untouched topics 只能作为 Persona + Scenario joint-transfer diagnostic，必须分开报告。
+
+每个 anchor 确定性转换成 25 个 content-only topic moves。每轮输入严格分离为：
+
+```text
+actual_user_turn_t = topic_move_t + pressure_template_t(L_t)
+```
+
+每个 Topic 保存 `topic_move_ids` 和 turn-aligned `topic_move_sha256s`；后者必须恰有 25 个 pairwise-unique content hashes。全库固定 `topic_content_canonicalization_version=restart-v2.3-topic-move-root-v1`：canonical bytes 为该 ASCII header 加换行，随后按 turn 1–25 拼接 `NN:<64-lowercase-hex>` 行，行间单个换行、末尾无额外换行。`topic_content_root_sha256` 是该 UTF-8 payload 的 SHA256，必须在 36 topics 中 globally unique，且不得混入 `topic_id`、source ID、`topic_scope` 或 split。相同 root 出现在多个 IDs/partitions 时 fail closed；cross-topic move overlap 与 near-duplicate scenario 另做 outcome-blind audit。
+
+每条 trajectory 另存 25 个独立 `pressure_template_ids`、absolute `L_1:25`、`turn_composition_version`、`composed_user_turn_sha256s` 和 `pre_response_full_prompt_sha256s`；三个 tuples 均按 turn 1–25 对齐。Topic move 不包含 level、反-Persona 指令或 outcome 预判，也不随 Persona/model/seed/schedule 改写。
+
+Anthropic items 的原生 biography/user stance 必须预先选择确定性剥离/标准化，或独立 source-specific baseline/estimand；否则不得进入 outcome-bearing pilot。Topic ID 是 split、provenance 和 outer cluster unit，不是 predictor feature。需要 Topic conditioning 时，只能使用 outcomes 前冻结的 topic features/embedding；具体模型编码与 regularization 由 `G6` 冻结。
 
 ### 3.4 Pressure schedules
 
@@ -139,13 +151,15 @@ S^*_{-1},\quad S^*,\quad S^*_{+1}.
 
 这里下标表示 schedule-grid neighbor；每条记录仍保存实际的 \(L_{1:25}\)。
 
-## 4. 样本设计（V2.2 待重算）
+Held-out family 不运行 outcome-bearing dose-finding，也不得用其 outcomes 选择 `S^*`。它只可使用 G4 independent-rater、outcome-blind L0–L5 calibration，以及在任何 held-out outcome 揭封前于 G6 冻结的 cross-Development-family schedule-transfer/fallback rule。该 rule 必须签名 inputs、aggregation、ties/shortfall 和左右邻居可行性；若无法给出可执行 schedule，则停止 held-out-family evaluation，不得看 outcome 后调整 dose。
 
-V2.1 基于四个 Flat-4 Persona 推导出的 `1,440` pilot trajectories、`8,640` main trajectories、`600` prefixes、`9,600` fork continuations 和约 `300,000` target-model turns 全部是 **RETIRED PLANNING FIGURES**。它们不能继续作为 V2.2 target、GPU 申请或完成度分母。
+## 4. 样本设计（V2.3 待重算）
 
-V2.2 保留以下非 Persona 因子作为规划输入：3 models、30 main topics、6 development pilot topics、25 main turns、5 candidate pilot schedules、3 main schedule arms，以及 fork 的 4 randomized doses。新的总量必须从 frozen manifests 计算，而不是从 README 常数读取。
+V2.1 基于四个 Flat-4 Persona 推导出的 `1,440` pilot trajectories、`8,640` main trajectories、`600` prefixes、`9,600` fork continuations 和约 `300,000` target-model turns 全部是 **RETIRED PLANNING FIGURES**。它们不能继续作为 V2.3 target、GPU 申请或完成度分母。
 
-V2.1 使用过的 pilot 4 seeds、main 8 seeds、候选 `8→10` 和 fork 每 arm 4 continuation seeds 都是 **historical candidate values**，不是 V2.2 defaults。三个 phase 的 seed 数均为 OPEN，必须根据该 phase 的 power/精度目标、层级方差、event rate 和 runtime/storage benchmark 在对应 gate 独立冻结。
+V2.3 以以下非 Persona 因子作为规划输入：3 models、36 main topics（12 shared + 24 family-specific）、6 Development pilot assets但仅5个G5 outcome-bearing logical assets、25 main turns、5 candidate pilot schedules、3 main schedule arms，以及 fork 的 4 randomized doses。新的总量必须从 frozen manifests 计算，而不是从 README 常数读取。
+
+V2.1 使用过的 pilot 4 seeds、main 8 seeds、候选 `8→10` 和 fork 每 arm 4 continuation seeds 都是 **historical candidate values**，不是 V2.3 defaults。三个 phase 的 seed 数均为 OPEN，必须根据该 phase 的 power/精度目标、层级方差、event rate 和 runtime/storage benchmark 在对应 gate 独立冻结。
 
 ### 4.1 G1/G2 后的重算输入
 
@@ -153,12 +167,13 @@ V2.1 使用过的 pilot 4 seeds、main 8 seeds、候选 `8→10` 和 fork 每 ar
 
 - exact family/trait catalog 与每个 trait 的 generalization role；
 - 哪些 traits 进入 pilot、Development、Calibration 和一次性 untouched evaluation；
+- 36 个 topic slots 的 `topic_scope`、eligible family 与 split，以及后续 phase-specific Topic × Persona exposure assignments；
 - prompt variants 是完整因子、平衡抽样因子还是 robustness subset；
 - pressure calibration 是 trait-level、pole-level 或 family-level；
 - intervention prefix quota 的分层单位；
 - 两卡 runtime、storage 与 checkpoint/resume benchmark。
 
-计划公式只从已签名的逐行 assignment manifests 计算。对 \(\phi\in\{\mathrm{pilot},\mathrm{main},\mathrm{fork}\}\)，令 \(X_{\phi}\) 是该 phase 的 non-seed design rows；pilot/main 行至少包含 model、topic、trait、prompt variant 和 schedule，fork 行至少包含 root prefix、fork turn、trait、prompt variant 和 dose。定义 trait × variant 计数矩阵：
+计划公式只从已签名的逐行 assignment manifests 计算。G1 冻结 Persona family/trait catalog 与 sampling frame，以及静态 Topic/eligibility/split contract；G2 冻结 fully held-out family 与 trait/variant/wording generalization assignments；`X_pilot`、`X_main`、`X_fork` 分别必须在对应 outcome phase 前签名，且 G6 冻结 analysis/confirmatory exposure rules。对 \(\phi\in\{\mathrm{pilot},\mathrm{main},\mathrm{fork}\}\)，令 \(X_{\phi}\) 是该 phase 的 non-seed design rows；pilot/main 行至少包含 model、topic_id、topic_scope、topic_split、eligible family、trait、prompt variant、Persona holdout role 和 schedule，fork 行至少包含 root prefix、fork turn、trait、prompt variant 和 dose。定义 trait × variant 计数矩阵：
 
 \[
 A^{(\phi)}_{\tau v}=\lvert X_{\phi}(\tau,v)\rvert.
@@ -175,9 +190,9 @@ N_{\phi}=\sum_{x\in X_{\phi}}s_{\phi}(x)
 
 ### 4.2 Pilot 与 power
 
-Pilot 仍只使用 6 个预先指定的 Development topics，目的仍是 hook/protocol sanity、transition-band/positivity、cluster variance、runtime 与 storage。只有 `G1/G2/G3/G4`、新版 sample-size manifest 和停止规则全部通过后才能启动。Pilot 不产生 confirmatory claim。
+六个预先指定的 Development pilot assets 全部用于 outcome-free scenario/instrumentation QA。G5 outcome-bearing dose pilot 仅使用 5 个 logical assets（2 shared + 三个 Development families 各 1 specific）；held-out-family specific asset 不进入 `X_pilot`，不产生 behavior/activation outcome。只有 G1/G2/G3/G4、新版 sample-size manifest、signed `X_pilot` 和停止规则全部通过后才能启动。Dose pilot 不产生 confirmatory claim。
 
-Pilot seed rule 在 `G5` 前冻结；main seed rule、trait × variant assignment 与主效应 power 均须依据 pilot 的 event rate 和 family/trait/topic cluster variance在 `G6` 预注册；fork continuation seed rule 在揭示任何 fork outcome 前于 `G7` 冻结。V2.1 的 4/8/10 只可作为 power simulation 的候选情景，不得被自动选为运行值。
+Pilot seed rule 与 signed `X_pilot` 在任何 pilot outcome 前冻结；main seed rule、trait × variant assignment 与主效应 power 均须依据 pilot 的 event rate 和 family/trait/topic cluster variance在 `G6` 预注册；fork continuation seed rule 在揭示任何 fork outcome 前于 `G7` 冻结。V2.1 的 4/8/10 只可作为 power simulation 的候选情景，不得被自动选为运行值。
 
 ### 4.3 Randomized forks
 
@@ -195,13 +210,24 @@ Turn 10/15、5-turn horizon、`d in {0,1,2,3}`、no-clipping 和全部 arms feas
 protocol_version
 model_id + model_revision + tokenizer_revision
 behavioral_family_id + persona_trait_id + persona_prompt_variant_id + persona_catalog_sha256
-topic_id + scenario_version + scenario_sha256 + topic_move_ids_1:25 + split
+topic_id + topic_scope + topic_split + eligible_behavioral_family_id
+split_algorithm_version + split_seed + assignment_outcome_blind=true
+balance_diagnostics_sha256 + topic_split_plan_manifest_sha256
+scenario_version + scenario_sha256
+topic_content_canonicalization_version=restart-v2.3-topic-move-root-v1
+topic_move_ids + topic_move_sha256s + topic_content_root_sha256
 pressure_family + schedule_id + L_1:25
-prompt_template_ids_1:25
+pressure_template_ids_1:25
+turn_composition_version + composed_user_turn_sha256s
+pre_response_full_prompt_sha256s
 generation_seed + sampling_config
 ```
 
-模型输出、prompt、token IDs、stop reason、runtime、software/hardware provenance 和异常状态全部 append-only 记录。失败重跑生成新的 attempt ID，不覆盖原 attempt。
+`topic_move_sha256s` 必须恰有 25 个 pairwise-unique hashes。`topic_content_root_sha256` 使用 `restart-v2.3-topic-move-root-v1`：header 加换行后按 turn 1–25 拼接 `NN:<hash>`，行间单个换行、末尾无额外换行，然后对完整 UTF-8 payload 做 SHA256。Root 必须在 36 topics 中 globally unique；duplicate、跨 split 重用或 canonical replay mismatch 都在生成前 fail closed。
+
+其中 `turn_composition_version` 唯一标识将 frozen `topic_move_t` 与 `pressure_template_t(L_t)` 组成实际 `U_t` 的确定性规则。Tuple `composed_user_turn_sha256s` 中的单-turn `composed_user_turn_sha256` 是组成后、进入 chat history 前的实际 user-turn UTF-8 bytes 的 SHA256；tuple `pre_response_full_prompt_sha256s` 中的单-turn `pre_response_full_prompt_sha256` 是 observational `t^-` 实际送入 tokenizer 的完整 chat-template-rendered prompt UTF-8 bytes 的 SHA256。两组 tuple 都必须严格包含 25 项、与 turn 1–25 对齐；不能只保存最后一轮、滚动摘要或未组合的 template hash。
+
+模型输出、完整 prompt、token IDs、stop reason、runtime、software/hardware provenance 和异常状态全部 append-only 记录。组成版本、composed-turn hash、full-prompt hash 或 token replay 任一不一致时必须 fail closed，不得采集正式 activation。失败重跑生成新的 attempt ID，不覆盖原 attempt。
 
 ### 5.2 Pre-response activations
 
@@ -245,7 +271,7 @@ Sustained Drift label 必须 behavior-only：judge 看不到 activation、Region
 
 ## 7. Persona representation
 
-Persona Vector 的提取数据必须与 30 个 main topics、pressure templates 和 test outcomes分离。`G2` 冻结：
+Persona Vector 的提取数据必须与 36 个 main topics、pressure templates 和 test outcomes分离。`G2` 冻结：
 
 - positive/negative paired prompts 的来源、数量和 split；
 - vector formula、token aggregation 和 normalization；
@@ -353,16 +379,16 @@ Primary metric、最小有意义增益、false-alarm budget、warning threshold�
 behavioral family → persona trait → prompt variant → trajectory → turn
 ```
 
-Topic 与这一主干交叉，所以共享 topic 的 model/trait/variant/seed/schedule trajectories 相关；seeds 是 trajectory replicates 而不是新 trait 或无条件 iid 单位。干预数据另有 `root trajectory/prefix → dose arm → fork continuation` 嵌套。同一 root 下的 forks 共享历史，不能装作独立 roots。
+Shared Topic 与这一主干交叉；family-specific Topic 只在 eligible family 内交叉。共享同一 topic 的 model/trait/variant/seed/schedule trajectories 相关；seeds 是 trajectory replicates 而不是新 trait 或无条件 iid 单位。干预数据另有 `root trajectory/prefix → dose arm → fork continuation` 嵌套。同一 root 下的 forks 共享历史，不能装作独立 roots。
 
 Primary uncertainty 计算必须遵守：
 
-1. observational Development/Calibration/Test 以 **topic** 为 outer cluster/resampling unit，在预注册 source/category strata 内重抽整个 topic block，保留该 topic 下全部 Persona 层级、trajectories 和 turns；
+1. observational Development/Calibration/Test 以 **topic** 为 outer cluster/resampling unit，在预注册 topic_scope/source/scenario strata 内重抽整个 topic block，保留该 topic 下全部 Persona 层级、trajectories 和 turns；
 2. Region 的 primary alarm calibration 使用 trajectory-level maxima，不将 turns 当 iid calibration samples；评估 calibration uncertainty 时仍保留 topic blocks；
 3. randomized fork 以 **root prefix** 为 randomization/dependence unit，重抽一个 root 时同时携带其所有 dose arms 与 continuations，并使用 topic 作 outer block/层级效应；
 4. turns、seeds、prompt variants 和 fork continuations 均不得被当作 iid replicates 以缩小标准误。
 
-Estimator、source/category strata、small-cluster correction 与有限样本区间在 `G6/G7` 冻结，但不能改变上述 primary units。规划中只有 4 个 behavioral families，因此 family 作为有限的 fixed claim strata，不作为 4 个 iid clusters 来估计“所有可能 Persona families”的 population variance。一个 fully unseen family 只支持对该预注册 family 的 cold-start transfer claim，不支持无界的新-family population generalization。Trait 级 claim 也条件于 `G1` 冻结的 sampling frame 和 inclusion rule。
+Estimator、topic_scope/source/scenario strata、small-cluster correction 与有限样本区间在 `G6/G7` 冻结，但不能改变上述 primary units。规划中只有 4 个 behavioral families，因此 family 作为有限的 fixed claim strata，不作为 4 个 iid clusters 来估计“所有可能 Persona families”的 population variance。一个 fully unseen family 只支持对该预注册 family 的 cold-start transfer claim，不支持无界的新-family population generalization。Trait 级 claim 也条件于 `G1` 冻结的 sampling frame 和 inclusion rule。Shared-topic cross-family claim 与 family-specific within-family claim 必须分开估计和报告；held-out family-specific topic 只支持 Persona + Scenario 联合迁移诊断。
 
 ## 9. Randomized causal Robust Radius
 
@@ -392,14 +418,14 @@ R_{t^+}^{fork,(5)}(d)
 | Stage | 输入 | 必须产出 | Stop / go |
 |---|---|---|---|
 | 0. Archive & provenance | 旧项目 + 三份设计材料 | 三个 source checksums、Git tag、read-only artifact archive manifest verification | `G0` **PASS** |
-| 1. Static public design | public datasets | family/trait/item and topic manifests、licenses/revisions、two orthogonal splits、scenario templates、topic-feature contract | `G1` |
-| 2. Measurement design | persona definitions | vectors protocol、judge rubric、onset rules | `G2` |
-| 3. Instrumentation smoke | 3 target models | model license/access、frozen revisions、hook validation、10-trajectory benchmark | `G3` |
+| 1. Static public design | public datasets | Persona family/trait catalog 与 sampling frame、public item/provenance manifests、36-topic `topic_scope`/source/content-root manifests、exact 18/6/12 IDs、exact 6 pilot-asset IDs、split provenance fields/plan hash、`topic_scope × family` eligibility、静态双轴 access policy、25-turn templates、suitability/topic-feature contracts | `G1` |
+| 2. Measurement design | persona definitions | fully held-out family 与 trait/variant/wording generalization assignments、vectors protocol、judge rubric、onset rules | `G2` |
+| 3. Instrumentation smoke | 3 target models + 6 pilot assets | 六个 assets 的 outcome-free QA、model license/access、frozen revisions、hook validation、benchmark；held-out-family Persona 不产生 outcome | `G3` |
 | 4. Pressure calibration | L0–L5 candidates | calibrated template bank | `G4` |
-| 5. Dose pilot | recalculated manifest only | S* decisions、topic-stratified within-cell positivity/overlap、variance/runtime/storage | `G5` |
-| 6. Analysis/power lock | pilot summaries only | two-clock estimands、trajectory-max calibration、Turn-25 horizon rule、signed analysis manifest、power result、non-Flow extension allowlist | `G6` |
-| 7. Main study | recalculated manifest only | frozen Development/Calibration/Test artifacts | test opened once |
-| 8. Intervention | eligible post-response main prefixes | eligibility/shortfall decision、randomized fork results | `G7` before outcomes |
+| 5. Dose pilot | signed `X_pilot`：5 logical topic assets × 3 Development families only | S* decisions、topic-stratified within-cell positivity/overlap、variance/runtime/storage；held-out family 无 outcome | `G5` |
+| 6. Analysis/power lock | Development-family pilot summaries only | two-clock estimands、trajectory-max calibration、Turn-25 rule、confirmatory exposure rule、signed `X_main`、heldout-family schedule-transfer/fallback、power、non-Flow allowlist | `G6` |
+| 7. Main study | signed `X_main` only | frozen Development/Calibration/Test artifacts；shared untouched 是 heldout-family primary cold-start，family-specific untouched 是 joint transfer | test opened once |
+| 8. Intervention | eligible prefixes + signed `X_fork` | eligibility/shortfall decision、randomized fork results | `G7` before outcomes |
 | 9. External evaluation | frozen pipeline | PersonaGym study | `G8` |
 
 通用 stopping rules：
@@ -407,6 +433,7 @@ R_{t^+}^{fork,(5)}(d)
 - label reliability 未达到 `G2` 标准：停止生成或重做 rubric，不调 activation model弥补；
 - hook/logit equivalence失败：停止对应模型；
 - transition band 不存在：停止该 cell或走预注册 pressure-template扩展；
+- held-out family 的 schedule-transfer/fallback rule 无法给出可执行且有左右邻居的 schedule：停止该 family evaluation，不查看 outcome、不事后调 dose；
 - aggregate transition band 存在但 topic-stratified positivity/overlap 不足：停止该 cell，不用 aggregate rate 掩盖 topic separation；
 - 存储/runtime 超过 `G3/G5` cap：先调整工程格式或样本设计 amendment，不丢字段后继续；
 - G7 eligible prefixes 少于任一预注册 stratum target：停止并 amendment，不 clipping、不跨 stratum 替代、不凑数；
@@ -434,8 +461,8 @@ Raw generations、activations、licensed model weights 和 credentials 不进入
 截至本协议日期，G0 已通过：三份设计源文件 checksums、pre-restart Git tag 和 read-only artifact archive manifest 已验证。以下内容均尚未发生：
 
 - 未完成 G1–G8；
-- 未运行任何 V2.2 dose-finding pilot；
-- 未生成任何 V2.2 main trajectories；
+- 未运行任何 V2.3 dose-finding pilot；
+- 未生成任何 V2.3 main trajectories；
 - 未运行 randomized intervention；
 - 未得到 V2 Region、Margin、hazard 或 Robust Radius 结果；
 - 未形成任何 V2 confirmatory conclusion。

@@ -5,10 +5,10 @@
 # operationalizes items intentionally left open by the design; it is not an
 # alternative or competing protocol.
 
-schema_version: restart-v2.2
+schema_version: restart-v2.3
 study_name: latent_persona_seismograph_restart_v2
 implementation_status: protocol_skeleton_only
-protocol_revision: 2.2-preparation
+protocol_revision: 2.3-preparation
 
 scope_exclusions:
   conditional_flow_family:
@@ -54,9 +54,11 @@ authoritative_documents:
     - 重启项目的细节.md
   endorsed_design_discussion:
     - persona和topic的讨论.md
+    - topic的优化.md
   active_amendments:
     - docs/restart_v2_amendment.md
     - docs/persona_topic_design_amendment_v2_2.md
+    - docs/topic_design_amendment_v2_3.md
 
 hardware:
   gpu_count: 2
@@ -90,27 +92,118 @@ frozen:
     - id: google/gemma-3-12b-it
 
   topics:
-    total: 30
-    sources:
-      mmlu_pro:
+    design_principle: scenario_first_category_second
+    hierarchy: [topic_scope, scenario_family, topic, scenario_template]
+    machine_identity_fields:
+      family_eligibility: eligible_behavioral_family_id
+      scenario_version_is_distinct_from_conversion_template_id: true
+    total: 36
+    topic_scopes:
+      shared_core:
+        count: 12
+        kinds:
+          evidence: 6
+          opinion: 6
+        accessible_to_all_behavioral_families: true
+      family_specific:
         count: 24
-        domains: 12
-        per_domain: 2
+        behavioral_families: 4
+        topics_per_family: 6
+        accessible_only_to_matching_behavioral_family: true
+    candidate_sources:
+      mmlu_pro:
+        official_categories_in_candidate_pool: 14
+        category_quota: none
+        exact_category_ids_and_source_revision:
+          status: open_must_freeze_before_G1_pass
+        manifest_requires:
+          - selection_outcome_blind
+          - immutable_candidate_source_item_ids
+          - candidate_items_sha256
+          - exclusion_log_sha256
+          - suitability_rubric_sha256
       anthropic_sycophancy:
-        count: 6
-        groups:
-          philosophy: 2
-          nlp: 2
-          politics: 2
+        role: opinion_anchor_candidate_pool
+        exact_group_ids_and_source_revision:
+          status: open_must_freeze_before_G1_pass
+        selected_group_quota:
+          status: open_must_freeze_before_G1_pass
+        manifest_requires:
+          - selection_outcome_blind
+          - immutable_candidate_source_item_ids
+          - candidate_items_sha256
+          - exclusion_log_sha256
+          - suitability_rubric_sha256
+    suitability_screen:
+      selection_must_be_outcome_blind: true
+      versioned_rubric_manifest_required: true
+      exact_criteria_scale_aggregation_rater_tie_rule_and_threshold:
+        status: open_must_freeze_before_G1_pass
     split_unit: topic
+    split_manifest:
+      split_algorithm_id_required: true
+      split_algorithm_version_required: true
+      nonnegative_integer_seed_required: true
+      balance_diagnostics_sha256_required: true
+      manifest_sha256_required: true
+      assignment_must_be_outcome_blind: true
     partitions:
-      development: 15
-      calibration: 5
-      untouched_test: 10
+      development: 18
+      calibration: 6
+      untouched_test: 12
+    scope_stratification:
+      shared_core:
+        development: 6
+        calibration: 2
+        untouched_test: 4
+      each_family_specific:
+        development: 3
+        calibration: 1
+        untouched_test: 2
     pilot:
       count: 6
+      catalog_asset_semantics: outcome_free_quality_assurance_assets
       must_be_subset_of: development
+      shared_topics: 2
+      family_specific_topics_per_family: 1
       may_enter_untouched_confirmation: false
+      outcome_bearing_dose_finding:
+        gate: G5
+        persona_families: development_only
+        development_family_count: 3
+        exposed_logical_assets: 5
+        exposed_asset_composition:
+          shared_core: 2
+          matching_family_specific: 3
+        heldout_family_slot_outcome_access: forbidden
+        persona_roles_allowed:
+          - seen_trait_observed_wording
+    turn_composition:
+      content_only_topic_moves_per_trajectory: 25
+      pressure_template_ids_per_trajectory: 25
+      topic_moves_and_pressure_templates_recorded_separately: true
+      frozen_scenario_manifest_per_topic_required: true
+      topic_content_root:
+        canonical_rule: restart-v2.3-topic-move-root-v1
+        binds_ordered_topic_move_sha256s: true
+        globally_unique_across_36_topics: true
+        repeated_move_content_within_topic_allowed: false
+      ordered_pressure_slots_per_trajectory: 25
+      deterministic_composition_version_required: true
+      composed_user_turn_sha256s_per_trajectory: 25
+      composed_user_turn_sha256s_must_be_unique: true
+      pre_response_full_prompt_sha256s_per_trajectory: 25
+      pre_response_full_prompt_sha256s_must_be_unique: true
+      activation_snapshot_prompt_sha256_must_bind_by_turn: true
+      provenance_chain:
+        - topic_move_and_pressure_template_ids
+        - composed_user_turn_sha256
+        - pre_response_full_prompt_sha256
+    predictor_fit_access:
+      requires_both:
+        - topic_split_is_development
+        - persona_role_is_seen_trait_observed_wording
+      all_persona_holdout_roles_are_evaluation_only: true
 
   activation_capture:
     timing: pre_response
@@ -155,6 +248,12 @@ frozen:
     main_arm_semantics: grid_neighbors_of_interior_transition_schedule
     pilot_grid_boundary_policy: five_explicit_absolute_schedules_no_runtime_clipping
     generic_level_boundary_policy: error_never_clip
+    heldout_family_schedule_selection:
+      outcome_access_during_G4_level_calibration: forbidden
+      transfer_or_fallback_rule_source: development_families_only
+      transfer_or_fallback_rule_must_be_frozen_before_heldout_outcome_reveal: true
+      heldout_outcomes_may_select_schedule: false
+      missing_frozen_rule_policy: stop
 
   intervention:
     prefix_turns: [10, 15]
@@ -213,6 +312,30 @@ planning:
       status: open_must_freeze_before_G2
     held_out_items_may_influence_prompt_vector_layer_or_threshold_selection: false
 
+  topic_design:
+    status: endorsed_structure_pending_G1_operational_freeze
+    execution_authorized: false
+    exact_topic_ids_source_mapping_scenario_families_and_subtypes:
+      status: open_must_freeze_before_G1_pass
+    suitability_scoring:
+      status: candidate_only_open_must_freeze_before_G1_pass
+      execution_authorized: false
+      candidate_criteria_not_frozen:
+        - extensible_to_25_turns
+        - supports_persona_expression
+        - supports_natural_pressure
+        - has_ground_truth_or_stable_stance
+        - avoids_safety_policy_confound
+      candidate_scale: {minimum: 0, maximum: 2}
+      candidate_total_threshold: 8
+      aggregation_rule: open
+      rater_and_tie_rule: open
+    source_category_policy:
+      mmlu_pro_14_categories_are_candidate_pool_not_quota: true
+      fixed_per_category_quota: false
+      anthropic_group_ids_revision_and_quota_are_open: true
+      both_sources_require_unique_outcome_blind_candidate_pool_manifests: true
+
   sample_design:
     status: blocked_pending_exact_trait_inventory_variant_exposure_and_resource_rebenchmark
     retired_flat_four_counts:
@@ -225,7 +348,9 @@ planning:
       models: 3
       pilot_topics: 6
       pilot_candidate_schedules: 5
-      main_topics: 30
+      logical_topic_slots:
+        count: 36
+        semantics: scope_constrained_catalog_slots_not_full_persona_cross_product
       main_pressure_schedules: 3
       fork_doses: 4
       turns_per_full_trajectory: 25
@@ -241,6 +366,9 @@ planning:
       - exact_trait_inventory
       - traits_exposed_in_each_phase
       - prompt_variant_exposure_policy
+      - topic_scope_by_behavioral_family_eligibility_matrix
+      - persona_trait_variant_holdout_assignments
+      - phase_specific_X_phi_exposure_signed_manifests
       - eligible_prefix_target_and_stratification
     pilot_power_simulation_target: 0.90
 
@@ -255,8 +383,10 @@ protocol_gates:
     status: open_must_preregister_before_pilot_submission
   public_source_revisions_licenses_and_download_hashes:
     status: open_must_freeze_before_G1_pass
-  persona_family_trait_catalog_and_generalization_assignments:
+  persona_family_trait_catalog:
     status: open_must_freeze_before_G1_pass
+  persona_generalization_assignments:
+    status: open_must_freeze_before_G2_pass
   persona_prompt_variants_and_wording_holdout:
     status: open_must_freeze_before_G2
   persona_item_role_manifests_and_no_overlap_audit:
@@ -264,13 +394,29 @@ protocol_gates:
   revised_sample_counts_runtime_storage_and_variant_exposure:
     status: open_must_freeze_before_pilot_submission
   public_topic_item_ids_and_conversion_templates:
-    status: open_must_freeze_before_pilot
+    status: open_must_freeze_before_G1_pass
+  topic_scenario_family_ids_subtypes_and_target_family_assignments:
+    status: open_must_freeze_before_G1_pass
+  topic_suitability_scale_aggregation_raters_ties_and_threshold:
+    status: open_must_freeze_before_G1_pass
+  public_source_candidate_groups_revisions_items_and_manifest_hashes:
+    status: open_must_freeze_before_G1_pass
+  topic_scenario_manifests_with_25_moves_and_pressure_slots:
+    status: open_must_freeze_before_G1_pass
+  topic_scope_by_behavioral_family_eligibility_matrix:
+    status: open_must_freeze_before_G1_pass
+  persona_trait_variant_holdout_assignments:
+    status: open_must_freeze_before_G2_pass
+  phase_specific_X_phi_exposure_signed_manifests:
+    status: open_must_freeze_before_each_outcome_phase
   topic_outcome_blind_suitability_and_source_stance_policy:
     status: open_must_freeze_before_G1_pass
   development_calibration_test_topic_id_assignment:
-    status: open_must_freeze_before_pilot
+    status: open_must_freeze_before_G1_pass
   six_development_pilot_topic_ids:
-    status: open_must_freeze_before_pilot
+    status: open_must_freeze_before_G1_pass
+  heldout_family_schedule_transfer_or_fallback_rule:
+    status: open_must_freeze_before_G6_main_outcome_reveal
   persona_system_prompt_construction_and_validation:
     status: open_must_freeze_before_pilot
   pressure_family_definitions:

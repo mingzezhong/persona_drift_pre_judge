@@ -8,7 +8,7 @@ extraction, or causal estimation.
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 from .personas import (
     PersonaCatalog,
@@ -23,9 +23,20 @@ from .protocol import (
     ProtocolValidationError,
     validate_main_turn,
 )
+from .splits import (
+    TopicAnchor,
+    TopicCandidatePoolManifest,
+    TopicScenarioManifest,
+    TopicScope,
+    TopicSplitPlan,
+    TopicSuitabilityRubricManifest,
+    compute_topic_content_root_sha256,
+    validate_topic_family_access,
+    validate_topic_scenario_catalog,
+)
 
 
-SCHEMA_VERSION = "restart-v2.2"
+SCHEMA_VERSION = "restart-v2.3"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -40,6 +51,11 @@ class TopicPartition(str, Enum):
     DEVELOPMENT = "development"
     CALIBRATION = "calibration"
     UNTOUCHED_TEST = "untouched_test"
+
+
+class PredictorFitAccess(str, Enum):
+    FIT = "fit"
+    EVALUATION_ONLY = "evaluation_only"
 
 
 
@@ -125,15 +141,28 @@ class TrajectoryMetadata(_SerializableRecord):
     persona_generalization_plan_sha256: str
     pressure_family: str
     topic_id: str
+    topic_scope: TopicScope
+    scenario_family_id: str
+    eligible_behavioral_family_id: Optional[str]
+    scenario_subtype: str
+    topic_catalog_manifest_sha256: str
+    topic_split_plan_manifest_sha256: str
     scenario_version: str
-    scenario_sha256: str
+    scenario_template_sha256: str
+    scenario_manifest_sha256: str
+    topic_content_root_sha256: str
     topic_move_ids: Tuple[str, ...]
     topic_move_sha256s: Tuple[str, ...]
-    topic_partition: TopicPartition
+    pressure_slot_ids: Tuple[str, ...]
+    topic_split: TopicPartition
+    predictor_fit_access: PredictorFitAccess
     seed: int
     schedule_id: str
     pressure_levels: Tuple[int, ...]
     pressure_template_ids: Tuple[str, ...]
+    turn_composition_version: str
+    composed_user_turn_sha256s: Tuple[str, ...]
+    pre_response_full_prompt_sha256s: Tuple[str, ...]
     generation_config_sha256: str
     schema_version: str = SCHEMA_VERSION
 
@@ -148,8 +177,11 @@ class TrajectoryMetadata(_SerializableRecord):
             ("persona_prompt_variant_id", self.persona_prompt_variant_id),
             ("pressure_family", self.pressure_family),
             ("topic_id", self.topic_id),
+            ("scenario_family_id", self.scenario_family_id),
+            ("scenario_subtype", self.scenario_subtype),
             ("scenario_version", self.scenario_version),
             ("schedule_id", self.schedule_id),
+            ("turn_composition_version", self.turn_composition_version),
         ):
             _nonempty(value, field=field)
         if self.schema_version != SCHEMA_VERSION:
@@ -173,7 +205,29 @@ class TrajectoryMetadata(_SerializableRecord):
             self.persona_generalization_plan_sha256,
             field="persona_generalization_plan_sha256",
         )
-        _sha256(self.scenario_sha256, field="scenario_sha256")
+        _require_enum(self.topic_scope, TopicScope, field="topic_scope")
+        if self.topic_scope is TopicScope.SHARED_CORE:
+            if self.eligible_behavioral_family_id is not None:
+                raise ProtocolValidationError(
+                    "shared trajectory topics cannot bind an eligible behavioral family"
+                )
+        else:
+            _nonempty(
+                self.eligible_behavioral_family_id,
+                field="eligible_behavioral_family_id",
+            )
+            if self.eligible_behavioral_family_id != self.behavioral_family_id:
+                raise ProtocolValidationError(
+                    "family-specific trajectory topic must match the persona family"
+                )
+        _sha256(self.topic_catalog_manifest_sha256, field="topic_catalog_manifest_sha256")
+        _sha256(self.topic_split_plan_manifest_sha256, field="topic_split_plan_manifest_sha256")
+        _sha256(self.scenario_template_sha256, field="scenario_template_sha256")
+        _sha256(self.scenario_manifest_sha256, field="scenario_manifest_sha256")
+        _sha256(
+            self.topic_content_root_sha256,
+            field="topic_content_root_sha256",
+        )
         move_ids = tuple(self.topic_move_ids)
         move_hashes = tuple(self.topic_move_sha256s)
         if len(move_ids) != MAIN_TURNS or any(
@@ -186,12 +240,53 @@ class TrajectoryMetadata(_SerializableRecord):
             raise ProtocolValidationError("topic_move_sha256s must contain 25 hashes")
         for index, value in enumerate(move_hashes):
             _sha256(value, field=f"topic_move_sha256s[{index}]")
+        expected_content_root = compute_topic_content_root_sha256(move_hashes)
+        if self.topic_content_root_sha256 != expected_content_root:
+            raise ProtocolValidationError(
+                "topic_content_root_sha256 does not match topic_move_sha256s"
+            )
         object.__setattr__(self, "topic_move_ids", move_ids)
         object.__setattr__(self, "topic_move_sha256s", move_hashes)
-        _require_enum(self.topic_partition, TopicPartition, field="topic_partition")
-        if self.phase is StudyPhase.PILOT and self.topic_partition is not TopicPartition.DEVELOPMENT:
+        pressure_slots = tuple(self.pressure_slot_ids)
+        if len(pressure_slots) != MAIN_TURNS or any(
+            not isinstance(item, str) or not item.strip() for item in pressure_slots
+        ):
+            raise ProtocolValidationError(
+                "pressure_slot_ids must contain 25 non-empty scenario slot IDs"
+            )
+        object.__setattr__(self, "pressure_slot_ids", pressure_slots)
+        _require_enum(self.topic_split, TopicPartition, field="topic_split")
+        _require_enum(
+            self.predictor_fit_access,
+            PredictorFitAccess,
+            field="predictor_fit_access",
+        )
+        expected_fit_access = (
+            PredictorFitAccess.FIT
+            if (
+                self.topic_split is TopicPartition.DEVELOPMENT
+                and self.persona_generalization_role
+                is PersonaGeneralizationRole.SEEN_TRAIT_OBSERVED_WORDING
+            )
+            else PredictorFitAccess.EVALUATION_ONLY
+        )
+        if self.predictor_fit_access is not expected_fit_access:
+            raise ProtocolValidationError(
+                "predictor_fit_access must require both a development topic and "
+                "a seen-trait observed-wording persona"
+            )
+        if self.phase is StudyPhase.PILOT and self.topic_split is not TopicPartition.DEVELOPMENT:
             raise ProtocolValidationError(
                 "pilot topics must be selected from the development partition"
+            )
+        if (
+            self.phase is StudyPhase.PILOT
+            and self.persona_generalization_role
+            is not PersonaGeneralizationRole.SEEN_TRAIT_OBSERVED_WORDING
+        ):
+            raise ProtocolValidationError(
+                "outcome-bearing pilot trajectories require a seen-trait "
+                "observed-wording persona"
             )
         _nonnegative_int(self.seed, field="seed")
         schedule = PressureSchedule(self.schedule_id, tuple(self.pressure_levels))
@@ -204,6 +299,32 @@ class TrajectoryMetadata(_SerializableRecord):
                 "pressure_template_ids must contain 25 non-empty frozen IDs"
             )
         object.__setattr__(self, "pressure_template_ids", template_ids)
+        composed_hashes = tuple(self.composed_user_turn_sha256s)
+        prompt_hashes = tuple(self.pre_response_full_prompt_sha256s)
+        if len(composed_hashes) != MAIN_TURNS:
+            raise ProtocolValidationError(
+                "composed_user_turn_sha256s must contain 25 hashes"
+            )
+        if len(prompt_hashes) != MAIN_TURNS:
+            raise ProtocolValidationError(
+                "pre_response_full_prompt_sha256s must contain 25 hashes"
+            )
+        for field, values in (
+            ("composed_user_turn_sha256s", composed_hashes),
+            ("pre_response_full_prompt_sha256s", prompt_hashes),
+        ):
+            for index, value in enumerate(values):
+                _sha256(value, field=f"{field}[{index}]")
+            if len(set(values)) != MAIN_TURNS:
+                raise ProtocolValidationError(
+                    f"{field} must contain 25 unique hashes"
+                )
+        object.__setattr__(
+            self, "composed_user_turn_sha256s", composed_hashes
+        )
+        object.__setattr__(
+            self, "pre_response_full_prompt_sha256s", prompt_hashes
+        )
         _sha256(self.generation_config_sha256, field="generation_config_sha256")
 
 
@@ -267,33 +388,145 @@ def validate_trajectory_persona_identity(
     return record
 
 
+def validate_trajectory_topic_identity(
+    record: TrajectoryMetadata,
+    *,
+    topic_catalog: Sequence[TopicAnchor],
+    topic_split_plan: TopicSplitPlan,
+    topic_scenario_manifests: Sequence[TopicScenarioManifest],
+    source_candidate_pool_manifests: Sequence[TopicCandidatePoolManifest],
+    suitability_rubric_manifest: TopicSuitabilityRubricManifest,
+    persona_catalog: PersonaCatalog,
+    topic_catalog_manifest_sha256: str,
+) -> TrajectoryMetadata:
+    """Bind a trajectory to the frozen topic hierarchy and both access axes."""
+
+    if not isinstance(record, TrajectoryMetadata):
+        raise ProtocolValidationError("record must be a TrajectoryMetadata instance")
+    if not isinstance(topic_split_plan, TopicSplitPlan):
+        raise ProtocolValidationError("topic_split_plan must be a TopicSplitPlan")
+    if not isinstance(persona_catalog, PersonaCatalog):
+        raise ProtocolValidationError("persona_catalog must be a PersonaCatalog")
+    _sha256(topic_catalog_manifest_sha256, field="topic_catalog_manifest_sha256")
+    family_ids = tuple(family.family_id for family in persona_catalog.families)
+    topic_split_plan.validate_against_catalog(
+        topic_catalog,
+        known_behavioral_family_ids=family_ids,
+        source_candidate_pool_manifests=source_candidate_pool_manifests,
+        suitability_rubric_manifest=suitability_rubric_manifest,
+    )
+    if record.behavioral_family_id not in set(family_ids):
+        raise ProtocolValidationError("trajectory references an unknown persona family")
+    if record.topic_catalog_manifest_sha256 != topic_catalog_manifest_sha256:
+        raise ProtocolValidationError("trajectory topic catalog manifest hash mismatch")
+    if record.topic_split_plan_manifest_sha256 != topic_split_plan.manifest_sha256:
+        raise ProtocolValidationError("trajectory topic split manifest hash mismatch")
+    anchors_by_id = {anchor.topic_id: anchor for anchor in topic_catalog}
+    anchor = anchors_by_id.get(record.topic_id)
+    if anchor is None:
+        raise ProtocolValidationError("trajectory references an unknown topic")
+    scenarios = validate_topic_scenario_catalog(
+        topic_catalog, topic_scenario_manifests
+    )
+    scenario = {item.topic_id: item for item in scenarios}[record.topic_id]
+    expected_partition = TopicPartition(
+        topic_split_plan.partition_for(record.topic_id)
+    )
+    if record.topic_split is not expected_partition:
+        raise ProtocolValidationError("trajectory topic partition mismatch")
+    if (
+        record.phase is StudyPhase.PILOT
+        and record.topic_id not in topic_split_plan.pilot
+    ):
+        raise ProtocolValidationError(
+            "pilot trajectory topic_id must belong to the frozen pilot subset"
+        )
+    if (
+        record.topic_scope is not anchor.topic_scope
+        or record.scenario_family_id != anchor.scenario_family_id
+        or record.eligible_behavioral_family_id
+        != anchor.eligible_behavioral_family_id
+        or record.scenario_subtype != anchor.scenario_subtype
+    ):
+        raise ProtocolValidationError("trajectory topic hierarchy identity mismatch")
+    if (
+        record.scenario_version != anchor.scenario_version
+        or record.scenario_version != scenario.scenario_version
+        or record.scenario_template_sha256 != anchor.scenario_template_sha256
+        or record.scenario_template_sha256 != scenario.scenario_template_sha256
+        or record.scenario_manifest_sha256 != anchor.scenario_manifest_sha256
+        or record.scenario_manifest_sha256 != scenario.manifest_sha256
+        or record.topic_content_root_sha256
+        != anchor.topic_content_root_sha256
+        or record.topic_content_root_sha256 != scenario.topic_content_root_sha256
+    ):
+        raise ProtocolValidationError("trajectory scenario manifest identity mismatch")
+    if (
+        record.topic_move_ids != scenario.ordered_topic_move_ids
+        or record.topic_move_sha256s != scenario.ordered_topic_move_sha256s
+        or record.pressure_slot_ids != scenario.pressure_slot_ids
+    ):
+        raise ProtocolValidationError(
+            "trajectory ordered topic moves or pressure slots mismatch scenario manifest"
+        )
+    validate_topic_family_access(
+        anchor, behavioral_family_id=record.behavioral_family_id
+    )
+    return record
+
+
 def create_manifest_validated_trajectory_metadata(
     *,
     persona_catalog: PersonaCatalog,
     persona_generalization_plan: PersonaGeneralizationPlan,
     persona_catalog_manifest_sha256: str,
     persona_generalization_plan_manifest_sha256: str,
+    topic_catalog: Sequence[TopicAnchor],
+    topic_split_plan: TopicSplitPlan,
+    topic_scenario_manifests: Sequence[TopicScenarioManifest],
+    source_candidate_pool_manifests: Sequence[TopicCandidatePoolManifest],
+    suitability_rubric_manifest: TopicSuitabilityRubricManifest,
+    topic_catalog_manifest_sha256: str,
     **metadata_fields: Any,
 ) -> TrajectoryMetadata:
-    """Construct and manifest-validate a trajectory metadata record."""
+    """Construct a trajectory and validate all Persona, Topic, and move manifests."""
 
     reserved = {
         "persona_catalog_sha256",
         "persona_generalization_plan_sha256",
+        "topic_catalog_manifest_sha256",
+        "topic_split_plan_manifest_sha256",
+        "scenario_manifest_sha256",
+        "topic_content_root_sha256",
     }
     supplied = reserved.intersection(metadata_fields)
     if supplied:
         raise ProtocolValidationError(
             f"factory owns manifest hash fields; remove {sorted(supplied)}"
         )
+    topic_id = metadata_fields.get("topic_id")
+    scenarios_by_id = {
+        item.topic_id: item for item in tuple(topic_scenario_manifests)
+        if isinstance(item, TopicScenarioManifest)
+    }
+    if topic_id not in scenarios_by_id:
+        raise ProtocolValidationError(
+            "factory topic_id must have a TopicScenarioManifest"
+        )
     record = TrajectoryMetadata(
         persona_catalog_sha256=persona_catalog_manifest_sha256,
         persona_generalization_plan_sha256=(
             persona_generalization_plan_manifest_sha256
         ),
+        topic_catalog_manifest_sha256=topic_catalog_manifest_sha256,
+        topic_split_plan_manifest_sha256=topic_split_plan.manifest_sha256,
+        scenario_manifest_sha256=scenarios_by_id[topic_id].manifest_sha256,
+        topic_content_root_sha256=(
+            scenarios_by_id[topic_id].topic_content_root_sha256
+        ),
         **metadata_fields,
     )
-    return validate_trajectory_persona_identity(
+    validate_trajectory_persona_identity(
         record,
         persona_catalog=persona_catalog,
         persona_generalization_plan=persona_generalization_plan,
@@ -301,6 +534,16 @@ def create_manifest_validated_trajectory_metadata(
         persona_generalization_plan_manifest_sha256=(
             persona_generalization_plan_manifest_sha256
         ),
+    )
+    return validate_trajectory_topic_identity(
+        record,
+        topic_catalog=topic_catalog,
+        topic_split_plan=topic_split_plan,
+        topic_scenario_manifests=topic_scenario_manifests,
+        source_candidate_pool_manifests=source_candidate_pool_manifests,
+        suitability_rubric_manifest=suitability_rubric_manifest,
+        persona_catalog=persona_catalog,
+        topic_catalog_manifest_sha256=topic_catalog_manifest_sha256,
     )
 
 
@@ -432,6 +675,37 @@ def validate_activation_coverage(
             "incomplete all-layer activation coverage: "
             f"missing={len(missing)}, unexpected={len(unexpected)}"
         )
+
+
+def validate_activation_prompt_binding(
+    snapshots: Sequence[ActivationSnapshotMetadata],
+    trajectory_metadata: TrajectoryMetadata,
+) -> None:
+    """Bind every activation to its trajectory's exact pre-response prompt."""
+
+    if not isinstance(trajectory_metadata, TrajectoryMetadata):
+        raise ProtocolValidationError(
+            "trajectory_metadata must be a TrajectoryMetadata instance"
+        )
+    for snapshot in snapshots:
+        if not isinstance(snapshot, ActivationSnapshotMetadata):
+            raise ProtocolValidationError(
+                "snapshots must contain ActivationSnapshotMetadata records"
+            )
+        if snapshot.trajectory_id != trajectory_metadata.trajectory_id:
+            raise ProtocolValidationError(
+                "activation snapshot trajectory_id does not match trajectory metadata"
+            )
+        expected_prompt_sha256 = (
+            trajectory_metadata.pre_response_full_prompt_sha256s[
+                snapshot.main_turn - 1
+            ]
+        )
+        if snapshot.prompt_sha256 != expected_prompt_sha256:
+            raise ProtocolValidationError(
+                "activation snapshot prompt_sha256 does not match the frozen "
+                "pre-response full prompt"
+            )
 
 
 @dataclass(frozen=True)
