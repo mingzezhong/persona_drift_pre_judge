@@ -25,8 +25,11 @@ from persona_drift.g1_local_reviewer import (
     PROMPTS_SCHEMA_VERSION,
     PRODUCTION_MODE,
     REGISTRY_SCHEMA_VERSION,
+    RUNNER_IMPLEMENTATION_RELATIVE_PATHS,
+    RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
     SYNTHETIC_MODE,
     _validate_instance,
+    runner_implementation_binding,
 )
 from persona_drift.g1_manifest import (
     ManifestValidationError,
@@ -134,6 +137,7 @@ _CONTRACT_FIELDS = frozenset(
         "decoding_canonical_sha256",
         "decoding",
         "batch_size",
+        "runner_implementation",
     }
 )
 
@@ -692,6 +696,44 @@ def _validate_contract(
         raise ReviewerPromotionError(f"{slot_id} decoding contract hash mismatch")
     if contract.get("batch_size") != 1:
         raise ReviewerPromotionError(f"{slot_id} smoke contract batch_size must equal 1")
+    implementation = _require_mapping(
+        contract.get("runner_implementation"),
+        f"{slot_id} contract runner_implementation",
+    )
+    _require_exact_keys(
+        implementation,
+        {"schema_version", "file_sha256s", "canonical_sha256"},
+        f"{slot_id} contract runner_implementation",
+    )
+    if implementation["schema_version"] != RUNNER_IMPLEMENTATION_SCHEMA_VERSION:
+        raise ReviewerPromotionError(
+            f"{slot_id} runner implementation schema_version is wrong"
+        )
+    implementation_hashes = _require_mapping(
+        implementation["file_sha256s"],
+        f"{slot_id} contract runner_implementation.file_sha256s",
+    )
+    if set(implementation_hashes) != set(RUNNER_IMPLEMENTATION_RELATIVE_PATHS):
+        raise ReviewerPromotionError(
+            f"{slot_id} runner implementation does not bind exactly the frozen files"
+        )
+    for relative_path, file_hash in implementation_hashes.items():
+        _require_sha256(
+            file_hash,
+            f"{slot_id} runner implementation hash for {relative_path}",
+        )
+    implementation_root = _require_sha256(
+        implementation["canonical_sha256"],
+        f"{slot_id} runner implementation canonical hash",
+    )
+    if implementation_root != _sha256(canonical_json_bytes(implementation_hashes)):
+        raise ReviewerPromotionError(
+            f"{slot_id} runner implementation canonical hash mismatch"
+        )
+    if dict(implementation) != runner_implementation_binding():
+        raise ReviewerPromotionError(
+            f"{slot_id} runner implementation differs from current exact bytes"
+        )
     for field in (
         "prompt_catalog_file_sha256",
         "prompt_catalog_canonical_sha256",
@@ -1041,6 +1083,14 @@ def build_g1_reviewer_promotion(
     production_registry = dict(registry)
     production_registry["registry_status"] = "frozen_for_production"
     production_registry["production_review_authorized"] = True
+    if common_contract is None:  # pragma: no cover - SLOT_IDS is frozen non-empty
+        raise ReviewerPromotionError("promotion has no validated review contract")
+    production_registry["runner_implementation"] = dict(
+        _require_mapping(
+            common_contract["runner_implementation"],
+            "validated runner implementation",
+        )
+    )
     production_registry_bytes = _yaml_bytes(production_registry)
     reparsed = _load_production_registry(production_registry_bytes)
     if dict(reparsed) != production_registry:

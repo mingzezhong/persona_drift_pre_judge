@@ -12,6 +12,7 @@ from persona_drift.g1_local_reviewer import (
     assigned_items,
     canonical_json_bytes,
     prepare_review,
+    runner_implementation_binding,
     run_review,
 )
 from persona_drift.g1_reviewer_promotion import (
@@ -221,14 +222,25 @@ def test_five_complete_runner_ledgers_promote_without_overwriting_source(
     assert source_registry["production_review_authorized"] is False
     assert production_registry["registry_status"] == "frozen_for_production"
     assert production_registry["production_review_authorized"] is True
+    assert production_registry["runner_implementation"] == runner_implementation_binding()
     assert {
         key: value
         for key, value in source_registry.items()
-        if key not in {"registry_status", "production_review_authorized"}
+        if key
+        not in {
+            "registry_status",
+            "production_review_authorized",
+            "runner_implementation",
+        }
     } == {
         key: value
         for key, value in production_registry.items()
-        if key not in {"registry_status", "production_review_authorized"}
+        if key
+        not in {
+            "registry_status",
+            "production_review_authorized",
+            "runner_implementation",
+        }
     }
 
 
@@ -241,6 +253,44 @@ def test_missing_fifth_real_ledger_fails_closed_without_outputs(
     production_path = tmp_path / "production.yaml"
 
     with pytest.raises(ReviewerPromotionError, match="scenario_writer.*missing"):
+        _promote(ledgers, report_path, production_path)
+
+    assert not report_path.exists()
+    assert not production_path.exists()
+
+
+def test_rechained_runner_binding_for_other_bytes_is_rejected(
+    tmp_path: Path,
+) -> None:
+    ledgers = _real_runner_ledgers(tmp_path / "ledgers")
+    target = ledgers["primary_01"]
+    records = [
+        json.loads(line)
+        for line in target.read_text(encoding="utf-8").splitlines()
+    ]
+    previous = None
+    for record in records:
+        implementation = record["review_contract"]["runner_implementation"]
+        implementation["file_sha256s"][
+            "scripts/run_g1_local_reviewer.py"
+        ] = "0" * 64
+        implementation["canonical_sha256"] = hashlib.sha256(
+            canonical_json_bytes(implementation["file_sha256s"])
+        ).hexdigest()
+        record["review_contract_sha256"] = hashlib.sha256(
+            canonical_json_bytes(record["review_contract"])
+        ).hexdigest()
+        record["previous_record_sha256"] = previous
+        record.pop("record_sha256")
+        previous = hashlib.sha256(canonical_json_bytes(record)).hexdigest()
+        record["record_sha256"] = previous
+    target.write_bytes(
+        b"".join(canonical_json_bytes(record) + b"\n" for record in records)
+    )
+    report_path = tmp_path / "report.json"
+    production_path = tmp_path / "production.yaml"
+
+    with pytest.raises(ReviewerPromotionError, match="current exact bytes"):
         _promote(ledgers, report_path, production_path)
 
     assert not report_path.exists()

@@ -10,13 +10,18 @@ import sys
 import tempfile
 import unittest
 
+import yaml
+
 from persona_drift.g1_local_reviewer import (
     AppendOnlyLedger,
+    Registry,
     ReviewRunnerError,
     assigned_items,
     canonical_json_bytes,
     prepare_review,
+    review_contract,
     review_plan,
+    runner_implementation_binding,
     run_review,
 )
 
@@ -187,6 +192,24 @@ class AssetAndAssignmentTests(unittest.TestCase):
         ):
             self.assertRegex(plan[key], r"^[0-9a-f]{64}$")
 
+    def test_review_contract_binds_exact_runner_implementation_bytes(self) -> None:
+        contract = review_contract(prepared_for("primary_02", "topic_triage"))
+        implementation = contract["runner_implementation"]
+        expected_paths = {
+            "src/persona_drift/g1_local_reviewer.py",
+            "scripts/run_g1_local_reviewer.py",
+        }
+        self.assertEqual(set(implementation["file_sha256s"]), expected_paths)
+        for relative_path, observed in implementation["file_sha256s"].items():
+            expected = hashlib.sha256(
+                (PROJECT_ROOT / relative_path).read_bytes()
+            ).hexdigest()
+            self.assertEqual(observed, expected)
+        expected_root = hashlib.sha256(
+            canonical_json_bytes(implementation["file_sha256s"])
+        ).hexdigest()
+        self.assertEqual(implementation["canonical_sha256"], expected_root)
+
     def test_production_stays_locked_by_registry(self) -> None:
         with self.assertRaisesRegex(
             ReviewRunnerError, "frozen_for_production"
@@ -199,6 +222,47 @@ class AssetAndAssignmentTests(unittest.TestCase):
                 production=True,
                 production_task="topic_triage",
             )
+
+    def test_production_registry_authorizes_only_current_runner_bytes(self) -> None:
+        source = yaml.safe_load(REGISTRY.read_bytes())
+        source["registry_status"] = "frozen_for_production"
+        source["production_review_authorized"] = True
+        source["runner_implementation"] = runner_implementation_binding()
+        with tempfile.TemporaryDirectory() as temporary:
+            production_registry = Path(temporary) / "production.yaml"
+            production_registry.write_text(
+                yaml.safe_dump(source, sort_keys=False), encoding="utf-8"
+            )
+            loaded = Registry.load(
+                production_registry,
+                reviewer_slot_id="primary_01",
+                production=True,
+                batch_size=1,
+            )
+            self.assertEqual(
+                dict(loaded.runner_implementation),
+                runner_implementation_binding(),
+            )
+
+            mismatched = source["runner_implementation"]
+            mismatched["file_sha256s"][
+                "scripts/run_g1_local_reviewer.py"
+            ] = "0" * 64
+            mismatched["canonical_sha256"] = hashlib.sha256(
+                canonical_json_bytes(mismatched["file_sha256s"])
+            ).hexdigest()
+            production_registry.write_text(
+                yaml.safe_dump(source, sort_keys=False), encoding="utf-8"
+            )
+            with self.assertRaisesRegex(
+                ReviewRunnerError, "differs from current exact bytes"
+            ):
+                Registry.load(
+                    production_registry,
+                    reviewer_slot_id="primary_01",
+                    production=True,
+                    batch_size=1,
+                )
 
     def test_role_filter_fails_if_explicit_task_is_not_assigned(self) -> None:
         prepared = prepared_for("primary_01", "scenario_writer")

@@ -32,8 +32,16 @@ from persona_drift.g1_manifest import (
 LEDGER_SCHEMA_VERSION = "restart-v2.3-g1-local-review-ledger-v1"
 PROMPTS_SCHEMA_VERSION = "restart-v2.3-g1-local-review-prompts-v1"
 REGISTRY_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-registry-v1"
+RUNNER_IMPLEMENTATION_SCHEMA_VERSION = (
+    "restart-v2.3-g1-local-review-implementation-v1"
+)
 SYNTHETIC_MODE = "SYNTHETIC_SMOKE"
 PRODUCTION_MODE = "PRODUCTION"
+
+RUNNER_IMPLEMENTATION_RELATIVE_PATHS = (
+    "src/persona_drift/g1_local_reviewer.py",
+    "scripts/run_g1_local_reviewer.py",
+)
 
 # The role-to-task boundary is intentionally code-frozen rather than inferred
 # from packet contents.  Primaries perform the blinded family-membership vote;
@@ -190,6 +198,70 @@ def _require_exact_keys(
         raise ReviewRunnerError(f"{context} is missing fields: {missing}")
     if extras:
         raise ReviewRunnerError(f"{context} has unsupported fields: {extras}")
+
+
+def runner_implementation_binding() -> dict[str, Any]:
+    """Content-address the exact runner module and CLI bytes in this checkout."""
+
+    project_root = Path(__file__).resolve().parents[2]
+    file_sha256s = {
+        relative_path: _sha256(
+            _read_regular_file(
+                project_root / relative_path,
+                label=f"runner implementation file {relative_path}",
+            )
+        )
+        for relative_path in RUNNER_IMPLEMENTATION_RELATIVE_PATHS
+    }
+    return {
+        "schema_version": RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
+        "file_sha256s": file_sha256s,
+        "canonical_sha256": _sha256(canonical_json_bytes(file_sha256s)),
+    }
+
+
+def _validate_authorized_runner_implementation(value: Any) -> Mapping[str, Any]:
+    context = "reviewer registry runner_implementation"
+    implementation = _require_mapping(value, context=context)
+    _require_exact_keys(
+        implementation,
+        required={"schema_version", "file_sha256s", "canonical_sha256"},
+        context=context,
+    )
+    if implementation["schema_version"] != RUNNER_IMPLEMENTATION_SCHEMA_VERSION:
+        raise ReviewRunnerError(
+            "reviewer registry runner_implementation schema_version is unsupported"
+        )
+    file_sha256s = _require_mapping(
+        implementation["file_sha256s"], context=f"{context}.file_sha256s"
+    )
+    if set(file_sha256s) != set(RUNNER_IMPLEMENTATION_RELATIVE_PATHS):
+        raise ReviewRunnerError(
+            "reviewer registry runner_implementation must bind exactly the frozen "
+            "runner files"
+        )
+    if any(
+        not isinstance(file_hash, str) or not _SHA256_RE.fullmatch(file_hash)
+        for file_hash in file_sha256s.values()
+    ):
+        raise ReviewRunnerError(
+            "reviewer registry runner_implementation file hashes must be SHA-256"
+        )
+    canonical_sha256 = implementation["canonical_sha256"]
+    if (
+        not isinstance(canonical_sha256, str)
+        or not _SHA256_RE.fullmatch(canonical_sha256)
+        or canonical_sha256 != _sha256(canonical_json_bytes(file_sha256s))
+    ):
+        raise ReviewRunnerError(
+            "reviewer registry runner_implementation canonical hash mismatch"
+        )
+    current = runner_implementation_binding()
+    if dict(implementation) != current:
+        raise ReviewRunnerError(
+            "authorized runner implementation differs from current exact bytes"
+        )
+    return implementation
 
 
 def _validate_schema_definition(schema: Any, *, path: str = "$") -> None:
@@ -512,6 +584,7 @@ class Registry:
     file_sha256: str
     canonical_sha256: str
     production_authorized: bool
+    runner_implementation: Mapping[str, Any] | None
 
     @classmethod
     def load(
@@ -536,24 +609,32 @@ class Registry:
             "slots",
             "independence_checks",
         }
+        registry_status = value.get("registry_status")
+        if registry_status == "frozen_for_production":
+            required.add("runner_implementation")
         _require_exact_keys(value, required=required, context="reviewer registry")
         if value["schema_version"] != REGISTRY_SCHEMA_VERSION:
             raise ReviewRunnerError("unsupported reviewer registry schema_version")
         if value["offline_only"] is not True or value["target_model_use"] != "forbidden":
             raise ReviewRunnerError("reviewer registry must be offline-only and forbid target models")
         if production:
-            if value["registry_status"] != "frozen_for_production":
+            if registry_status != "frozen_for_production":
                 raise ReviewRunnerError("production requires registry_status=frozen_for_production")
             if value["production_review_authorized"] is not True:
                 raise ReviewRunnerError("registry does not authorize production review")
         else:
-            if value["registry_status"] not in {
+            if registry_status not in {
                 "frozen_for_synthetic_smoke",
                 "frozen_for_production",
             }:
                 raise ReviewRunnerError("synthetic smoke requires a frozen registry")
             if value["synthetic_smoke_authorized"] is not True:
                 raise ReviewRunnerError("registry does not authorize synthetic smoke")
+        authorized_implementation = None
+        if registry_status == "frozen_for_production":
+            authorized_implementation = _validate_authorized_runner_implementation(
+                value["runner_implementation"]
+            )
         runtime = _require_mapping(value["runtime"], context="reviewer registry runtime")
         for field, expected in (
             ("framework", "transformers"),
@@ -592,6 +673,7 @@ class Registry:
             file_sha256=_sha256(raw),
             canonical_sha256=_sha256(canonical_json_bytes(value)),
             production_authorized=bool(value["production_review_authorized"]),
+            runner_implementation=authorized_implementation,
         )
 
 
@@ -822,6 +904,7 @@ def review_contract(prepared: PreparedReview) -> dict[str, Any]:
         "decoding_canonical_sha256": prepared.registry.decoder.canonical_sha256,
         "decoding": dict(prepared.registry.decoder.values),
         "batch_size": prepared.registry.decoder.batch_size,
+        "runner_implementation": runner_implementation_binding(),
     }
 
 
