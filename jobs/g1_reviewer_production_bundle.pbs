@@ -1,0 +1,109 @@
+#!/bin/bash
+#PBS -N g1-review-bundle
+#PBS -q med_gpuq
+#PBS -l select=1:ncpus=6:ngpus=2:mem=64gb
+#PBS -l walltime=24:00:00
+#PBS -j oe
+
+set -euo pipefail
+umask 027
+
+PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
+BUNDLE_ID="${BUNDLE_ID:?submit with BUNDLE_ID=<p01|p02_p03>}"
+PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
+REGISTRY_PATH="configs/g1_reviewer_registry_production_v2_3.yaml"
+PROMPTS_PATH="data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"
+
+cd "$PROJECT_ROOT"
+case "$BUNDLE_ID" in
+  p01|p02_p03)
+    ;;
+  *)
+    echo "unsupported production bundle: $BUNDLE_ID" >&2
+    exit 2
+    ;;
+esac
+
+test -s "$REGISTRY_PATH"
+test -s "$PROMPTS_PATH"
+test -s "data/stages/persona_scalar_primary_01_input_v2_3.jsonl"
+test -s "data/stages/persona_scalar_primary_02_input_v2_3.jsonl"
+test -s "data/stages/persona_scalar_primary_03_input_v2_3.jsonl"
+test -s "data/reviews/topic_mmlu_triage_input_v2_3.jsonl"
+mkdir -p "outputs/g1/reviews"
+
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$PROJECT_ROOT/src"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+echo "job_id=${PBS_JOBID:-unknown}"
+echo "host=$(hostname)"
+echo "project_root=$PROJECT_ROOT"
+echo "bundle_id=$BUNDLE_ID"
+echo "output_mode=append_or_resume"
+nvidia-smi --query-gpu=name,uuid,memory.total,driver_version --format=csv,noheader
+"$PYTHON_BIN" - <<'PY'
+import json
+import torch
+
+gpu_count = torch.cuda.device_count()
+print(json.dumps({"cuda_available": torch.cuda.is_available(), "gpu_count": gpu_count}))
+if not torch.cuda.is_available() or gpu_count != 2:
+    raise SystemExit("production reviewer bundle requires both allocated GPUs to be visible")
+PY
+
+run_assignment() {
+  local reviewer_slot="$1"
+  local task_id="$2"
+  local packet_path="$3"
+  local output_path="$4"
+
+  echo "assignment_start=${reviewer_slot}:${task_id}"
+  echo "packet_path=$packet_path"
+  echo "output_path=$output_path"
+  "$PYTHON_BIN" scripts/run_g1_local_reviewer.py \
+    --production \
+    --slot "$reviewer_slot" \
+    --task "$task_id" \
+    --registry "$REGISTRY_PATH" \
+    --prompts "$PROMPTS_PATH" \
+    --packet "$packet_path" \
+    --output "$output_path" \
+    --batch-size 1
+  echo "assignment_complete=${reviewer_slot}:${task_id}"
+}
+
+case "$BUNDLE_ID" in
+  p01)
+    run_assignment \
+      primary_01 \
+      persona_scalar \
+      data/stages/persona_scalar_primary_01_input_v2_3.jsonl \
+      outputs/g1/reviews/persona_scalar_primary_01_v2_3.jsonl
+    run_assignment \
+      primary_01 \
+      topic_triage \
+      data/reviews/topic_mmlu_triage_input_v2_3.jsonl \
+      outputs/g1/reviews/topic_mmlu_triage_primary_01_v2_3.jsonl
+    ;;
+  p02_p03)
+    run_assignment \
+      primary_02 \
+      persona_scalar \
+      data/stages/persona_scalar_primary_02_input_v2_3.jsonl \
+      outputs/g1/reviews/persona_scalar_primary_02_v2_3.jsonl
+    run_assignment \
+      primary_03 \
+      persona_scalar \
+      data/stages/persona_scalar_primary_03_input_v2_3.jsonl \
+      outputs/g1/reviews/persona_scalar_primary_03_v2_3.jsonl
+    run_assignment \
+      primary_02 \
+      topic_triage \
+      data/reviews/topic_mmlu_triage_input_v2_3.jsonl \
+      outputs/g1/reviews/topic_mmlu_triage_primary_02_v2_3.jsonl
+    ;;
+esac

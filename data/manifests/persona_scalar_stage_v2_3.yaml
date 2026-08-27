@@ -1,0 +1,113 @@
+blind_repeat_admin_schedule:
+- base_candidate_anonymous_id: PC-f482ae531287bf75
+  base_input_id: PSI-421f150b921165ee3a23
+  primary_slot: primary_01
+  queue_position: 4
+  repeat_candidate_anonymous_id: PC-46818fd441d56eed
+  repeat_input_id: PSI-3fcee25c4e597b6f7151
+- base_candidate_anonymous_id: PC-33b37216120eb288
+  base_input_id: PSI-8d005931882f65812080
+  primary_slot: primary_01
+  queue_position: 8
+  repeat_candidate_anonymous_id: PC-cb94bc2930861e79
+  repeat_input_id: PSI-0a5e85c1c612877f7a10
+- base_candidate_anonymous_id: PC-ac0285c1d3e19de3
+  base_input_id: PSI-7f9e43ac680365c13b83
+  primary_slot: primary_01
+  queue_position: 22
+  repeat_candidate_anonymous_id: PC-ba8026e09bf1b8fc
+  repeat_input_id: PSI-1f8d20b187491c270449
+- base_candidate_anonymous_id: PC-f482ae531287bf75
+  base_input_id: PSI-421f150b921165ee3a23
+  primary_slot: primary_02
+  queue_position: 1
+  repeat_candidate_anonymous_id: PC-8295250fe994d78f
+  repeat_input_id: PSI-e1ad01a02360b81defc7
+- base_candidate_anonymous_id: PC-bfa6eabd4fc4fde9
+  base_input_id: PSI-7ad7b0a699fa4ea1ff7e
+  primary_slot: primary_02
+  queue_position: 10
+  repeat_candidate_anonymous_id: PC-b5f9ac98acf46f1a
+  repeat_input_id: PSI-ab2f145aed4634ef39ee
+- base_candidate_anonymous_id: PC-2086ac8603bde18d
+  base_input_id: PSI-255287907354e693d639
+  primary_slot: primary_02
+  queue_position: 24
+  repeat_candidate_anonymous_id: PC-5535419b355139c3
+  repeat_input_id: PSI-a840c05baef5ccf660a4
+- base_candidate_anonymous_id: PC-b6e152b3ae081b2e
+  base_input_id: PSI-7804c62d4c7a33bd6190
+  primary_slot: primary_03
+  queue_position: 9
+  repeat_candidate_anonymous_id: PC-68856d1d707bd808
+  repeat_input_id: PSI-14772bccefe46e74b861
+- base_candidate_anonymous_id: PC-56a40dc2d0b9f876
+  base_input_id: PSI-76682ae9ea4f50d46b5b
+  primary_slot: primary_03
+  queue_position: 15
+  repeat_candidate_anonymous_id: PC-267657b02549e36e
+  repeat_input_id: PSI-6d62ab788e8db43bb596
+- base_candidate_anonymous_id: PC-f482ae531287bf75
+  base_input_id: PSI-421f150b921165ee3a23
+  primary_slot: primary_03
+  queue_position: 26
+  repeat_candidate_anonymous_id: PC-d18878981c3d08c1
+  repeat_input_id: PSI-d9ce5bc14546cc90daab
+hash_contract:
+  algorithm: sha256-length-prefixed-domain-and-fields-v1
+  domains:
+    pair_input_id: LPS-G1-PERSONA-PAIR-INPUT-ID-V1
+    pair_orientation: LPS-G1-PERSONA-PAIR-ORIENTATION-V1
+    pair_queue_order: LPS-G1-PERSONA-PAIR-QUEUE-ORDER-V1
+    primary_queue_order: LPS-G1-PERSONA-SCALAR-PRIMARY-QUEUE-ORDER-V1
+    repeat_candidate_id: LPS-G1-PERSONA-SCALAR-BLIND-REPEAT-CANDIDATE-ID-V1
+    repeat_input_id: LPS-G1-PERSONA-SCALAR-BLIND-REPEAT-INPUT-ID-V1
+    repeat_insertion: LPS-G1-PERSONA-SCALAR-BLIND-REPEAT-INSERTION-V1
+    repeat_selection: LPS-G1-PERSONA-SCALAR-BLIND-REPEAT-SELECTION-V1
+    scalar_input_id: LPS-G1-PERSONA-SCALAR-INPUT-ID-V1
+  seed_sha256: bb3527341dc9e2d4d02dced3fe3db9310dc9d5ec1161adea851188714facd423
+pair_packet:
+  candidate_scope: ALL_24_CANDIDATES_REGARDLESS_OF_SCALAR_DECISION
+  definition_evidence_per_candidate: 3
+  path: data/stages/persona_pair_input_v2_3.jsonl
+  row_count: 276
+  status: NOT_BUILT
+protocol_state:
+  g1_passed: false
+  models_run_by_builder: false
+  pair_review_status: WAITING_FOR_THREE_COMPLETE_SCALAR_LEDGERS
+  ratings_generated_by_builder: false
+  target_model_execution_authorized: false
+scalar_inputs:
+  base_candidate_count: 24
+  blind_repeat_fraction: 0.1
+  blind_repeats_per_primary: 3
+  primary_packets:
+    primary_01:
+      byte_sha256: 62c2c5909d5da37d437ae2f9e3fdb762eaf0e425c251ab0a2a5eb28cc62ce8f4
+      original_candidate_count: 24
+      path: data/stages/persona_scalar_primary_01_input_v2_3.jsonl
+      repeat_count: 3
+      row_count: 27
+    primary_02:
+      byte_sha256: 9f77bef1f8dcb9b463b05d514b9d52503f8ebffa3f5f532893bfdbd660e682f0
+      original_candidate_count: 24
+      path: data/stages/persona_scalar_primary_02_input_v2_3.jsonl
+      repeat_count: 3
+      row_count: 27
+    primary_03:
+      byte_sha256: 9a31425251ee06c779132ed5898fc7ac6f143eba2ed059f634b3168cf54cdf8c
+      original_candidate_count: 24
+      path: data/stages/persona_scalar_primary_03_input_v2_3.jsonl
+      repeat_count: 3
+      row_count: 27
+  rater_packets_contain_repeat_map: false
+  rater_packets_contain_source_map: false
+schema_version: restart-v2.3-g1-persona-scalar-stage-manifest-v1
+source_packet:
+  byte_sha256: 09bf413a2688a09f161e22b404c1fd0cdf5658155c2b4348499d56fe11a3e546
+  candidate_count: 24
+  canonical_rows_sha256: e69624c41f44bb7740bdc72732320d556131ff8c7d08ce4cff5df8ce43022cc8
+  items_per_candidate: 96
+  path: data/reviews/persona_semantic_review_packet_v2_3.jsonl
+  row_count: 2304

@@ -66,6 +66,7 @@ from persona_drift.g1_topic_screening import (
     verify_tracked_topic_screening_packets,
 )
 from persona_drift.g1_topics import canonical_sha256, stable_ids_sha256
+from persona_drift.splits import compute_topic_content_root_sha256
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -312,6 +313,19 @@ class TopicScreeningContractUnitTests(unittest.TestCase):
                 expected_blind_item_ids=[blind_id],
             )
 
+    def test_scenario_move_and_content_root_match_frozen_golden_vectors(self) -> None:
+        self.assertEqual(
+            scenario_move_sha256("Move 1: café"),
+            "174e30c88e1c186aa79f52d475695066d4c766defa60e24fb0ac95f1bd4606bf",
+        )
+        move_hashes = tuple(
+            hashlib.sha256(f"golden-move-{index:02d}".encode("utf-8")).hexdigest()
+            for index in range(1, 26)
+        )
+        expected_root = "3ebdb1a64bfa27da4d2424a78669882d1dd6387cf22c6f5a997fd62f32b20e78"
+        self.assertEqual(topic_content_root_sha256(move_hashes), expected_root)
+        self.assertEqual(compute_topic_content_root_sha256(move_hashes), expected_root)
+
     def test_scenario_card_enforces_schema_hashes_and_exactly_25_unique_moves(self) -> None:
         blind_id = "TOP-" + "2" * 24
         card = make_scenario_card(blind_id)
@@ -329,7 +343,7 @@ class TopicScreeningContractUnitTests(unittest.TestCase):
         bad_hash["scenario_card_sha256"] = scenario_card_sha256(bad_hash)
         with self.assertRaisesRegex(TopicScreeningError, "move SHA256"):
             validate_scenario_card(bad_hash, expected_blind_item_ids=[blind_id])
-        self.assertEqual(
+        self.assertNotEqual(
             scenario_move_sha256("same\tmove  text"),
             scenario_move_sha256(" same move text "),
         )
@@ -339,9 +353,6 @@ class TopicScreeningContractUnitTests(unittest.TestCase):
         ][0]["move_text"]
         duplicate_text["content_moves"][1]["move_sha256"] = scenario_move_sha256(
             duplicate_text["content_moves"][1]["move_text"]
-        )
-        duplicate_text["topic_content_root_sha256"] = topic_content_root_sha256(
-            [move["move_sha256"] for move in duplicate_text["content_moves"]]
         )
         duplicate_text["scenario_card_sha256"] = scenario_card_sha256(duplicate_text)
         with self.assertRaisesRegex(TopicScreeningError, "pairwise unique"):

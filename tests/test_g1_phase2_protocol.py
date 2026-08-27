@@ -156,8 +156,8 @@ def test_mmlu_triage_union_audit_and_rescue_are_exact() -> None:
     assert canonical_structured_file_sha256(contract) == (
         topic["implementation_contract_canonical_sha256"]
     )
-    assert topic["implementation_contract_file_sha256"] == "c1e5f088336193b1cb64a566a52e1f2f6f2187271224346e0d6e59fc7eef5fcf"
-    assert topic["implementation_contract_canonical_sha256"] == "7fa94ad725d8b0d81c5224a5a0a0a39daac82ae83e452f915ca475708652fafa"
+    assert topic["implementation_contract_file_sha256"] == "a2a0b613644625f7cbe7bb0a2465799c5dd6c0cbf0a0c3d5a4fa6abd05dd63c4"
+    assert topic["implementation_contract_canonical_sha256"] == "6ac8f9a804741fe500441562b9c77b4adf2a2aa0d2d69c19da1f5f078a6ed19e"
     assert topic["triage_rater_slots"] == ["primary_01", "primary_02"]
     assert topic["primary_full_screen_rater_slots"] == ["primary_01", "primary_02", "primary_03"]
     mmlu = topic["mmlu_pro"]

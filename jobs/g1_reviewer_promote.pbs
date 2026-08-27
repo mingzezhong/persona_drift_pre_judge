@@ -1,0 +1,29 @@
+#!/bin/bash
+#PBS -N g1-review-promote
+#PBS -q smallq
+#PBS -l select=1:ncpus=2:mem=8gb
+#PBS -l walltime=00:15:00
+#PBS -j oe
+
+set -euo pipefail
+umask 027
+
+PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
+PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
+
+cd "$PROJECT_ROOT"
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$PROJECT_ROOT/src"
+
+echo "job_id=${PBS_JOBID:-unknown}"
+echo "host=$(hostname)"
+echo "project_root=$PROJECT_ROOT"
+echo "smoke_ledger_directory=outputs/g1/reviewer_smoke"
+echo "report_output=data/reports/g1_reviewer_synthetic_smoke_v2_3.json"
+echo "production_registry_output=configs/g1_reviewer_registry_production_v2_3.yaml"
+
+"$PYTHON_BIN" scripts/promote_g1_reviewer_registry.py \
+  --project-root "$PROJECT_ROOT"

@@ -270,8 +270,8 @@ persona_review:
 
 topic_review:
   implementation_contract_path: data/manifests/topic_screening_packets_v2_3.yaml
-  implementation_contract_file_sha256: c1e5f088336193b1cb64a566a52e1f2f6f2187271224346e0d6e59fc7eef5fcf
-  implementation_contract_canonical_sha256: 7fa94ad725d8b0d81c5224a5a0a0a39daac82ae83e452f915ca475708652fafa
+  implementation_contract_file_sha256: a2a0b613644625f7cbe7bb0a2465799c5dd6c0cbf0a0c3d5a4fa6abd05dd63c4
+  implementation_contract_canonical_sha256: 6ac8f9a804741fe500441562b9c77b4adf2a2aa0d2d69c19da1f5f078a6ed19e
   implementation_contract_binding_status: hash_locked
   triage_rater_slots:
     - primary_01

@@ -1,0 +1,58 @@
+#!/bin/bash
+#PBS -N g1-review-model-smoke
+#PBS -q med_gpuq
+#PBS -l select=1:ncpus=6:ngpus=2:mem=64gb
+#PBS -l walltime=01:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
+REVIEWER_SLOT="${REVIEWER_SLOT:?submit with qsub -v REVIEWER_SLOT=<slot>}"
+PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
+ASSIGNED_NGPUS=2
+OUTPUT_DIR="$PROJECT_ROOT/outputs/g1/reviewer_smoke"
+
+cd "$PROJECT_ROOT"
+mkdir -p "$OUTPUT_DIR"
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$PROJECT_ROOT/src"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+echo "job_id=${PBS_JOBID:-unknown}"
+echo "host=$(hostname)"
+SOURCE_COMMIT="${G1_SOURCE_COMMIT:-}"
+if [[ -z "$SOURCE_COMMIT" ]] && command -v git >/dev/null 2>&1; then
+  SOURCE_COMMIT="$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || true)"
+fi
+SOURCE_COMMIT="${SOURCE_COMMIT:-unavailable}"
+echo "commit=$SOURCE_COMMIT"
+echo "reviewer_slot=$REVIEWER_SLOT"
+echo "scheduler_assigned_ngpus=$ASSIGNED_NGPUS"
+echo "cuda_visible_devices=${CUDA_VISIBLE_DEVICES:-scheduler-default}"
+echo "pbs_gpufile=${PBS_GPUFILE:-unavailable}"
+nvidia-smi --query-gpu=name,uuid,memory.total,driver_version --format=csv,noheader
+export G1_ASSIGNED_NGPUS="$ASSIGNED_NGPUS"
+
+"$PYTHON_BIN" - <<'PY'
+import os
+
+import torch
+
+assigned_gpu_count = int(os.environ["G1_ASSIGNED_NGPUS"])
+if not torch.cuda.is_available() or torch.cuda.device_count() != assigned_gpu_count:
+    raise SystemExit(
+        "model smoke CUDA visibility differs from the two GPUs reserved by PBS"
+    )
+PY
+
+"$PYTHON_BIN" scripts/run_g1_local_reviewer.py \
+  --smoke \
+  --slot "$REVIEWER_SLOT" \
+  --registry configs/g1_reviewer_registry_v2_3.yaml \
+  --prompts data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml \
+  --packet data/synthetic/g1_reviewer_smoke_v2_3.jsonl \
+  --output "$OUTPUT_DIR/${REVIEWER_SLOT}.jsonl"

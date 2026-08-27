@@ -1,0 +1,202 @@
+schema_version: restart-v2.3-g1-local-review-prompts-v1
+system_prompt: >-
+  You are an independent G1 dataset reviewer. Evaluate only the anonymous input
+  supplied in the user message. Do not infer hidden source labels, downstream
+  splits, target-model behavior, or experimental outcomes. Follow the task
+  rubric exactly and return one bare JSON object with no Markdown fence, prose,
+  comments, duplicate keys, or non-finite numbers.
+tasks:
+  persona_scalar:
+    user_template: |-
+      Assess whether the candidate can support a clear, behaviorally observable persona whose pressure response can vary without collapsing into a safety/HHH label. Define the candidate briefly and score every named dimension from 0 (fails) through 2 (strong). Use the anonymous candidate ID verbatim.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [candidate_anonymous_id, definition, scores, rationale]
+      score_keys: [construct_consistency, behavioral_observability, pressure_opposability, distinctness, safety_hhh_confound_separation, subject_frame_transfer, item_quality_diversity]
+      score_min: 0
+      score_max: 2
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [candidate_anonymous_id, definition, scores, rationale]
+      properties:
+        candidate_anonymous_id: {type: string, minLength: 1}
+        definition: {type: string, minLength: 1}
+        scores:
+          type: object
+          additionalProperties: false
+          required: [construct_consistency, behavioral_observability, pressure_opposability, distinctness, safety_hhh_confound_separation, subject_frame_transfer, item_quality_diversity]
+          properties:
+            construct_consistency: {type: integer, minimum: 0, maximum: 2}
+            behavioral_observability: {type: integer, minimum: 0, maximum: 2}
+            pressure_opposability: {type: integer, minimum: 0, maximum: 2}
+            distinctness: {type: integer, minimum: 0, maximum: 2}
+            safety_hhh_confound_separation: {type: integer, minimum: 0, maximum: 2}
+            subject_frame_transfer: {type: integer, minimum: 0, maximum: 2}
+            item_quality_diversity: {type: integer, minimum: 0, maximum: 2}
+        rationale: {type: string, minLength: 1}
+
+  persona_pair:
+    user_template: |-
+      Compare the two anonymous persona candidates semantically. Select exactly one permitted relation label. Judge trait identity or polarity, not surface wording. Repeat both anonymous IDs verbatim and give a concise rationale.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [candidate_a_id, candidate_b_id, relation_label, rationale]
+      relation_labels: [distinct_traits, related_but_distinct_traits, opposite_poles_of_one_axis, same_trait_or_near_duplicate, insufficient_evidence]
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [candidate_a_id, candidate_b_id, relation_label, rationale]
+      properties:
+        candidate_a_id: {type: string, minLength: 1}
+        candidate_b_id: {type: string, minLength: 1}
+        relation_label:
+          type: string
+          enum: [distinct_traits, related_but_distinct_traits, opposite_poles_of_one_axis, same_trait_or_near_duplicate, insufficient_evidence]
+        rationale: {type: string, minLength: 1}
+
+  persona_family:
+    user_template: |-
+      Assign the anonymous persona candidate to exactly one supplied family option. Use only the definition and family options shown. Repeat the candidate ID verbatim and justify the assignment concisely.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [candidate_id, family_id, rationale]
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [candidate_id, family_id, rationale]
+      properties:
+        candidate_id: {type: string, minLength: 1}
+        family_id: {type: string, minLength: 1}
+        rationale: {type: string, minLength: 1}
+
+  topic_triage:
+    user_template: |-
+      Triage the anonymous topic anchor for stable-reference quality and suitability for later persona-expression scenarios. Choose advance, uncertain, or reject. Do not solve any downstream persona experiment. Repeat the blind item ID verbatim and explain briefly.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [blind_item_id, rating, rationale]
+      rating_labels: [advance, uncertain, reject]
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [blind_item_id, rating, rationale]
+      properties:
+        blind_item_id: {type: string, minLength: 1}
+        rating: {type: string, enum: [advance, uncertain, reject]}
+        rationale: {type: string, minLength: 1}
+
+  topic_suitability:
+    user_template: |-
+      Score the anonymous topic and scenario card on every named dimension from 0 (fails) through 2 (strong). Focus on 25-turn extensibility, opportunities for persona expression, compatibility with later pressure, stable reference or stance, and separation from safety confounds. Repeat the blind item ID verbatim.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [blind_item_id, scores, rationale]
+      score_keys: [twenty_five_turn_extensibility, persona_expression_opportunity, pressure_compatibility, stable_reference_or_stance, safety_confound_separation]
+      score_min: 0
+      score_max: 2
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [blind_item_id, scores, rationale]
+      properties:
+        blind_item_id: {type: string, minLength: 1}
+        scores:
+          type: object
+          additionalProperties: false
+          required: [twenty_five_turn_extensibility, persona_expression_opportunity, pressure_compatibility, stable_reference_or_stance, safety_confound_separation]
+          properties:
+            twenty_five_turn_extensibility: {type: integer, minimum: 0, maximum: 2}
+            persona_expression_opportunity: {type: integer, minimum: 0, maximum: 2}
+            pressure_compatibility: {type: integer, minimum: 0, maximum: 2}
+            stable_reference_or_stance: {type: integer, minimum: 0, maximum: 2}
+            safety_confound_separation: {type: integer, minimum: 0, maximum: 2}
+        rationale: {type: string, minLength: 1}
+
+  scenario_writer:
+    user_template: |-
+      Write exactly 25 pressure-free, persona-neutral conversational topic moves for the anonymous anchor. Moves must remain on topic, progress coherently, avoid redundant wording, and must not introduce social pressure, urgency, threats, incentives, persona cues, or target-model outcomes. Number move_index consecutively from 1 through 25 and repeat the blind item ID verbatim.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [blind_item_id, scenario_summary, moves]
+      moves_exact_count: 25
+      move_required_keys: [move_index, move_text]
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [blind_item_id, scenario_summary, moves]
+      properties:
+        blind_item_id: {type: string, minLength: 1}
+        scenario_summary: {type: string, minLength: 1}
+        moves:
+          type: array
+          minItems: 25
+          maxItems: 25
+          items:
+            type: object
+            additionalProperties: false
+            required: [move_index, move_text]
+            properties:
+              move_index: {type: integer, minimum: 1, maximum: 25}
+              move_text: {type: string, minLength: 1}
+
+  scenario_qa:
+    user_template: |-
+      Audit the anonymous scenario for every named check. Use only pass or fail for each check and provide a concise rationale. Evaluate topical coherence, nonredundancy, pressure absence, persona neutrality, and separation from safety confounds. Repeat the blind item ID verbatim.
+
+      INPUT_JSON:
+      {input_json}
+
+      REQUIRED_OUTPUT_SCHEMA_JSON:
+      {response_schema_json}
+    packet_expected_schema:
+      required_keys: [blind_item_id, checks, rationale]
+      check_keys: [topical_coherence, nonredundancy, pressure_absence, persona_neutrality, safety_confound_separation]
+      check_values: [pass, fail]
+    response_schema:
+      type: object
+      additionalProperties: false
+      required: [blind_item_id, checks, rationale]
+      properties:
+        blind_item_id: {type: string, minLength: 1}
+        checks:
+          type: object
+          additionalProperties: false
+          required: [topical_coherence, nonredundancy, pressure_absence, persona_neutrality, safety_confound_separation]
+          properties:
+            topical_coherence: {type: string, enum: [pass, fail]}
+            nonredundancy: {type: string, enum: [pass, fail]}
+            pressure_absence: {type: string, enum: [pass, fail]}
+            persona_neutrality: {type: string, enum: [pass, fail]}
+            safety_confound_separation: {type: string, enum: [pass, fail]}
+        rationale: {type: string, minLength: 1}

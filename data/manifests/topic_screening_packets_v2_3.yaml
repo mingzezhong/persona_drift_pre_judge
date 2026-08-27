@@ -648,10 +648,11 @@ review_contracts:
     - move_index
     - move_text
     - move_sha256
-    move_text_canonicalization_version: restart-v2.3-topic-move-text-v1
-    move_hash_rule: sha256(canonical_json({canonicalization_version,move_text}))
+    move_text_encoding: UTF-8
+    move_hash_rule: sha256(exact_move_text_utf8_bytes)
     move_hashes_pairwise_unique: true
-    content_root_rule: sha256(canonical_json({canonicalization_version,ordered_move_sha256s}))
+    topic_content_canonicalization_version: restart-v2.3-topic-move-root-v1
+    content_root_rule: sha256(exact_utf8(ascii_header_newline_plus_ordered_NN_colon_move_sha256_lines_without_trailing_newline))
     card_hash_rule: sha256(canonical_json(card_without_scenario_card_sha256))
     runtime_validators:
     - validate_scenario_card

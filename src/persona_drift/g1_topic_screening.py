@@ -14,7 +14,6 @@ import json
 import math
 from pathlib import Path
 from typing import Any
-import unicodedata
 
 import yaml
 
@@ -34,6 +33,7 @@ from persona_drift.g1_topics import (
     mmlu_stable_id,
     stable_ids_sha256,
 )
+from persona_drift.splits import compute_topic_content_root_sha256
 
 
 SCHEMA_VERSION = "restart-v2.3-g1-topic-screening-packets-v1"
@@ -108,7 +108,6 @@ THIRD_TRIAGE_SLOT = "primary_03"
 PRIMARY_SUITABILITY_SLOTS = ("primary_01", "primary_02", "primary_03")
 ADJUDICATOR_SLOT = "adjudicator_04"
 SCENARIO_WRITER_SLOT = "scenario_writer"
-MOVE_TEXT_CANONICALIZATION_VERSION = "restart-v2.3-topic-move-text-v1"
 SUITABILITY_CRITERIA = (
     "twenty_five_turn_extensibility",
     "persona_expression_opportunity",
@@ -788,40 +787,15 @@ def validate_initial_triage_pair(
         raise TopicScreeningError("initial triage base-model families must be distinct")
 
 
-def canonicalize_move_text(move_text: str) -> str:
-    _require_nonempty_string(move_text, "move_text")
-    canonical = " ".join(unicodedata.normalize("NFKC", move_text).split())
-    if not canonical:
-        raise TopicScreeningError("canonical move_text must be non-empty")
-    return canonical
-
-
 def scenario_move_sha256(move_text: str) -> str:
-    """Hash canonical move content only; an index can never create uniqueness."""
+    """Hash the exact UTF-8 move text; an index can never create uniqueness."""
 
-    return hashlib.sha256(
-        canonical_json_bytes(
-            {
-                "canonicalization_version": MOVE_TEXT_CANONICALIZATION_VERSION,
-                "move_text": canonicalize_move_text(move_text),
-            }
-        )
-    ).hexdigest()
+    _require_nonempty_string(move_text, "move_text")
+    return hashlib.sha256(move_text.encode("utf-8")).hexdigest()
 
 
 def topic_content_root_sha256(ordered_move_sha256s: Sequence[str]) -> str:
-    if len(ordered_move_sha256s) != 25:
-        raise TopicScreeningError("topic content root requires exactly 25 move hashes")
-    for value in ordered_move_sha256s:
-        _require_sha256(value, "move_sha256")
-    return hashlib.sha256(
-        canonical_json_bytes(
-            {
-                "canonicalization_version": "restart-v2.3-topic-move-root-v1",
-                "ordered_move_sha256s": list(ordered_move_sha256s),
-            }
-        )
-    ).hexdigest()
+    return compute_topic_content_root_sha256(ordered_move_sha256s)
 
 
 def scenario_card_sha256(card: Mapping[str, Any]) -> str:
@@ -1268,14 +1242,15 @@ def _contracts(umbrella_topic: Mapping[str, Any]) -> dict[str, Any]:
             "writer_must_be_separate_from_suitability_raters": True,
             "content_moves_exact_count": 25,
             "move_required_fields": ["move_index", "move_text", "move_sha256"],
-            "move_text_canonicalization_version": MOVE_TEXT_CANONICALIZATION_VERSION,
-            "move_hash_rule": (
-                "sha256(canonical_json({canonicalization_version,move_text}))"
-            ),
+            "move_text_encoding": "UTF-8",
+            "move_hash_rule": "sha256(exact_move_text_utf8_bytes)",
             "move_hashes_pairwise_unique": True,
+            "topic_content_canonicalization_version": (
+                "restart-v2.3-topic-move-root-v1"
+            ),
             "content_root_rule": (
-                "sha256(canonical_json({canonicalization_version,"
-                "ordered_move_sha256s}))"
+                "sha256(exact_utf8(ascii_header_newline_plus_ordered_"
+                "NN_colon_move_sha256_lines_without_trailing_newline))"
             ),
             "card_hash_rule": "sha256(canonical_json(card_without_scenario_card_sha256))",
             "runtime_validators": [
