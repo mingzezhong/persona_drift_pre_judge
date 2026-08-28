@@ -18,6 +18,12 @@ from typing import Any, Mapping, Sequence
 import yaml
 
 from persona_drift.g1_manifest import canonical_json_bytes
+from persona_drift.g1_local_reviewer import (
+    LEDGER_SCHEMA_VERSION,
+    OUTPUT_NORMALIZATION_CONTRACT,
+    REVIEW_CONTRACT_SCHEMA_VERSION,
+    normalize_model_output,
+)
 
 
 SOURCE_PACKET_PATH = Path(
@@ -49,7 +55,7 @@ REPEATS_PER_PRIMARY = math.ceil(
 PAIR_COUNT = CANDIDATE_COUNT * (CANDIDATE_COUNT - 1) // 2
 
 SCALAR_MANIFEST_SCHEMA = "restart-v2.3-g1-persona-scalar-stage-manifest-v1"
-LEDGER_SCHEMA = "restart-v2.3-g1-local-review-ledger-v1"
+LEDGER_SCHEMA = LEDGER_SCHEMA_VERSION
 
 HASH_DOMAINS: Mapping[str, str] = {
     "scalar_input_id": "LPS-G1-PERSONA-SCALAR-INPUT-ID-V1",
@@ -706,6 +712,13 @@ def _consume_scalar_ledger(
             "packet_file_sha256"
         ) != packet_sha:
             raise PersonaStagePacketError(f"{slot} review contract is not packet-bound")
+        if (
+            contract.get("schema_version") != REVIEW_CONTRACT_SCHEMA_VERSION
+            or contract.get("output_normalization") != OUTPUT_NORMALIZATION_CONTRACT
+        ):
+            raise PersonaStagePacketError(
+                f"{slot} review contract has the wrong normalization contract"
+            )
         contract_reviewer = _require_mapping(
             contract.get("reviewer"), context="review contract reviewer"
         )
@@ -740,6 +753,36 @@ def _consume_scalar_ledger(
         response_sha = record.get("response_canonical_sha256")
         if response_sha != _sha256(canonical_json_bytes(response)):
             raise PersonaStagePacketError(f"{slot} accepted response hash differs")
+        raw_output = record.get("raw_output")
+        raw_output_sha = record.get("raw_output_sha256")
+        if (
+            not isinstance(raw_output, str)
+            or raw_output_sha != _sha256(raw_output.encode("utf-8"))
+        ):
+            raise PersonaStagePacketError(f"{slot} accepted raw output hash differs")
+        try:
+            normalized = normalize_model_output(raw_output)
+        except ValueError as exc:
+            raise PersonaStagePacketError(
+                f"{slot} accepted output cannot be normalized"
+            ) from exc
+        if (
+            record.get("normalization") != normalized.normalization
+            or record.get("normalized_output_sha256") != normalized.sha256
+        ):
+            raise PersonaStagePacketError(
+                f"{slot} accepted normalization evidence differs"
+            )
+        try:
+            normalized_response = json.loads(normalized.text)
+        except json.JSONDecodeError as exc:
+            raise PersonaStagePacketError(
+                f"{slot} accepted normalized output is not JSON"
+            ) from exc
+        if canonical_json_bytes(normalized_response) != canonical_json_bytes(response):
+            raise PersonaStagePacketError(
+                f"{slot} normalized output and response differ"
+            )
         accepted[input_id] = response
         accepted_record_hashes[input_id] = record_hash
     if set(accepted) != set(expected):

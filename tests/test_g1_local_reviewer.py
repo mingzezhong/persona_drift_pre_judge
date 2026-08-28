@@ -282,10 +282,24 @@ class StrictOutputTests(unittest.TestCase):
         parsed = self.task.parse_output(self.valid, self.item)
         self.assertEqual(parsed["blind_item_id"], self.item.input_value["blind_item_id"])
 
-    def test_rejects_fences_prose_duplicates_and_nonfinite_numbers(self) -> None:
+    def test_accepts_exactly_one_complete_json_or_bare_fence(self) -> None:
+        for opener in ("```json", "```"):
+            parsed = self.task.parse_output(
+                f"{opener}\n{self.valid}\n```", self.item
+            )
+            self.assertEqual(
+                parsed["blind_item_id"], self.item.input_value["blind_item_id"]
+            )
+
+    def test_rejects_prose_other_fences_duplicates_and_nonfinite_numbers(self) -> None:
         invalid = (
-            "\x60\x60\x60json\n" + self.valid + "\n\x60\x60\x60",
             "Result: " + self.valid,
+            "```JSON\n" + self.valid + "\n```",
+            "```python\n" + self.valid + "\n```",
+            "````json\n" + self.valid + "\n````",
+            "```json\n```json\n" + self.valid + "\n```\n```",
+            "```json\n" + self.valid + "\n```\ntrailing prose",
+            "prefix\n```json\n" + self.valid + "\n```",
             (
                 '{"blind_item_id":"SYN-TOP-001","rating":"advance",'
                 '"rating":"reject","rationale":"duplicate"}'
@@ -333,6 +347,10 @@ class AppendOnlyExecutionTests(unittest.TestCase):
             self.assertEqual(summary.attempted, 1)
             self.assertEqual(backend.calls, 1)
             self.assertEqual(first["status"], "accepted")
+            self.assertEqual(first["normalization"], "none")
+            self.assertEqual(
+                first["normalized_output_sha256"], first["raw_output_sha256"]
+            )
             self.assertIsNone(first["previous_record_sha256"])
             self.assertEqual(
                 first["raw_output_sha256"],
@@ -357,6 +375,30 @@ class AppendOnlyExecutionTests(unittest.TestCase):
             self.assertEqual(resumed.skipped_accepted, 1)
             self.assertEqual(resumed.attempted, 0)
             self.assertEqual(output.read_bytes(), first_bytes)
+
+    def test_fenced_output_is_accepted_but_raw_and_normalization_are_audited(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "ratings.jsonl"
+            bare = response_for(self.item)
+            fenced = f"```json\n{bare}\n```"
+            summary = run_review(
+                self.prepared,
+                output_path=output,
+                backend=QueueBackend([fenced]),
+                clock=lambda: FIXED_TIME,
+                attempt_id_factory=lambda: "ATT-fenced",
+            )
+            record = json.loads(output.read_text())
+            self.assertEqual(summary.accepted, 1)
+            self.assertEqual(record["raw_output"], fenced)
+            self.assertEqual(
+                record["normalization"],
+                "strip_single_outer_markdown_json_fence",
+            )
+            self.assertEqual(
+                record["normalized_output_sha256"],
+                hashlib.sha256(bare.encode()).hexdigest(),
+            )
 
     def test_invalid_attempt_is_retained_then_valid_retry_is_chained(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

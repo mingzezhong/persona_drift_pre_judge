@@ -6,7 +6,11 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from persona_drift.g1_local_reviewer import LEDGER_SCHEMA_VERSION
+from persona_drift.g1_local_reviewer import (
+    LEDGER_SCHEMA_VERSION,
+    OUTPUT_NORMALIZATION_CONTRACT,
+    REVIEW_CONTRACT_SCHEMA_VERSION,
+)
 from persona_drift.g1_topic_screening import RATER_RECORD_SCHEMA_VERSION
 from persona_drift.g1_topic_stages import (
     TopicStageError,
@@ -64,7 +68,7 @@ def make_ledger(
         "base_model_family": family,
     }
     contract = {
-        "schema_version": "restart-v2.3-g1-local-review-contract-v1",
+        "schema_version": REVIEW_CONTRACT_SCHEMA_VERSION,
         "mode": "PRODUCTION",
         "reviewer": reviewer,
         "registry_file_sha256": "1" * 64,
@@ -80,6 +84,7 @@ def make_ledger(
             "max_new_tokens": 128,
         },
         "batch_size": 1,
+        "output_normalization": dict(OUTPUT_NORMALIZATION_CONTRACT),
     }
     contract_hash = sha256(canonical_json_bytes(contract))
     records = []
@@ -116,6 +121,8 @@ def make_ledger(
             "decoding": {},
             "raw_output": raw_output,
             "raw_output_sha256": sha256(raw_output.encode("utf-8")),
+            "normalization": "none",
+            "normalized_output_sha256": sha256(raw_output.encode("utf-8")),
             "response": response,
             "response_canonical_sha256": sha256(canonical_json_bytes(response)),
             "error": None,

@@ -22,13 +22,18 @@ import yaml
 
 from persona_drift.g1_local_reviewer import (
     LEDGER_SCHEMA_VERSION,
+    NORMALIZATION_NONE,
+    NORMALIZATION_STRIP_SINGLE_OUTER_FENCE,
+    OUTPUT_NORMALIZATION_CONTRACT,
     PROMPTS_SCHEMA_VERSION,
     PRODUCTION_MODE,
     REGISTRY_SCHEMA_VERSION,
+    REVIEW_CONTRACT_SCHEMA_VERSION,
     RUNNER_IMPLEMENTATION_RELATIVE_PATHS,
     RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
     SYNTHETIC_MODE,
     _validate_instance,
+    normalize_model_output,
     runner_implementation_binding,
 )
 from persona_drift.g1_manifest import (
@@ -39,7 +44,7 @@ from persona_drift.g1_manifest import (
 
 
 REPORT_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-synthetic-smoke-report-v1"
-CONTRACT_SCHEMA_VERSION = "restart-v2.3-g1-local-review-contract-v1"
+CONTRACT_SCHEMA_VERSION = REVIEW_CONTRACT_SCHEMA_VERSION
 
 SMOKE_REGISTRY_PATH = Path("configs/g1_reviewer_registry_v2_3.yaml")
 SYNTHETIC_PACKET_PATH = Path("data/synthetic/g1_reviewer_smoke_v2_3.jsonl")
@@ -117,6 +122,8 @@ _LEDGER_FIELDS = frozenset(
         "decoding",
         "raw_output",
         "raw_output_sha256",
+        "normalization",
+        "normalized_output_sha256",
         "response",
         "response_canonical_sha256",
         "error",
@@ -137,6 +144,7 @@ _CONTRACT_FIELDS = frozenset(
         "decoding_canonical_sha256",
         "decoding",
         "batch_size",
+        "output_normalization",
         "runner_implementation",
     }
 )
@@ -696,6 +704,10 @@ def _validate_contract(
         raise ReviewerPromotionError(f"{slot_id} decoding contract hash mismatch")
     if contract.get("batch_size") != 1:
         raise ReviewerPromotionError(f"{slot_id} smoke contract batch_size must equal 1")
+    if contract.get("output_normalization") != OUTPUT_NORMALIZATION_CONTRACT:
+        raise ReviewerPromotionError(
+            f"{slot_id} contract output-normalization policy differs from frozen policy"
+        )
     implementation = _require_mapping(
         contract.get("runner_implementation"),
         f"{slot_id} contract runner_implementation",
@@ -751,6 +763,8 @@ def _validate_record_payload_hashes(
     context = f"{slot_id} ledger line {line_number}"
     raw_output = record["raw_output"]
     raw_hash = record["raw_output_sha256"]
+    normalization = record["normalization"]
+    normalized_hash = record["normalized_output_sha256"]
     response = record["response"]
     response_hash = record["response_canonical_sha256"]
     if raw_output is None:
@@ -758,6 +772,28 @@ def _validate_record_payload_hashes(
             raise ReviewerPromotionError(f"{context} has a hash for null raw_output")
     elif not isinstance(raw_output, str) or raw_hash != _sha256(raw_output.encode("utf-8")):
         raise ReviewerPromotionError(f"{context} raw_output hash mismatch")
+    if raw_output is None:
+        if normalization is not None or normalized_hash is not None:
+            raise ReviewerPromotionError(
+                f"{context} has normalization evidence for null raw_output"
+            )
+    else:
+        try:
+            normalized = normalize_model_output(raw_output)
+        except ValueError:
+            normalized = None
+        if normalized is None:
+            if normalization is not None or normalized_hash is not None:
+                raise ReviewerPromotionError(
+                    f"{context} unsupported output form has normalization evidence"
+                )
+        elif (
+            normalization
+            not in {NORMALIZATION_NONE, NORMALIZATION_STRIP_SINGLE_OUTER_FENCE}
+            or normalization != normalized.normalization
+            or normalized_hash != normalized.sha256
+        ):
+            raise ReviewerPromotionError(f"{context} normalization evidence mismatch")
     if response is None:
         if response_hash is not None:
             raise ReviewerPromotionError(f"{context} has a hash for null response")
@@ -771,6 +807,10 @@ def _validate_record_payload_hashes(
     if status == "accepted":
         if raw_output is None or response is None or error is not None:
             raise ReviewerPromotionError(f"{context} accepted payload is incomplete")
+        if normalization is None or normalized_hash is None:
+            raise ReviewerPromotionError(
+                f"{context} accepted payload lacks normalization evidence"
+            )
     elif status == "rejected_invalid_output":
         if raw_output is None or response is not None or not isinstance(error, str):
             raise ReviewerPromotionError(f"{context} rejected payload is inconsistent")
@@ -953,9 +993,10 @@ def _validate_ledger(
                     f"{slot_id} ledger contains duplicate accepted item {item_id}"
                 )
             response = _require_mapping(record["response"], f"{context} accepted response")
+            normalized = normalize_model_output(record["raw_output"])
             raw_response = _strict_json(
-                record["raw_output"].strip().encode("utf-8"),
-                f"{context} accepted raw_output",
+                normalized.text.encode("utf-8"),
+                f"{context} accepted normalized_output",
             )
             if canonical_json_bytes(raw_response) != canonical_json_bytes(response):
                 raise ReviewerPromotionError(

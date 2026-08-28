@@ -159,7 +159,15 @@ def _real_runner_ledgers(directory: Path) -> dict[str, Path]:
         run_review(
             prepared,
             output_path=output,
-            backend=QueueBackend([_response_for(item) for item in items], prepared),
+            backend=QueueBackend(
+                [
+                    f"```json\n{_response_for(item)}\n```"
+                    if slot == "scenario_writer"
+                    else _response_for(item)
+                    for item in items
+                ],
+                prepared,
+            ),
             clock=lambda: FIXED_TIME,
             attempt_id_factory=lambda: next(attempt_ids),
         )

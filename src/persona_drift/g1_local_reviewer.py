@@ -29,7 +29,24 @@ from persona_drift.g1_manifest import (
 )
 
 
-LEDGER_SCHEMA_VERSION = "restart-v2.3-g1-local-review-ledger-v1"
+LEDGER_SCHEMA_VERSION = "restart-v2.3-g1-local-review-ledger-v2"
+REVIEW_CONTRACT_SCHEMA_VERSION = "restart-v2.3-g1-local-review-contract-v2"
+OUTPUT_NORMALIZATION_SCHEMA_VERSION = (
+    "restart-v2.3-g1-output-normalization-policy-v1"
+)
+NORMALIZATION_NONE = "none"
+NORMALIZATION_STRIP_SINGLE_OUTER_FENCE = (
+    "strip_single_outer_markdown_json_fence"
+)
+OUTPUT_NORMALIZATION_CONTRACT: Mapping[str, Any] = {
+    "schema_version": OUTPUT_NORMALIZATION_SCHEMA_VERSION,
+    "bare_json_operation": NORMALIZATION_NONE,
+    "fenced_json_operation": NORMALIZATION_STRIP_SINGLE_OUTER_FENCE,
+    "allowed_fence_openers": ["```json\n", "```\n"],
+    "required_fence_closer": "\n```",
+    "outer_whitespace": "strip",
+    "normalized_payload": "one_strict_json_object",
+}
 PROMPTS_SCHEMA_VERSION = "restart-v2.3-g1-local-review-prompts-v1"
 REGISTRY_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-registry-v1"
 RUNNER_IMPLEMENTATION_SCHEMA_VERSION = (
@@ -149,6 +166,51 @@ def _strict_json(data: bytes | str, *, context: str) -> Any:
         raise
     except json.JSONDecodeError as exc:
         raise ReviewRunnerError(f"{context} is not one exact JSON value: {exc}") from exc
+
+
+@dataclass(frozen=True)
+class NormalizedModelOutput:
+    """Exact text presented to strict JSON parsing and its audit operation."""
+
+    text: str
+    normalization: str
+
+    @property
+    def sha256(self) -> str:
+        return _sha256(self.text.encode("utf-8"))
+
+
+def normalize_model_output(raw_output: str) -> NormalizedModelOutput:
+    """Apply only the frozen bare-JSON or single-outer-fence policy."""
+
+    if not isinstance(raw_output, str):
+        raise ReviewRunnerError("model output must be text")
+    stripped = raw_output.strip()
+    normalization = NORMALIZATION_NONE
+    normalized = stripped
+    if stripped.startswith("```"):
+        opener = next(
+            (
+                candidate
+                for candidate in OUTPUT_NORMALIZATION_CONTRACT[
+                    "allowed_fence_openers"
+                ]
+                if stripped.startswith(candidate)
+            ),
+            None,
+        )
+        closer = OUTPUT_NORMALIZATION_CONTRACT["required_fence_closer"]
+        if opener is None or not stripped.endswith(closer):
+            raise ReviewRunnerError(
+                "model output fence must be exactly one complete outer ```json or ``` fence"
+            )
+        normalized = stripped[len(opener) : -len(closer)].strip()
+        normalization = NORMALIZATION_STRIP_SINGLE_OUTER_FENCE
+    elif stripped.endswith("```"):
+        raise ReviewRunnerError(
+            "model output fence must be exactly one complete outer ```json or ``` fence"
+        )
+    return NormalizedModelOutput(text=normalized, normalization=normalization)
 
 
 def _read_regular_file(path: Path, *, label: str) -> bytes:
@@ -411,14 +473,17 @@ class TaskSpec:
         )
 
     def parse_output(self, raw_output: str, item: "InputItem") -> Mapping[str, Any]:
-        if not isinstance(raw_output, str):
-            raise ReviewRunnerError("model output must be text")
-        stripped = raw_output.strip()
-        if not stripped.startswith("{") or not stripped.endswith("}"):
+        normalized = normalize_model_output(raw_output)
+        return self.parse_normalized_output(normalized, item)
+
+    def parse_normalized_output(
+        self, normalized: NormalizedModelOutput, item: "InputItem"
+    ) -> Mapping[str, Any]:
+        if not normalized.text.startswith("{") or not normalized.text.endswith("}"):
             raise ReviewRunnerError(
-                "model output must be one bare JSON object without prose or fences"
+                "normalized model output must be one strict JSON object without prose"
             )
-        value = _strict_json(stripped, context="model output")
+        value = _strict_json(normalized.text, context="normalized model output")
         if not isinstance(value, Mapping):
             raise ReviewRunnerError("model output must be a JSON object")
         _validate_instance(value, self.response_schema)
@@ -887,7 +952,7 @@ def review_contract(prepared: PreparedReview) -> dict[str, Any]:
 
     identity = prepared.registry.identity
     return {
-        "schema_version": "restart-v2.3-g1-local-review-contract-v1",
+        "schema_version": REVIEW_CONTRACT_SCHEMA_VERSION,
         "mode": prepared.mode,
         "reviewer": {
             "reviewer_slot_id": identity.reviewer_slot_id,
@@ -904,6 +969,7 @@ def review_contract(prepared: PreparedReview) -> dict[str, Any]:
         "decoding_canonical_sha256": prepared.registry.decoder.canonical_sha256,
         "decoding": dict(prepared.registry.decoder.values),
         "batch_size": prepared.registry.decoder.batch_size,
+        "output_normalization": dict(OUTPUT_NORMALIZATION_CONTRACT),
         "runner_implementation": runner_implementation_binding(),
     }
 
@@ -1331,6 +1397,8 @@ def _attempt_body(
     finished_at: str,
     status: str,
     raw_output: str | None,
+    normalization: str | None,
+    normalized_output_sha256: str | None,
     response: Mapping[str, Any] | None,
     error: str | None,
 ) -> dict[str, Any]:
@@ -1374,6 +1442,8 @@ def _attempt_body(
         "raw_output_sha256": None
         if raw_output is None
         else _sha256(raw_output.encode("utf-8")),
+        "normalization": normalization,
+        "normalized_output_sha256": normalized_output_sha256,
         "response": None if response is None else dict(response),
         "response_canonical_sha256": None
         if response is None
@@ -1436,6 +1506,8 @@ def run_review(
                     finished_at=finished_at,
                     status="generation_error",
                     raw_output=None,
+                    normalization=None,
+                    normalized_output_sha256=None,
                     response=None,
                     error=f"{type(exc).__name__}: {exc}",
                 )
@@ -1445,13 +1517,16 @@ def run_review(
                 ) from exc
             if not isinstance(raw_output, str):
                 raw_output = repr(raw_output)
+                normalized_output = None
                 validation_error: ReviewRunnerError | None = ReviewRunnerError(
                     "model output must be text"
                 )
                 response = None
             else:
+                normalized_output = None
                 try:
-                    response = task.parse_output(raw_output, item)
+                    normalized_output = normalize_model_output(raw_output)
+                    response = task.parse_normalized_output(normalized_output, item)
                     validation_error = None
                 except ReviewRunnerError as exc:
                     response = None
@@ -1477,6 +1552,12 @@ def run_review(
                     finished_at=finished_at,
                     status=status,
                     raw_output=raw_output,
+                    normalization=None
+                    if normalized_output is None
+                    else normalized_output.normalization,
+                    normalized_output_sha256=None
+                    if normalized_output is None
+                    else normalized_output.sha256,
                     response=response,
                     error=error,
                 )

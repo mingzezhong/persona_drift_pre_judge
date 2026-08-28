@@ -11,6 +11,11 @@ import tempfile
 import pytest
 
 from persona_drift.g1_manifest import canonical_json_bytes
+from persona_drift.g1_local_reviewer import (
+    LEDGER_SCHEMA_VERSION,
+    OUTPUT_NORMALIZATION_CONTRACT,
+    REVIEW_CONTRACT_SCHEMA_VERSION,
+)
 from persona_drift.g1_persona_stages import (
     CANDIDATE_COUNT,
     ITEMS_PER_CANDIDATE,
@@ -42,9 +47,11 @@ def _ledger(stage, slot: str) -> bytes:
         "reviewer_slot_id": slot,
     }
     contract = {
+        "schema_version": REVIEW_CONTRACT_SCHEMA_VERSION,
         "mode": "PRODUCTION",
         "packet_file_sha256": packet_sha,
         "reviewer": reviewer,
+        "output_normalization": dict(OUTPUT_NORMALIZATION_CONTRACT),
     }
     contract_sha = _sha(canonical_json_bytes(contract))
     base_ids = {row["input_id"] for row in stage.base_inputs}
@@ -71,6 +78,7 @@ def _ledger(stage, slot: str) -> bytes:
             },
         }
         row_bytes = canonical_json_bytes(row)
+        raw_output = canonical_json_bytes(response).decode("utf-8")
         body = {
             "item": {
                 "canonical_sha256": _sha(row_bytes),
@@ -84,10 +92,14 @@ def _ledger(stage, slot: str) -> bytes:
             "previous_record_sha256": previous,
             "response": response,
             "response_canonical_sha256": _sha(canonical_json_bytes(response)),
+            "raw_output": raw_output,
+            "raw_output_sha256": _sha(raw_output.encode("utf-8")),
+            "normalization": "none",
+            "normalized_output_sha256": _sha(raw_output.encode("utf-8")),
             "review_contract": contract,
             "review_contract_sha256": contract_sha,
             "reviewer": reviewer,
-            "schema_version": "restart-v2.3-g1-local-review-ledger-v1",
+            "schema_version": LEDGER_SCHEMA_VERSION,
             "status": "accepted",
         }
         record_hash = _sha(canonical_json_bytes(body))

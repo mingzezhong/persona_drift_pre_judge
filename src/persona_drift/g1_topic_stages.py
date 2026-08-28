@@ -20,7 +20,10 @@ import yaml
 
 from persona_drift.g1_local_reviewer import (
     LEDGER_SCHEMA_VERSION,
+    OUTPUT_NORMALIZATION_CONTRACT,
     PRODUCTION_MODE,
+    REVIEW_CONTRACT_SCHEMA_VERSION,
+    normalize_model_output,
 )
 from persona_drift.g1_topic_screening import (
     DOUBLE_REJECT_AUDIT_NAMESPACE,
@@ -36,7 +39,6 @@ from persona_drift.g1_topics import canonical_json_bytes
 SCHEMA_VERSION = "restart-v2.3-g1-topic-triage-join-v1"
 IMPLEMENTATION_STATUS = "TRIAGE_JOIN_MATERIALIZED"
 ID_SET_SCHEMA_VERSION = "restart-v2.3-g1-topic-stage-id-set-v1"
-REVIEW_CONTRACT_SCHEMA_VERSION = "restart-v2.3-g1-local-review-contract-v1"
 
 MMLU_PACKET = Path("data/reviews/topic_mmlu_triage_input_v2_3.jsonl")
 ANTHROPIC_PACKET = Path("data/reviews/topic_anthropic_full_screen_input_v2_3.jsonl")
@@ -72,6 +74,8 @@ _LEDGER_TOP_LEVEL_FIELDS = frozenset(
         "decoding",
         "raw_output",
         "raw_output_sha256",
+        "normalization",
+        "normalized_output_sha256",
         "response",
         "response_canonical_sha256",
         "error",
@@ -320,6 +324,10 @@ def _load_primary_ledger(path: Path, slot_id: str, packet: _Packet) -> _Ledger:
             raise TopicStageError(f"{context} review contract has the wrong schema_version")
         if contract.get("mode") != PRODUCTION_MODE:
             raise TopicStageError(f"{context} review contract is not PRODUCTION")
+        if contract.get("output_normalization") != OUTPUT_NORMALIZATION_CONTRACT:
+            raise TopicStageError(
+                f"{context} review contract has a different normalization policy"
+            )
         if contract.get("packet_file_sha256") != packet.file_sha256:
             raise TopicStageError(f"{context} review contract binds a different packet")
         contract_hashes.add(contract_hash)
@@ -377,6 +385,27 @@ def _load_primary_ledger(path: Path, slot_id: str, packet: _Packet) -> _Ledger:
                 raw_output.encode("utf-8")
             ):
                 raise TopicStageError(f"{context} accepted raw-output hash mismatch")
+            try:
+                normalized = normalize_model_output(raw_output)
+            except ValueError as exc:
+                raise TopicStageError(
+                    f"{context} accepted output cannot be normalized"
+                ) from exc
+            if (
+                record["normalization"] != normalized.normalization
+                or record["normalized_output_sha256"] != normalized.sha256
+            ):
+                raise TopicStageError(f"{context} normalization evidence mismatch")
+            try:
+                normalized_response = json.loads(normalized.text)
+            except json.JSONDecodeError as exc:
+                raise TopicStageError(
+                    f"{context} normalized output is not JSON"
+                ) from exc
+            if canonical_json_bytes(normalized_response) != canonical_json_bytes(response):
+                raise TopicStageError(
+                    f"{context} normalized output and response differ"
+                )
             if record["error"] is not None:
                 raise TopicStageError(f"{context} accepted attempt unexpectedly has an error")
             if blind_id in accepted:
