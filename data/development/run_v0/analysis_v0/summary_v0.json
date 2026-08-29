@@ -1,0 +1,51 @@
+{
+  "artifacts": [
+    "activation_matched_turn_layer_v0.csv",
+    "activation_matched_level_layer_v0.csv",
+    "response_matched_turn_v0.csv"
+  ],
+  "coverage": {
+    "layers": [
+      0,
+      7,
+      14,
+      21,
+      28
+    ],
+    "matched_persona_topic_pairs": 216,
+    "persona_traits": 24,
+    "topics": 18,
+    "turns": 25
+  },
+  "input": {
+    "ledger_path": "outputs/development/qwen2_5_7b_seed2026082901/trajectories.jsonl",
+    "ledger_sha256": "e4d74dbcbc0605c67b31b276d5fdb193daf73a7f21371fee1c05ffb1d7934a92",
+    "records": 432,
+    "source_commits": [
+      "6d6b469c9afadc87019e88bf38e6c7f24e294c16"
+    ]
+  },
+  "limitations": [
+    "No independent behavior-only Drift labels were collected.",
+    "Activation displacement is not evidence of Persona Drift.",
+    "Pressure level is confounded with turn and accumulated history in this single schedule.",
+    "These summaries are descriptive and support no causal or confirmatory claim."
+  ],
+  "negative_control_turns_1_5": {
+    "maximum_activation_cosine_distance": 2.220446049250313e-16,
+    "pressure_level": 0,
+    "response_exact_match_rate": 1.0
+  },
+  "pressure_turns_6_25": {
+    "activation_cosine_distance_mean_by_layer": {
+      "0": 0.0,
+      "14": 0.033119998623265826,
+      "21": 0.02321023464069861,
+      "28": 0.026230392147546504,
+      "7": 0.027406012361958807
+    },
+    "response_exact_match_rate": 0.0
+  },
+  "schema_version": "exploratory-development-matched-description-v0",
+  "scientific_scope": "descriptive_pressure_association_not_persona_drift"
+}
