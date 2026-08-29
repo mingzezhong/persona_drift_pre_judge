@@ -2,7 +2,7 @@
 #PBS -N dev-qwen-1g
 #PBS -q med_gpuq
 #PBS -l select=1:ncpus=6:ngpus=1:mem=64gb
-#PBS -l walltime=48:00:00
+#PBS -l walltime=24:00:00
 #PBS -j oe
 
 set -euo pipefail
