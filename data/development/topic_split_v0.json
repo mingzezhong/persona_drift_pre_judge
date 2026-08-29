@@ -1,0 +1,155 @@
+{
+  "asset_id": "development-topic-split-v0",
+  "calibration_topic_ids": [
+    "dev-topic-se-measurement-02",
+    "dev-topic-so-epistemic-02",
+    "dev-topic-f1-horizon-02",
+    "dev-topic-f2-governance-02",
+    "dev-topic-f3-harm-02",
+    "dev-topic-f4-impact-02"
+  ],
+  "development_topic_ids": [
+    "dev-topic-se-measurement-01",
+    "dev-topic-se-causal-01",
+    "dev-topic-se-rules-01",
+    "dev-topic-so-ethics-01",
+    "dev-topic-so-epistemic-01",
+    "dev-topic-so-governance-01",
+    "dev-topic-f1-risk-01",
+    "dev-topic-f1-option-01",
+    "dev-topic-f1-horizon-01",
+    "dev-topic-f2-governance-01",
+    "dev-topic-f2-expert-01",
+    "dev-topic-f2-authority-01",
+    "dev-topic-f3-care-01",
+    "dev-topic-f3-harm-01",
+    "dev-topic-f3-means-01",
+    "dev-topic-f4-influence-01",
+    "dev-topic-f4-power-01",
+    "dev-topic-f4-impact-01"
+  ],
+  "execution_policy": {
+    "calibration_outcomes_sealed_during_initial_pilot": true,
+    "development_outcomes_may_be_opened": true,
+    "untouched_test_outcomes_sealed_until_confirmatory_analysis": true
+  },
+  "outcome_blind": true,
+  "per_group": {
+    "decision_under_uncertainty_and_horizon": {
+      "calibration_topic_ids": [
+        "dev-topic-f1-horizon-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-f1-risk-01",
+        "dev-topic-f1-option-01",
+        "dev-topic-f1-horizon-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-f1-horizon-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-f1-risk-02",
+        "dev-topic-f1-option-02"
+      ]
+    },
+    "deference_and_self_direction": {
+      "calibration_topic_ids": [
+        "dev-topic-f2-governance-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-f2-governance-01",
+        "dev-topic-f2-expert-01",
+        "dev-topic-f2-authority-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-f2-governance-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-f2-expert-02",
+        "dev-topic-f2-authority-02"
+      ]
+    },
+    "interpersonal_prosocial_vs_instrumental": {
+      "calibration_topic_ids": [
+        "dev-topic-f3-harm-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-f3-care-01",
+        "dev-topic-f3-harm-01",
+        "dev-topic-f3-means-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-f3-harm-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-f3-care-02",
+        "dev-topic-f3-means-02"
+      ]
+    },
+    "power_and_impact_orientation": {
+      "calibration_topic_ids": [
+        "dev-topic-f4-impact-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-f4-influence-01",
+        "dev-topic-f4-power-01",
+        "dev-topic-f4-impact-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-f4-impact-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-f4-influence-02",
+        "dev-topic-f4-power-02"
+      ]
+    },
+    "shared_evidence": {
+      "calibration_topic_ids": [
+        "dev-topic-se-measurement-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-se-measurement-01",
+        "dev-topic-se-causal-01",
+        "dev-topic-se-rules-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-se-measurement-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-se-causal-02",
+        "dev-topic-se-rules-02"
+      ]
+    },
+    "shared_opinion": {
+      "calibration_topic_ids": [
+        "dev-topic-so-epistemic-02"
+      ],
+      "development_topic_ids": [
+        "dev-topic-so-ethics-01",
+        "dev-topic-so-epistemic-01",
+        "dev-topic-so-governance-01"
+      ],
+      "qa_pilot_topic_id": "dev-topic-so-epistemic-01",
+      "untouched_test_topic_ids": [
+        "dev-topic-so-ethics-02",
+        "dev-topic-so-governance-02"
+      ]
+    }
+  },
+  "qa_pilot_topic_ids": [
+    "dev-topic-se-measurement-01",
+    "dev-topic-so-epistemic-01",
+    "dev-topic-f1-horizon-01",
+    "dev-topic-f2-governance-01",
+    "dev-topic-f3-harm-01",
+    "dev-topic-f4-impact-01"
+  ],
+  "schema_version": "restart-v2.3-development-assets-v0",
+  "split_algorithm_id": "six-groups-three-subtypes-paired-v0",
+  "topic_catalog_path": "data/development/topic_catalog_v0.json",
+  "topic_catalog_sha256": "b54600abce11a3b214a62c0dcd0a83c2c590b7c67557dcc99f12753028b6e926",
+  "untouched_test_topic_ids": [
+    "dev-topic-se-causal-02",
+    "dev-topic-se-rules-02",
+    "dev-topic-so-ethics-02",
+    "dev-topic-so-governance-02",
+    "dev-topic-f1-risk-02",
+    "dev-topic-f1-option-02",
+    "dev-topic-f2-expert-02",
+    "dev-topic-f2-authority-02",
+    "dev-topic-f3-care-02",
+    "dev-topic-f3-means-02",
+    "dev-topic-f4-influence-02",
+    "dev-topic-f4-power-02"
+  ]
+}

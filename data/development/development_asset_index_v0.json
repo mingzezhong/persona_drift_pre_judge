@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "path": "data/development/persona_catalog_v0.json",
+      "sha256": "f6405f116b4152134232d07ca573048804cdd1f3e1d7df0b36464e6039ebea65"
+    },
+    {
+      "path": "data/development/persona_evaluation_items_v0.jsonl",
+      "sha256": "59df0f717f260fc28434b63443dabaa3f3cdad9c0418282c1f22258a2e9ba3af"
+    },
+    {
+      "path": "data/development/topic_catalog_v0.json",
+      "sha256": "b54600abce11a3b214a62c0dcd0a83c2c590b7c67557dcc99f12753028b6e926"
+    },
+    {
+      "path": "data/development/topic_scenarios_v0.jsonl",
+      "sha256": "e3fb04bbaa52aaab07424ba9a96aa311ec7cfefdc941fc476c8348037f12f512"
+    },
+    {
+      "path": "data/development/topic_split_v0.json",
+      "sha256": "4a81627db3fcfd83aa79880844c0dc201b41f36ed27feed22a6b7dbc3c87c2f7"
+    },
+    {
+      "path": "data/development/persona_topic_access_matrix_v0.jsonl",
+      "sha256": "fc58cf4966a706e4b811936d704cebd8e7ceed6d577f42e293aaf3b4a3b8037a"
+    }
+  ],
+  "asset_id": "complete-development-experiment-assets-v0",
+  "confirmatory_execution_authorized": false,
+  "counts": {
+    "calibration_topics": 6,
+    "development_persona_topic_cells_per_condition": 216,
+    "development_topics": 18,
+    "eligible_persona_topic_cells": 432,
+    "persona_evaluation_items": 2304,
+    "persona_families": 4,
+    "persona_prompt_variants": 48,
+    "persona_traits": 24,
+    "qa_pilot_persona_topic_cells_per_condition": 72,
+    "qa_pilot_topics": 6,
+    "topic_moves": 900,
+    "topics": 36,
+    "untouched_test_topics": 12
+  },
+  "development_execution_authorized": true,
+  "independent_asset_review_status": "PENDING",
+  "schema_version": "restart-v2.3-development-assets-v0",
+  "selection_outcome_blind": true,
+  "status": "READY_FOR_DEVELOPMENT_ONLY"
+}
