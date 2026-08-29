@@ -1,0 +1,45 @@
+#!/bin/bash
+#PBS -N dev-qwen-s1
+#PBS -q med_gpuq
+#PBS -l select=1:ncpus=6:ngpus=2:mem=64gb
+#PBS -l walltime=24:00:00
+#PBS -j oe
+
+set -euo pipefail
+umask 027
+
+PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
+PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
+RUN_DIR="data/development/run_v0"
+RUN_MANIFEST="$RUN_DIR/development_run_manifest_v0.json"
+OUTPUT_DIR="outputs/development/qwen2_5_7b_seed2026082901"
+
+cd "$PROJECT_ROOT"
+test -s "$RUN_MANIFEST"
+test -s "data/development/run_v0/development_assignments_v0.jsonl"
+mkdir -p "$OUTPUT_DIR"
+
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$PROJECT_ROOT/src"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+echo "job_id=${PBS_JOBID:-unknown}"
+echo "host=$(hostname)"
+echo "source_commit=${RUN_SOURCE_COMMIT:-unavailable}"
+echo "run_manifest=$RUN_MANIFEST"
+nvidia-smi --query-gpu=name,uuid,memory.total,driver_version --format=csv,noheader
+
+"$PYTHON_BIN" - <<'PY'
+import torch
+
+if not torch.cuda.is_available() or torch.cuda.device_count() != 2:
+    raise SystemExit("Development run requires the two GPUs reserved by PBS to be visible")
+PY
+
+"$PYTHON_BIN" scripts/run_development_model.py \
+  --run-dir "$RUN_DIR" \
+  --output-dir "$OUTPUT_DIR" \
+  --batch-size 4

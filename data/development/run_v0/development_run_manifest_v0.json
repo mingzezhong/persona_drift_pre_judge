@@ -1,0 +1,138 @@
+{
+  "activation_capture": {
+    "layers": [
+      0,
+      7,
+      14,
+      21,
+      28
+    ],
+    "position": "pre_response_last_prompt_token",
+    "storage_dtype": "float16"
+  },
+  "assignments": {
+    "path": "data/development/run_v0/development_assignments_v0.jsonl",
+    "row_count": 432,
+    "sha256": "9de32159ca7d8d26b562835862432aebe0d20ce07ed7abe5bf176c07fb0d509e"
+  },
+  "calibration_outcomes_authorized": false,
+  "conditions": {
+    "gradual_direct_opposition_L0_to_L5": {
+      "levels": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5
+      ],
+      "pressure_family": "direct_persona_opposition_v0",
+      "trajectory_count": 216
+    },
+    "neutral_L0": {
+      "levels": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "trajectory_count": 216
+    }
+  },
+  "counts": {
+    "conditions": 2,
+    "development_topics": 18,
+    "eligible_cells_per_condition": 216,
+    "persona_traits": 24,
+    "total_turns": 10800,
+    "trajectories": 432,
+    "turns_per_trajectory": 25
+  },
+  "development_outcomes_authorized": true,
+  "expected_outputs": {
+    "activation_directory": "activations",
+    "root": "outputs/development/qwen2_5_7b_seed2026082901",
+    "trajectory_ledger": "trajectories.jsonl"
+  },
+  "generation": {
+    "batch_size": 4,
+    "do_sample": false,
+    "max_new_tokens": 128,
+    "seed": 2026082901,
+    "temperature": 0.0
+  },
+  "independent_asset_review_status": "PENDING_BEFORE_CONFIRMATORY_RUN",
+  "input_artifacts": [
+    {
+      "path": "data/development/development_asset_index_v0.json",
+      "sha256": "7af1d8b48700cfde2e876e4f2bfbf266ac1443c8418c65ed21d616388adf851c"
+    },
+    {
+      "path": "data/development/persona_catalog_v0.json",
+      "sha256": "f6405f116b4152134232d07ca573048804cdd1f3e1d7df0b36464e6039ebea65"
+    },
+    {
+      "path": "data/development/topic_scenarios_v0.jsonl",
+      "sha256": "e3fb04bbaa52aaab07424ba9a96aa311ec7cfefdc941fc476c8348037f12f512"
+    },
+    {
+      "path": "data/development/topic_split_v0.json",
+      "sha256": "4a81627db3fcfd83aa79880844c0dc201b41f36ed27feed22a6b7dbc3c87c2f7"
+    },
+    {
+      "path": "data/development/persona_topic_access_matrix_v0.jsonl",
+      "sha256": "fc58cf4966a706e4b811936d704cebd8e7ceed6d577f42e293aaf3b4a3b8037a"
+    }
+  ],
+  "run_id": "qwen2.5-7b-complete-development-seed-2026082901-v0",
+  "schema_version": "restart-v2.3-exploratory-development-run-v0",
+  "scientific_scope": "exploratory_development_only_not_confirmatory",
+  "status": "READY_TO_QUEUE_EXPLORATORY_DEVELOPMENT",
+  "target_model": {
+    "license_spdx": "Apache-2.0",
+    "local_snapshot": "/shared/homes/u24524629/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/a09a35458c702b33eeacc393d103063234e8bc28",
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
+    "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "untouched_test_outcomes_authorized": false
+}
