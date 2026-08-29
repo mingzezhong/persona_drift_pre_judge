@@ -34,7 +34,7 @@ slots:
     model_id: Qwen/Qwen2.5-7B-Instruct
     model_revision: a09a35458c702b33eeacc393d103063234e8bc28
     base_model_family: qwen2
-    local_snapshot: /shared/homes/u24524629/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/a09a35458c702b33eeacc393d103063234e8bc28
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/a09a35458c702b33eeacc393d103063234e8bc28
     license_spdx: Apache-2.0
     license_evidence_url: https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/blob/a09a35458c702b33eeacc393d103063234e8bc28/LICENSE
   primary_02:
@@ -42,7 +42,7 @@ slots:
     model_id: ibm-granite/granite-3.3-8b-instruct
     model_revision: 51dd4bc2ade4059a6bd87649d68aa11e4fb2529b
     base_model_family: granite
-    local_snapshot: /shared/homes/u24524629/.cache/huggingface/hub/models--ibm-granite--granite-3.3-8b-instruct/snapshots/51dd4bc2ade4059a6bd87649d68aa11e4fb2529b
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--ibm-granite--granite-3.3-8b-instruct/snapshots/51dd4bc2ade4059a6bd87649d68aa11e4fb2529b
     license_spdx: Apache-2.0
     license_evidence_url: https://huggingface.co/ibm-granite/granite-3.3-8b-instruct/blob/51dd4bc2ade4059a6bd87649d68aa11e4fb2529b/LICENSE
   primary_03:
@@ -50,7 +50,7 @@ slots:
     model_id: allenai/OLMo-2-1124-7B-Instruct
     model_revision: 470b1fba1ae01581f270116362ee4aa1b97f4c84
     base_model_family: olmo2
-    local_snapshot: /shared/homes/u24524629/.cache/huggingface/hub/models--allenai--OLMo-2-1124-7B-Instruct/snapshots/470b1fba1ae01581f270116362ee4aa1b97f4c84
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--allenai--OLMo-2-1124-7B-Instruct/snapshots/470b1fba1ae01581f270116362ee4aa1b97f4c84
     license_spdx: Apache-2.0
     license_evidence_url: https://huggingface.co/allenai/OLMo-2-1124-7B-Instruct/blob/470b1fba1ae01581f270116362ee4aa1b97f4c84/LICENSE
   adjudicator_04:
@@ -58,7 +58,7 @@ slots:
     model_id: microsoft/phi-4
     model_revision: 2db69c1c3e91a05d2c64a3185acfbaf36f744e25
     base_model_family: phi3
-    local_snapshot: /shared/homes/u24524629/.cache/huggingface/hub/models--microsoft--phi-4/snapshots/2db69c1c3e91a05d2c64a3185acfbaf36f744e25
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--microsoft--phi-4/snapshots/2db69c1c3e91a05d2c64a3185acfbaf36f744e25
     license_spdx: MIT
     license_evidence_url: https://huggingface.co/microsoft/phi-4/blob/2db69c1c3e91a05d2c64a3185acfbaf36f744e25/LICENSE
   scenario_writer:
@@ -66,7 +66,7 @@ slots:
     model_id: mistralai/Mistral-Small-24B-Instruct-2501
     model_revision: 9527884be6e5616bdd54de542f9ae13384489724
     base_model_family: mistral
-    local_snapshot: /shared/homes/u24524629/.cache/huggingface/hub/models--mistralai--Mistral-Small-24B-Instruct-2501/snapshots/9527884be6e5616bdd54de542f9ae13384489724
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--mistralai--Mistral-Small-24B-Instruct-2501/snapshots/9527884be6e5616bdd54de542f9ae13384489724
     license_spdx: Apache-2.0
     license_evidence_url: https://huggingface.co/mistralai/Mistral-Small-24B-Instruct-2501/blob/9527884be6e5616bdd54de542f9ae13384489724/LICENSE
 
