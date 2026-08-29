@@ -307,6 +307,20 @@ def _git_head(root: Path) -> str:
         return "unavailable"
 
 
+def resolve_model_snapshot(
+    manifest: Mapping[str, Any], override: Path | None = None
+) -> Path:
+    """Resolve a host-local copy of the manifest-locked model revision."""
+    target = manifest["target_model"]
+    snapshot = (override or Path(target["local_snapshot"])).expanduser().resolve()
+    _require(snapshot.is_dir(), "locked target-model snapshot is missing")
+    _require(
+        snapshot.name == target["model_revision"],
+        "target-model snapshot directory must match the locked revision",
+    )
+    return snapshot
+
+
 def _verify_existing_ledger(path: Path) -> tuple[set[str], str | None]:
     completed: set[str] = set()
     previous: str | None = None
@@ -333,6 +347,7 @@ def execute_development_run(
     limit: int | None = None,
     max_turns: int = 25,
     batch_size: int | None = None,
+    model_snapshot: Path | None = None,
     smoke: bool = False,
 ) -> dict[str, Any]:
     root = root.resolve()
@@ -370,8 +385,7 @@ def execute_development_run(
     np.random.seed(SEED % (2**32))
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
-    snapshot = Path(manifest["target_model"]["local_snapshot"])
-    _require(snapshot.is_dir(), "locked target-model snapshot is missing")
+    snapshot = resolve_model_snapshot(manifest, model_snapshot)
     tokenizer = AutoTokenizer.from_pretrained(
         snapshot, local_files_only=True, trust_remote_code=False
     )
@@ -513,6 +527,11 @@ def run_main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--max-turns", type=int, default=25)
     parser.add_argument("--batch-size", type=int)
+    parser.add_argument(
+        "--model-snapshot",
+        type=Path,
+        help="Host-local snapshot directory for the manifest-locked model revision",
+    )
     parser.add_argument("--validate-only", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     args = parser.parse_args(argv)
@@ -527,6 +546,7 @@ def run_main(argv: Sequence[str] | None = None) -> int:
             limit=args.limit,
             max_turns=args.max_turns,
             batch_size=args.batch_size,
+            model_snapshot=args.model_snapshot,
             smoke=args.smoke,
         )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))

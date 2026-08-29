@@ -9,6 +9,7 @@ from persona_drift.development_run import (
     MANIFEST_NAME,
     RUN_DIR,
     build_development_run,
+    resolve_model_snapshot,
     verify_development_run,
 )
 from persona_drift.protocol import ProtocolValidationError
@@ -66,3 +67,16 @@ def test_tampered_assignment_fails_closed(tmp_path):
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ProtocolValidationError):
         verify_development_run(ROOT, run_dir=tmp_path)
+
+
+def test_model_snapshot_override_must_match_locked_revision(tmp_path):
+    manifest = verify_development_run(ROOT)
+    revision = manifest["target_model"]["model_revision"]
+    snapshot = tmp_path / revision
+    snapshot.mkdir()
+    assert resolve_model_snapshot(manifest, snapshot) == snapshot.resolve()
+
+    wrong = tmp_path / "wrong-revision"
+    wrong.mkdir()
+    with pytest.raises(ProtocolValidationError, match="locked revision"):
+        resolve_model_snapshot(manifest, wrong)
