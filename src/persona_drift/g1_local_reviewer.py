@@ -1058,6 +1058,16 @@ def _snapshot_provenance(identity: ModelIdentity) -> dict[str, Any]:
     }
 
 
+def _tokenizer_load_options(base_model_family: str) -> dict[str, Any]:
+    options: dict[str, Any] = {
+        "local_files_only": True,
+        "trust_remote_code": False,
+    }
+    if base_model_family == "mistral":
+        options["fix_mistral_regex"] = True
+    return options
+
+
 class LocalHuggingFaceBackend:
     """Greedy, network-disabled text generation from one frozen local snapshot."""
 
@@ -1121,13 +1131,10 @@ class LocalHuggingFaceBackend:
             raise ReviewRunnerError("registry runtime.device_map must be non-empty")
 
         snapshot = str(registry.identity.snapshot_path)
-        common = {
-            "local_files_only": True,
-            "trust_remote_code": False,
-        }
-        tokenizer_options = dict(common)
-        if registry.identity.base_model_family == "mistral":
-            tokenizer_options["fix_mistral_regex"] = True
+        common = _tokenizer_load_options("")
+        tokenizer_options = _tokenizer_load_options(
+            registry.identity.base_model_family
+        )
         try:
             tokenizer = AutoTokenizer.from_pretrained(snapshot, **tokenizer_options)
             model = AutoModelForCausalLM.from_pretrained(

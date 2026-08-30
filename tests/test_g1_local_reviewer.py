@@ -16,6 +16,7 @@ from persona_drift.g1_local_reviewer import (
     AppendOnlyLedger,
     Registry,
     ReviewRunnerError,
+    _tokenizer_load_options,
     assigned_items,
     canonical_json_bytes,
     prepare_review,
@@ -33,6 +34,24 @@ PROMPTS = (
 )
 SMOKE = PROJECT_ROOT / "data/synthetic/g1_reviewer_smoke_v2_3.jsonl"
 FIXED_TIME = datetime(2026, 8, 28, 0, 0, tzinfo=timezone.utc)
+
+
+class TokenizerLoadOptionsTests(unittest.TestCase):
+    def test_mistral_enables_upstream_regex_fix(self) -> None:
+        self.assertEqual(
+            _tokenizer_load_options("mistral"),
+            {
+                "local_files_only": True,
+                "trust_remote_code": False,
+                "fix_mistral_regex": True,
+            },
+        )
+
+    def test_other_families_do_not_receive_mistral_only_option(self) -> None:
+        self.assertEqual(
+            _tokenizer_load_options("olmo2"),
+            {"local_files_only": True, "trust_remote_code": False},
+        )
 
 
 def prepared_for(slot: str, *tasks: str):
