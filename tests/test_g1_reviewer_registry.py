@@ -7,6 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "configs" / "g1_reviewer_registry_v2_3.yaml"
+AMENDMENT = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -35,6 +36,44 @@ def test_registry_is_smoke_only_and_uses_five_distinct_families():
         assert entry["local_snapshot"].endswith(entry["model_revision"])
         assert entry["license_spdx"] in {"Apache-2.0", "MIT"}
         assert entry["license_evidence_url"].startswith("https://huggingface.co/")
+
+
+def test_reviewer_amendment_replaces_primary_03_without_authorizing_production():
+    payload = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
+    primary_03 = payload["slots"]["primary_03"]
+    assert primary_03 == {
+        "role": "independent_primary_rater",
+        "model_id": "01-ai/Yi-1.5-9B-Chat",
+        "model_revision": "286ee8b32be4000c8fb27f9a2565d8a3659c61f8",
+        "base_model_family": "yi_llama",
+        "local_snapshot": (
+            "/home/minzhong/Data/huggingface/hub/"
+            "models--01-ai--Yi-1.5-9B-Chat/snapshots/"
+            "286ee8b32be4000c8fb27f9a2565d8a3659c61f8"
+        ),
+        "license_spdx": "Apache-2.0",
+        "license_evidence_url": (
+            "https://huggingface.co/01-ai/Yi-1.5-9B-Chat/blob/"
+            "286ee8b32be4000c8fb27f9a2565d8a3659c61f8/LICENSE"
+        ),
+    }
+    primary_families = {
+        payload["slots"][slot]["base_model_family"]
+        for slot in ("primary_01", "primary_02", "primary_03")
+    }
+    assert primary_families == {"qwen2", "granite", "yi_llama"}
+    assert payload["production_review_authorized"] is False
+
+
+def test_reviewer_amendment_records_failure_and_forbidden_workarounds():
+    amendment = AMENDMENT.read_text(encoding="utf-8")
+    assert "3 of 6" in amendment
+    assert "doubly escaped enum value" in amendment
+    assert "omitted required field" in amendment
+    assert "unquoted JSON enum value" in amendment
+    for forbidden in ("Parser relaxation", "output repair", "retry-until-valid"):
+        assert forbidden in amendment
+    assert "production_review_authorized: false" in amendment
 
 
 def test_smoke_fixture_is_synthetic_and_covers_all_required_task_shapes():

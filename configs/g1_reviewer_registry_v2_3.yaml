@@ -47,12 +47,12 @@ slots:
     license_evidence_url: https://huggingface.co/ibm-granite/granite-3.3-8b-instruct/blob/51dd4bc2ade4059a6bd87649d68aa11e4fb2529b/LICENSE
   primary_03:
     role: independent_primary_rater
-    model_id: allenai/OLMo-2-1124-7B-Instruct
-    model_revision: 470b1fba1ae01581f270116362ee4aa1b97f4c84
-    base_model_family: olmo2
-    local_snapshot: /home/minzhong/Data/huggingface/hub/models--allenai--OLMo-2-1124-7B-Instruct/snapshots/470b1fba1ae01581f270116362ee4aa1b97f4c84
+    model_id: 01-ai/Yi-1.5-9B-Chat
+    model_revision: 286ee8b32be4000c8fb27f9a2565d8a3659c61f8
+    base_model_family: yi_llama
+    local_snapshot: /home/minzhong/Data/huggingface/hub/models--01-ai--Yi-1.5-9B-Chat/snapshots/286ee8b32be4000c8fb27f9a2565d8a3659c61f8
     license_spdx: Apache-2.0
-    license_evidence_url: https://huggingface.co/allenai/OLMo-2-1124-7B-Instruct/blob/470b1fba1ae01581f270116362ee4aa1b97f4c84/LICENSE
+    license_evidence_url: https://huggingface.co/01-ai/Yi-1.5-9B-Chat/blob/286ee8b32be4000c8fb27f9a2565d8a3659c61f8/LICENSE
   adjudicator_04:
     role: disagreement_and_shortfall_adjudicator
     model_id: microsoft/phi-4
