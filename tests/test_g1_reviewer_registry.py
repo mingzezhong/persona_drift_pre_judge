@@ -7,7 +7,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "configs" / "g1_reviewer_registry_v2_3.yaml"
-AMENDMENT = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
+AMENDMENT_1 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
+AMENDMENT_2 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_2.md"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -34,44 +35,58 @@ def test_registry_is_smoke_only_and_uses_five_distinct_families():
     for entry in slots.values():
         assert HEX40.fullmatch(entry["model_revision"])
         assert entry["local_snapshot"].endswith(entry["model_revision"])
-        assert entry["license_spdx"] in {"Apache-2.0", "MIT"}
+        assert entry["license_spdx"] in {
+            "Apache-2.0",
+            "LicenseRef-TII-Falcon-LLM-2.0",
+            "MIT",
+        }
         assert entry["license_evidence_url"].startswith("https://huggingface.co/")
 
 
-def test_reviewer_amendment_replaces_primary_03_without_authorizing_production():
+def test_reviewer_amendment_2_replaces_primary_03_without_authorizing_production():
     payload = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
     primary_03 = payload["slots"]["primary_03"]
     assert primary_03 == {
         "role": "independent_primary_rater",
-        "model_id": "01-ai/Yi-1.5-9B-Chat",
-        "model_revision": "286ee8b32be4000c8fb27f9a2565d8a3659c61f8",
-        "base_model_family": "yi_llama",
+        "model_id": "tiiuae/Falcon3-10B-Instruct",
+        "model_revision": "8799bc6aec0152757221dc6b272d824642db6202",
+        "base_model_family": "falcon3",
         "local_snapshot": (
             "/home/minzhong/Data/huggingface/hub/"
-            "models--01-ai--Yi-1.5-9B-Chat/snapshots/"
-            "286ee8b32be4000c8fb27f9a2565d8a3659c61f8"
+            "models--tiiuae--Falcon3-10B-Instruct/snapshots/"
+            "8799bc6aec0152757221dc6b272d824642db6202"
         ),
-        "license_spdx": "Apache-2.0",
+        "license_spdx": "LicenseRef-TII-Falcon-LLM-2.0",
         "license_evidence_url": (
-            "https://huggingface.co/01-ai/Yi-1.5-9B-Chat/blob/"
-            "286ee8b32be4000c8fb27f9a2565d8a3659c61f8/LICENSE"
+            "https://huggingface.co/tiiuae/Falcon3-10B-Instruct/blob/"
+            "8799bc6aec0152757221dc6b272d824642db6202/LICENSE.txt"
         ),
     }
     primary_families = {
         payload["slots"][slot]["base_model_family"]
         for slot in ("primary_01", "primary_02", "primary_03")
     }
-    assert primary_families == {"qwen2", "granite", "yi_llama"}
+    assert primary_families == {"qwen2", "granite", "falcon3"}
     assert payload["production_review_authorized"] is False
 
 
-def test_reviewer_amendment_records_failure_and_forbidden_workarounds():
-    amendment = AMENDMENT.read_text(encoding="utf-8")
+def test_reviewer_amendment_1_records_failure_and_forbidden_workarounds():
+    amendment = AMENDMENT_1.read_text(encoding="utf-8")
     assert "3 of 6" in amendment
     assert "doubly escaped enum value" in amendment
     assert "omitted required field" in amendment
     assert "unquoted JSON enum value" in amendment
     for forbidden in ("Parser relaxation", "output repair", "retry-until-valid"):
+        assert forbidden in amendment
+    assert "production_review_authorized: false" in amendment
+
+
+def test_reviewer_amendment_2_records_failure_and_forbidden_workarounds():
+    amendment = AMENDMENT_2.read_text(encoding="utf-8")
+    assert "5 of 6" in amendment
+    assert "integer score values as JSON" in amendment
+    assert "strings instead of JSON integers" in amendment
+    for forbidden in ("Parser coercion", "prompt accommodation", "retry"):
         assert forbidden in amendment
     assert "production_review_authorized: false" in amendment
 
