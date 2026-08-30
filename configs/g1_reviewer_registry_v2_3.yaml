@@ -52,7 +52,7 @@ slots:
     base_model_family: falcon3
     local_snapshot: /home/minzhong/Data/huggingface/hub/models--tiiuae--Falcon3-10B-Instruct/snapshots/8799bc6aec0152757221dc6b272d824642db6202
     license_spdx: LicenseRef-TII-Falcon-LLM-2.0
-    license_evidence_url: https://huggingface.co/tiiuae/Falcon3-10B-Instruct/blob/8799bc6aec0152757221dc6b272d824642db6202/LICENSE.txt
+    license_evidence_url: https://huggingface.co/tiiuae/Falcon3-10B-Instruct/blob/8799bc6aec0152757221dc6b272d824642db6202/README.md
   adjudicator_04:
     role: disagreement_and_shortfall_adjudicator
     model_id: microsoft/phi-4

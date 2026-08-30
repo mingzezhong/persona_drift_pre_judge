@@ -59,7 +59,7 @@ def test_reviewer_amendment_2_replaces_primary_03_without_authorizing_production
         "license_spdx": "LicenseRef-TII-Falcon-LLM-2.0",
         "license_evidence_url": (
             "https://huggingface.co/tiiuae/Falcon3-10B-Instruct/blob/"
-            "8799bc6aec0152757221dc6b272d824642db6202/LICENSE.txt"
+            "8799bc6aec0152757221dc6b272d824642db6202/README.md"
         ),
     }
     primary_families = {
