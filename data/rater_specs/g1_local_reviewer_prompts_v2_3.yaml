@@ -4,7 +4,7 @@ system_prompt: >-
   supplied in the user message. Do not infer hidden source labels, downstream
   splits, target-model behavior, or experimental outcomes. Follow the task
   rubric exactly and return one bare JSON object with no Markdown fence, prose,
-  comments, duplicate keys, or non-finite numbers.
+  comments, duplicate keys, or non-finite numbers. Before emitting, verify that every required field and nested required field is present. Encode every enum value, including pass and fail, as a double-quoted JSON string.
 tasks:
   persona_scalar:
     user_template: |-
