@@ -1125,8 +1125,11 @@ class LocalHuggingFaceBackend:
             "local_files_only": True,
             "trust_remote_code": False,
         }
+        tokenizer_options = dict(common)
+        if registry.identity.base_model_family == "mistral":
+            tokenizer_options["fix_mistral_regex"] = True
         try:
-            tokenizer = AutoTokenizer.from_pretrained(snapshot, **common)
+            tokenizer = AutoTokenizer.from_pretrained(snapshot, **tokenizer_options)
             model = AutoModelForCausalLM.from_pretrained(
                 snapshot,
                 device_map=device_map,
@@ -1143,6 +1146,9 @@ class LocalHuggingFaceBackend:
             "python_version": platform.python_version(),
             "torch_version": torch.__version__,
             "transformers_version": transformers.__version__,
+            "tokenizer_fix_mistral_regex": bool(
+                tokenizer_options.get("fix_mistral_regex", False)
+            ),
             "cuda_version": torch.version.cuda,
             "cuda_available": bool(torch.cuda.is_available()),
             "cuda_device_count": int(torch.cuda.device_count()),
