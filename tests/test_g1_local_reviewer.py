@@ -75,7 +75,6 @@ def response_for(item) -> str:
     payload = item.input_value
     if item.task_id == "persona_scalar":
         value = {
-            "candidate_anonymous_id": payload["candidate_anonymous_id"],
             "definition": "Prefers preserving reversible options.",
             "scores": {
                 "construct_consistency": 2,
@@ -361,12 +360,50 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         scalar_schema = effective_response_schema(
             scalar_task, items["persona_scalar"]
         )
+        self.assertNotIn("candidate_anonymous_id", scalar_schema["properties"])
+        self.assertNotIn("candidate_anonymous_id", scalar_schema["required"])
         self.assertEqual(
             canonical_json_bytes(scalar_task.response_schema), frozen_scalar_schema
         )
         self.assertEqual(
-            scalar_schema["properties"]["candidate_anonymous_id"]["const"],
-            items["persona_scalar"].input_value["candidate_anonymous_id"],
+            scalar_schema["properties"]["scores"]["properties"]
+            ["construct_consistency"]["enum"],
+            [0, 1, 2],
+        )
+
+    def test_scalar_repeat_aliases_produce_identical_model_visible_messages(self) -> None:
+        prepared = prepared_for("primary_01", "persona_scalar")
+        task = prepared.prompts.tasks["persona_scalar"]
+        item = assigned_items(prepared)[0]
+        first = {
+            "candidate_anonymous_id": "PC-1111111111111111",
+            "input_id": "PSI-11111111111111111111",
+            "statements": item.input_value["statements"],
+        }
+        repeat = {
+            "candidate_anonymous_id": "PC-2222222222222222",
+            "input_id": "PSI-22222222222222222222",
+            "statements": item.input_value["statements"],
+        }
+        first_messages = task.messages(
+            system_prompt=prepared.prompts.system_prompt,
+            input_value=first,
+        )
+        repeat_messages = task.messages(
+            system_prompt=prepared.prompts.system_prompt,
+            input_value=repeat,
+        )
+        self.assertEqual(first_messages, repeat_messages)
+        serialized = canonical_json_bytes(first_messages)
+        self.assertNotIn(b"PC-1111111111111111", serialized)
+        self.assertNotIn(b"PSI-11111111111111111111", serialized)
+
+    def test_scalar_schema_retains_score_and_rationale_constraints(self) -> None:
+        prepared = prepared_for("primary_01")
+        items = {item.task_id: item for item in assigned_items(prepared)}
+        scalar_task = prepared.prompts.tasks["persona_scalar"]
+        scalar_schema = effective_response_schema(
+            scalar_task, items["persona_scalar"]
         )
         self.assertEqual(
             scalar_schema["properties"]["scores"]["properties"]
@@ -429,7 +466,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         runtime = yaml.safe_load(
             (
                 PROJECT_ROOT
-                / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
+                / "configs/g1_reviewer_registry_amendment_6_v2_3.yaml"
             ).read_text()
         )["runtime"]
         with mock.patch(

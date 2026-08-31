@@ -631,16 +631,10 @@ def _reviewer_projection(
     return {key: str(reviewer[key]) for key in sorted(required)}
 
 
-def _validate_scalar_response(
-    response: Any, *, expected_candidate_id: str
-) -> Mapping[str, Any]:
+def _validate_scalar_response(response: Any) -> Mapping[str, Any]:
     response = _require_mapping(response, context="accepted scalar response")
-    if set(response) != {"candidate_anonymous_id", "definition", "scores", "rationale"}:
+    if set(response) != {"definition", "scores", "rationale"}:
         raise PersonaStagePacketError("accepted scalar response has wrong fields")
-    if response["candidate_anonymous_id"] != expected_candidate_id:
-        raise PersonaStagePacketError(
-            "accepted scalar response changed its anonymous candidate ID"
-        )
     if not isinstance(response["definition"], str) or not response["definition"].strip():
         raise PersonaStagePacketError("accepted scalar definition is empty")
     if not isinstance(response["rationale"], str) or not response["rationale"].strip():
@@ -746,10 +740,7 @@ def _consume_scalar_ledger(
             raise PersonaStagePacketError(
                 f"{slot} ledger has duplicate accepted input {input_id}"
             )
-        response = _validate_scalar_response(
-            record.get("response"),
-            expected_candidate_id=str(expected_row["candidate_anonymous_id"]),
-        )
+        response = _validate_scalar_response(record.get("response"))
         response_sha = record.get("response_canonical_sha256")
         if response_sha != _sha256(canonical_json_bytes(response)):
             raise PersonaStagePacketError(f"{slot} accepted response hash differs")

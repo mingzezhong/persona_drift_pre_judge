@@ -60,7 +60,6 @@ def _ledger(stage, slot: str) -> bytes:
     for line_number, row in enumerate(stage.packets[slot], start=1):
         is_original = row["input_id"] in base_ids
         response = {
-            "candidate_anonymous_id": row["candidate_anonymous_id"],
             "definition": (
                 f"{slot} definition for {row['candidate_anonymous_id']}"
                 if is_original

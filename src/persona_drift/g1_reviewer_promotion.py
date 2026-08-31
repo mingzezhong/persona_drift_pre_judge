@@ -32,6 +32,7 @@ from persona_drift.g1_local_reviewer import (
     RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
     SYNTHETIC_MODE,
     TOKENIZER_CONSTRAINT_DECODER_POLICY,
+    _model_visible_input,
     _validate_instance,
     build_effective_response_schema,
     normalize_model_output,
@@ -48,14 +49,14 @@ REPORT_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-synthetic-smoke-report-v1"
 CONTRACT_SCHEMA_VERSION = REVIEW_CONTRACT_SCHEMA_VERSION
 
 SMOKE_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
+    "configs/g1_reviewer_registry_amendment_6_v2_3.yaml"
 )
 SYNTHETIC_PACKET_PATH = Path("data/synthetic/g1_reviewer_smoke_v2_3.jsonl")
 PROMPT_CATALOG_PATH = Path("data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml")
-SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke_amendment_5")
-SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_amendment_5_v2_3.json")
+SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke_amendment_6")
+SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_amendment_6_v2_3.json")
 PRODUCTION_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_production_amendment_5_v2_3.yaml"
+    "configs/g1_reviewer_registry_production_amendment_6_v2_3.yaml"
 )
 
 SLOT_IDS = (
@@ -537,7 +538,7 @@ def _expected_items(
 def _validate_response_ids(item: _SmokeItem, response: Mapping[str, Any]) -> None:
     payload = item.payload
     if item.task_id == "persona_scalar":
-        expected = {"candidate_anonymous_id": payload.get("candidate_anonymous_id")}
+        expected = {}
     elif item.task_id == "persona_pair":
         candidate_a = _require_mapping(payload.get("candidate_a"), "candidate_a")
         candidate_b = _require_mapping(payload.get("candidate_b"), "candidate_b")
@@ -581,8 +582,9 @@ def _expected_messages(
     effective_schema: Mapping[str, Any],
 ) -> list[Mapping[str, str]]:
     task = prompt_catalog.tasks[item.task_id]
+    model_input = _model_visible_input(item.task_id, item.payload)
     user = task.user_template.replace(
-        "{input_json}", canonical_json_bytes(item.payload).decode("utf-8")
+        "{input_json}", canonical_json_bytes(model_input).decode("utf-8")
     ).replace(
         "{response_schema_json}",
         canonical_json_bytes(effective_schema).decode("utf-8"),

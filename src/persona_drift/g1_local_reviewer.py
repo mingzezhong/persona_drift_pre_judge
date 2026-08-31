@@ -438,6 +438,23 @@ def _validate_instance(value: Any, schema: Mapping[str, Any], *, path: str = "$"
                 raise ReviewRunnerError(f"response {path} violates {keyword}")
 
 
+def _model_visible_input(
+    task_id: str, input_value: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Remove non-semantic scalar aliases while retaining ledger provenance."""
+
+    if task_id != "persona_scalar":
+        return input_value
+    statements = input_value.get("statements")
+    if not isinstance(statements, list) or not statements:
+        raise ReviewRunnerError(
+            "persona_scalar input requires a non-empty statements list"
+        )
+    # input_id and candidate_anonymous_id remain bound by InputItem, the packet
+    # hash, and the append-only ledger.  They must not perturb scalar scores.
+    return {"statements": statements}
+
+
 @dataclass(frozen=True)
 class TaskSpec:
     task_id: str
@@ -453,8 +470,9 @@ class TaskSpec:
         input_value: Mapping[str, Any],
         effective_schema: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, str], ...]:
+        model_input = _model_visible_input(self.task_id, input_value)
         user = self.user_template.replace(
-            "{input_json}", canonical_json_bytes(input_value).decode("utf-8")
+            "{input_json}", canonical_json_bytes(model_input).decode("utf-8")
         ).replace(
             "{response_schema_json}",
             canonical_json_bytes(
@@ -788,7 +806,7 @@ def build_effective_response_schema(
     properties = schema["properties"]
     payload = input_value
     if task_id == "persona_scalar":
-        dynamic_values = {"candidate_anonymous_id": payload.get("candidate_anonymous_id")}
+        dynamic_values = {}
     elif task_id == "persona_pair":
         candidate_a = _require_mapping(payload.get("candidate_a"), context="candidate_a")
         candidate_b = _require_mapping(payload.get("candidate_b"), context="candidate_b")
@@ -933,7 +951,7 @@ def _validate_task_semantics(
     payload = item.input_value
     comparisons: list[tuple[str, Any]] = []
     if task_id == "persona_scalar":
-        comparisons.append(("candidate_anonymous_id", payload.get("candidate_anonymous_id")))
+        pass
     elif task_id == "persona_pair":
         comparisons.extend(
             (

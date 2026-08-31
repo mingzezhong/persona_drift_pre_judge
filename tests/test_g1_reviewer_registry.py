@@ -13,12 +13,15 @@ AMENDMENT_2 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_2.md"
 AMENDMENT_3 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_3.md"
 AMENDMENT_4 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_4.md"
 AMENDMENT_5 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_5.md"
+AMENDMENT_6 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_6.md"
 AMENDED_REGISTRY = ROOT / "configs" / "g1_reviewer_registry_amendment_3_v2_3.yaml"
 AMENDMENT_4_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
 AMENDMENT_5_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
+AMENDMENT_6_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_6_v2_3.yaml"
 FAILURE_REPORT = ROOT / "data" / "reports" / "g1_reviewer_production_failure_amendment_3_v2_3.json"
 SMOKE_FAILURE_REPORT = ROOT / "data/reports/g1_reviewer_smoke_failure_amendment_4_v2_3.json"
 AMENDMENT_5_FAILURE_REPORT = ROOT / "data/reports/g1_reviewer_smoke_failure_amendment_5_v2_3.json"
+SCALAR_FAILURE_REPORT = ROOT / "data/reports/g1_persona_scalar_blind_repeat_failure_v2_3.json"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -256,4 +259,38 @@ def test_amendment_5_quarantines_token_limit_failure_and_bounds_rationale():
     assert "to 1024 characters" in amendment
     for forbidden in ("truncate", "repair", "coerce", "parse-relax", "retry"):
         assert forbidden in amendment
+    assert "production_review_authorized: false" in amendment
+
+
+def test_amendment_6_is_one_prospective_recalibration_without_id_scoring():
+    report = json.loads(SCALAR_FAILURE_REPORT.read_text(encoding="utf-8"))
+    assert report["status"] == "FAIL_CLOSED_RECALIBRATION_REQUIRED"
+    assert report["blind_repeat"]["exact_rating_vector_match_count"] == 6
+    assert report["blind_repeat"]["repeat_count"] == 9
+    assert report["blind_repeat"]["passed"] is False
+    assert report["protocol_actions"]["recalibration_cycles_completed"] == 0
+    registry = yaml.safe_load(AMENDMENT_6_REGISTRY.read_text(encoding="utf-8"))
+    prior = yaml.safe_load(AMENDMENT_5_REGISTRY.read_text(encoding="utf-8"))
+    assert registry["production_review_authorized"] is False
+    assert registry["registry_status"] == "frozen_for_synthetic_smoke"
+    assert registry["slots"] == prior["slots"]
+    assert registry["runtime"] == prior["runtime"]
+    prompts = yaml.safe_load(
+        (ROOT / "data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml").read_text()
+    )
+    scalar = prompts["tasks"]["persona_scalar"]
+    assert "candidate_anonymous_id" not in scalar["response_schema"]["properties"]
+    assert scalar["packet_expected_schema"]["required_keys"] == [
+        "definition",
+        "scores",
+        "rationale",
+    ]
+    amendment = AMENDMENT_6.read_text(encoding="utf-8")
+    for required in (
+        "same 24 candidates",
+        "0.85",
+        "one recalibration cycle",
+        "must not start",
+    ):
+        assert required in amendment
     assert "production_review_authorized: false" in amendment
