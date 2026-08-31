@@ -4,8 +4,9 @@ This ledger begins at the v2 restart. The complete prior ledger remains
 recoverable from Git tag `pre-restart-v1-20260824`; see
 [`legacy_recovery.md`](legacy_recovery.md).
 
-No v2 model generation, behavior-judge run, pressure calibration, dose pilot,
-forecasting fit, randomized fork, or confirmatory analysis has been executed.
+No target-model generation, behavior-judge run, pressure calibration, dose
+pilot, forecasting fit, randomized fork, or confirmatory analysis has been
+executed. Outcome-blind local reviewer execution is recorded below.
 
 | Date (UTC) | Gate/stage | Status | Evidence |
 |---|---|---|---|
@@ -29,6 +30,8 @@ forecasting fit, randomized fork, or confirmatory analysis has been executed.
 | 2026-08-26 | G1 phase-1 validation | PASS (phase only) | Full suite: 99 passed in 151.14s; seven artifact byte/canonical hashes and contents passed; validator intentionally returned PREPARATION, ready=false, exit 2 with only PREPARATION_STATUS failing; status-only READY forgery rejected; source-material checksums, secret scan, and git diff --check passed |
 | 2026-08-26 | G1 phase-2 outcome-blind review preparation | PREPARATION | Protocol and anonymous input packets materialized: Persona 2,304 rows (24 × 96), MMLU-Pro 12,032 candidates, and Anthropic 158 logical candidates. No ratings, final catalogs, scenarios, split/freeze attestation, target-model outcome, or G1 PASS exists; exact reviewer registry and synthetic smoke remain open. |
 | 2026-08-26 | G1 phase-2 packet validation | PASS (preparation only) | Full suite: 142/142 passed (exit 0); Persona and Topic deterministic `--verify-only` checks passed; five source-material checksums passed. The aggregate G1 validator intentionally remained `PREPARATION`/`ready=false` with 30/31 checks passing and only `PREPARATION_STATUS` open (expected exit 2). |
+| 2026-08-31 | G1 reviewer amendment-5 synthetic smoke and promotion | PASS | Five frozen reviewer/writer slots accepted 23/23 synthetic tasks with zero invalid outputs; production registry `configs/g1_reviewer_registry_production_amendment_5_v2_3.yaml` was promoted and hash-bound. |
+| 2026-08-31 | G1 production Persona scalar review | **FAIL CLOSED — RECALIBRATION REQUIRED** | Three independent primaries accepted 81/81 production records, but blind-repeat exact rating-vector agreement was 6/9 = 0.667, below the frozen 0.85 minimum. Pair review was not started; the mechanically generated pair packet was quarantined. Evidence: `data/reports/g1_persona_scalar_blind_repeat_failure_v2_3.json`. |
 
 Public-data licenses/item IDs remain a `G1` requirement. Exact model revisions,
 license/access, chat templates, and hook equivalence remain `G3` requirements.
