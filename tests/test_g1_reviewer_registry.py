@@ -1,4 +1,5 @@
 import json
+import hashlib
 import re
 from pathlib import Path
 
@@ -9,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "configs" / "g1_reviewer_registry_v2_3.yaml"
 AMENDMENT_1 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
 AMENDMENT_2 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_2.md"
+AMENDMENT_3 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_3.md"
+AMENDED_REGISTRY = ROOT / "configs" / "g1_reviewer_registry_amendment_3_v2_3.yaml"
+FAILURE_REPORT = ROOT / "data" / "reports" / "g1_reviewer_production_failure_amendment_3_v2_3.json"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -108,3 +112,64 @@ def test_smoke_fixture_is_synthetic_and_covers_all_required_task_shapes():
     serialized = SMOKE.read_text(encoding="utf-8")
     assert "PC-9fad" not in serialized
     assert "TOP-0003" not in serialized
+
+
+def test_amendment_3_failure_report_is_status_only_and_quarantines_every_row():
+    report = json.loads(FAILURE_REPORT.read_text(encoding="utf-8"))
+    assert report["inspection_scope"] == {
+        "record_status_inspected": True,
+        "error_category_inspected": True,
+        "semantic_scores_inspected": False,
+        "rationales_inspected": False,
+    }
+    assert report["ledgers"] == {
+        "primary_01": {
+            "records": 27,
+            "accepted": 26,
+            "invalid": 1,
+            "ledger_sha256": "08793e75de9da795afa3277b3aa90311443609e72b7ee09028933382588b0910",
+            "chain_head": "9ee72f1b63a2ac59c741e629e1e51bd737d6633ef7d9bc561b455092180f3345",
+            "error_categories": {"integer_type_violation": 1},
+        },
+        "primary_02": {
+            "records": 27,
+            "accepted": 24,
+            "invalid": 3,
+            "ledger_sha256": "18628acf2a1379250b0fcd30ad0c30c39f5d53d15674c1b4944710c8ac1032da",
+            "chain_head": "d9427464ce6bc0d19f13f1777e26c343023b4df52295247c6d7203491cdd7850",
+            "error_categories": {
+                "integer_type_violation": 2,
+                "duplicate_json_key": 1,
+            },
+        },
+    }
+    assert report["quarantine"]["all_current_production_ratings"] is True
+    assert report["quarantine"]["reuse_accepted_rows"] is False
+    assert report["quarantine"]["rerun_only_failed_items"] is False
+    assert report["ratings_generated_by_report"] is False
+    assert report["all_required_reviews_complete"] is False
+    assert report["g1_pass"] is False
+    amendment = AMENDMENT_3.read_text(encoding="utf-8")
+    for forbidden in ("Retry", "repair", "coercion", "parser relaxation"):
+        assert forbidden in amendment
+
+
+def test_amendment_3_registry_is_schema_stress_only_and_not_production():
+    registry = yaml.safe_load(AMENDED_REGISTRY.read_text(encoding="utf-8"))
+    assert registry["registry_status"] == "frozen_for_synthetic_smoke"
+    assert registry["synthetic_smoke_authorized"] is True
+    assert registry["production_review_authorized"] is False
+    assert registry["runtime"]["schema_constrained_decoding"] == {
+        "required": True,
+        "backend": "lm-format-enforcer",
+        "version": "0.11.2",
+    }
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"lm-format-enforcer==0.11.2"' in pyproject
+    phase2 = yaml.safe_load((ROOT / "configs/g1_phase2_v2_3.yaml").read_text())
+    assert phase2["ratings_generated"] is False
+    assert phase2["authorization_guard"]["all_required_reviews_complete"] is False
+    old_production = ROOT / "configs/g1_reviewer_registry_production_v2_3.yaml"
+    assert hashlib.sha256(old_production.read_bytes()).hexdigest() == (
+        "93f3c5571057b66afd6134725a56166e303382b22e94dd14bb856413711ac877"
+    )

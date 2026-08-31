@@ -1,0 +1,41 @@
+{
+  "schema_version": "restart-v2.3-g1-reviewer-production-failure-report-v1",
+  "amendment_id": "LPS-G1-REVIEWER-AMENDMENT-3-20260831",
+  "inspection_scope": {
+    "record_status_inspected": true,
+    "error_category_inspected": true,
+    "semantic_scores_inspected": false,
+    "rationales_inspected": false
+  },
+  "ledgers": {
+    "primary_01": {
+      "records": 27,
+      "accepted": 26,
+      "invalid": 1,
+      "ledger_sha256": "08793e75de9da795afa3277b3aa90311443609e72b7ee09028933382588b0910",
+      "chain_head": "9ee72f1b63a2ac59c741e629e1e51bd737d6633ef7d9bc561b455092180f3345",
+      "error_categories": {"integer_type_violation": 1}
+    },
+    "primary_02": {
+      "records": 27,
+      "accepted": 24,
+      "invalid": 3,
+      "ledger_sha256": "18628acf2a1379250b0fcd30ad0c30c39f5d53d15674c1b4944710c8ac1032da",
+      "chain_head": "d9427464ce6bc0d19f13f1777e26c343023b4df52295247c6d7203491cdd7850",
+      "error_categories": {
+        "integer_type_violation": 2,
+        "duplicate_json_key": 1
+      }
+    }
+  },
+  "quarantine": {
+    "all_current_production_ratings": true,
+    "reuse_accepted_rows": false,
+    "rerun_only_failed_items": false,
+    "preserve_old_production_registry": true,
+    "preserve_failed_ledgers": true
+  },
+  "ratings_generated_by_report": false,
+  "all_required_reviews_complete": false,
+  "g1_pass": false
+}

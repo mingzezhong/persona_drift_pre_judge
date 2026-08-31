@@ -23,7 +23,6 @@ import yaml
 from persona_drift.g1_local_reviewer import (
     LEDGER_SCHEMA_VERSION,
     NORMALIZATION_NONE,
-    NORMALIZATION_STRIP_SINGLE_OUTER_FENCE,
     OUTPUT_NORMALIZATION_CONTRACT,
     PROMPTS_SCHEMA_VERSION,
     PRODUCTION_MODE,
@@ -33,6 +32,7 @@ from persona_drift.g1_local_reviewer import (
     RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
     SYNTHETIC_MODE,
     _validate_instance,
+    build_effective_response_schema,
     normalize_model_output,
     runner_implementation_binding,
 )
@@ -46,7 +46,9 @@ from persona_drift.g1_manifest import (
 REPORT_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-synthetic-smoke-report-v1"
 CONTRACT_SCHEMA_VERSION = REVIEW_CONTRACT_SCHEMA_VERSION
 
-SMOKE_REGISTRY_PATH = Path("configs/g1_reviewer_registry_v2_3.yaml")
+SMOKE_REGISTRY_PATH = Path(
+    "configs/g1_reviewer_registry_amendment_3_v2_3.yaml"
+)
 SYNTHETIC_PACKET_PATH = Path("data/synthetic/g1_reviewer_smoke_v2_3.jsonl")
 PROMPT_CATALOG_PATH = Path("data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml")
 SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke")
@@ -119,6 +121,8 @@ _LEDGER_FIELDS = frozenset(
         "packet",
         "item",
         "prompt",
+        "effective_response_schema",
+        "effective_response_schema_canonical_sha256",
         "decoding",
         "raw_output",
         "raw_output_sha256",
@@ -558,14 +562,16 @@ def _validate_response_ids(item: _SmokeItem, response: Mapping[str, Any]) -> Non
 
 
 def _expected_messages(
-    item: _SmokeItem, prompt_catalog: _PromptCatalog
+    item: _SmokeItem,
+    prompt_catalog: _PromptCatalog,
+    effective_schema: Mapping[str, Any],
 ) -> list[Mapping[str, str]]:
     task = prompt_catalog.tasks[item.task_id]
     user = task.user_template.replace(
         "{input_json}", canonical_json_bytes(item.payload).decode("utf-8")
     ).replace(
         "{response_schema_json}",
-        canonical_json_bytes(task.response_schema).decode("utf-8"),
+        canonical_json_bytes(effective_schema).decode("utf-8"),
     )
     return [
         {"role": "system", "content": prompt_catalog.system_prompt},
@@ -589,6 +595,8 @@ def _validate_runtime_provenance(
         "python_version",
         "torch_version",
         "transformers_version",
+        "schema_constrained_decoding_backend",
+        "schema_constrained_decoding_version",
         "tokenizer_fix_mistral_regex",
         "cuda_version",
         "cuda_available",
@@ -619,6 +627,13 @@ def _validate_runtime_provenance(
         )
     if provenance["torch_version"] != registry_runtime.get("torch_version"):
         raise ReviewerPromotionError(f"{slot_id} runtime torch version differs from registry")
+    if (
+        provenance["schema_constrained_decoding_backend"] != "lm-format-enforcer"
+        or provenance["schema_constrained_decoding_version"] != "0.11.2"
+    ):
+        raise ReviewerPromotionError(
+            f"{slot_id} runtime schema-constrained decoding dependency differs"
+        )
     tokenizer_fix_mistral_regex = provenance["tokenizer_fix_mistral_regex"]
     if not isinstance(tokenizer_fix_mistral_regex, bool):
         raise ReviewerPromotionError(
@@ -799,8 +814,7 @@ def _validate_record_payload_hashes(
                     f"{context} unsupported output form has normalization evidence"
                 )
         elif (
-            normalization
-            not in {NORMALIZATION_NONE, NORMALIZATION_STRIP_SINGLE_OUTER_FENCE}
+            normalization != NORMALIZATION_NONE
             or normalization != normalized.normalization
             or normalized_hash != normalized.sha256
         ):
@@ -925,6 +939,23 @@ def _validate_ledger(
                 f"{context} packet expected_schema differs from prompt catalog"
             )
 
+        expected_effective_schema = build_effective_response_schema(
+            expected_item.task_id,
+            prompt_task.response_schema,
+            expected_item.payload,
+        )
+        effective_schema = _require_mapping(
+            record["effective_response_schema"], f"{context} effective response schema"
+        )
+        if dict(effective_schema) != dict(expected_effective_schema):
+            raise ReviewerPromotionError(
+                f"{context} effective response schema differs from frozen item schema"
+            )
+        if record["effective_response_schema_canonical_sha256"] != _sha256(
+            canonical_json_bytes(effective_schema)
+        ):
+            raise ReviewerPromotionError(f"{context} effective response schema hash mismatch")
+
         current_contract_hash = _require_sha256(
             record["review_contract_sha256"], f"{context} contract hash"
         )
@@ -978,7 +1009,9 @@ def _validate_ledger(
             canonical_json_bytes(messages)
         ):
             raise ReviewerPromotionError(f"{context} prompt messages hash mismatch")
-        if messages != _expected_messages(expected_item, prompt_catalog):
+        if messages != _expected_messages(
+            expected_item, prompt_catalog, effective_schema
+        ):
             raise ReviewerPromotionError(
                 f"{context} prompt messages differ from frozen task and input"
             )
@@ -1014,7 +1047,7 @@ def _validate_ledger(
                     f"{context} raw_output and accepted response differ"
                 )
             try:
-                _validate_instance(response, prompt_task.response_schema)
+                _validate_instance(response, effective_schema)
             except ValueError as exc:
                 raise ReviewerPromotionError(
                     f"{context} accepted response violates frozen schema: {exc}"

@@ -52,7 +52,7 @@ PY
 "$PYTHON_BIN" scripts/run_g1_local_reviewer.py \
   --smoke \
   --slot "$REVIEWER_SLOT" \
-  --registry configs/g1_reviewer_registry_v2_3.yaml \
+  --registry configs/g1_reviewer_registry_amendment_3_v2_3.yaml \
   --prompts data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml \
   --packet data/synthetic/g1_reviewer_smoke_v2_3.jsonl \
   --output "$OUTPUT_DIR/${REVIEWER_SLOT}.jsonl"

@@ -2,8 +2,9 @@
 
 Synthetic smoke is the default. Production inputs require an explicit flag and
 a registry that separately authorizes production. Every model attempt is kept
-in an append-only, hash-chained JSONL ledger; only accepted attempts are skipped
-when a run resumes.
+in an append-only, hash-chained JSONL ledger. Accepted attempts may be skipped
+only when the same review contract has no failed attempt; any failure
+quarantines the complete contract and forbids resumption.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import fcntl
 import hashlib
+import importlib.metadata
 import json
 import math
 import os
@@ -29,21 +31,18 @@ from persona_drift.g1_manifest import (
 )
 
 
-LEDGER_SCHEMA_VERSION = "restart-v2.3-g1-local-review-ledger-v2"
-REVIEW_CONTRACT_SCHEMA_VERSION = "restart-v2.3-g1-local-review-contract-v2"
+LEDGER_SCHEMA_VERSION = "restart-v2.3-g1-local-review-ledger-v3"
+REVIEW_CONTRACT_SCHEMA_VERSION = "restart-v2.3-g1-local-review-contract-v3"
 OUTPUT_NORMALIZATION_SCHEMA_VERSION = (
-    "restart-v2.3-g1-output-normalization-policy-v1"
+    "restart-v2.3-g1-output-normalization-policy-v2"
 )
 NORMALIZATION_NONE = "none"
-NORMALIZATION_STRIP_SINGLE_OUTER_FENCE = (
-    "strip_single_outer_markdown_json_fence"
-)
 OUTPUT_NORMALIZATION_CONTRACT: Mapping[str, Any] = {
     "schema_version": OUTPUT_NORMALIZATION_SCHEMA_VERSION,
     "bare_json_operation": NORMALIZATION_NONE,
-    "fenced_json_operation": NORMALIZATION_STRIP_SINGLE_OUTER_FENCE,
-    "allowed_fence_openers": ["```json\n", "```\n"],
-    "required_fence_closer": "\n```",
+    "markdown_fences": "forbidden",
+    "repair": "forbidden",
+    "coercion": "forbidden",
     "outer_whitespace": "strip",
     "normalized_payload": "one_strict_json_object",
 }
@@ -54,6 +53,14 @@ RUNNER_IMPLEMENTATION_SCHEMA_VERSION = (
 )
 SYNTHETIC_MODE = "SYNTHETIC_SMOKE"
 PRODUCTION_MODE = "PRODUCTION"
+SCHEMA_ENFORCER_DISTRIBUTION = "lm-format-enforcer"
+SCHEMA_ENFORCER_VERSION = "0.11.2"
+FREE_TEXT_MAX_LENGTHS: Mapping[str, int] = {
+    "definition": 512,
+    "rationale": 2048,
+    "scenario_summary": 1024,
+    "move_text": 1024,
+}
 
 RUNNER_IMPLEMENTATION_RELATIVE_PATHS = (
     "src/persona_drift/g1_local_reviewer.py",
@@ -181,36 +188,14 @@ class NormalizedModelOutput:
 
 
 def normalize_model_output(raw_output: str) -> NormalizedModelOutput:
-    """Apply only the frozen bare-JSON or single-outer-fence policy."""
+    """Accept bare JSON text only; repair and fence stripping are forbidden."""
 
     if not isinstance(raw_output, str):
         raise ReviewRunnerError("model output must be text")
     stripped = raw_output.strip()
-    normalization = NORMALIZATION_NONE
-    normalized = stripped
-    if stripped.startswith("```"):
-        opener = next(
-            (
-                candidate
-                for candidate in OUTPUT_NORMALIZATION_CONTRACT[
-                    "allowed_fence_openers"
-                ]
-                if stripped.startswith(candidate)
-            ),
-            None,
-        )
-        closer = OUTPUT_NORMALIZATION_CONTRACT["required_fence_closer"]
-        if opener is None or not stripped.endswith(closer):
-            raise ReviewRunnerError(
-                "model output fence must be exactly one complete outer ```json or ``` fence"
-            )
-        normalized = stripped[len(opener) : -len(closer)].strip()
-        normalization = NORMALIZATION_STRIP_SINGLE_OUTER_FENCE
-    elif stripped.endswith("```"):
-        raise ReviewRunnerError(
-            "model output fence must be exactly one complete outer ```json or ``` fence"
-        )
-    return NormalizedModelOutput(text=normalized, normalization=normalization)
+    if "```" in stripped:
+        raise ReviewRunnerError("model output Markdown fences are forbidden; no repair is allowed")
+    return NormalizedModelOutput(text=stripped, normalization=NORMALIZATION_NONE)
 
 
 def _read_regular_file(path: Path, *, label: str) -> bytes:
@@ -459,13 +444,19 @@ class TaskSpec:
     canonical_sha256: str
 
     def messages(
-        self, *, system_prompt: str, input_value: Mapping[str, Any]
+        self,
+        *,
+        system_prompt: str,
+        input_value: Mapping[str, Any],
+        effective_schema: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, str], ...]:
         user = self.user_template.replace(
             "{input_json}", canonical_json_bytes(input_value).decode("utf-8")
         ).replace(
             "{response_schema_json}",
-            canonical_json_bytes(self.response_schema).decode("utf-8"),
+            canonical_json_bytes(
+                self.response_schema if effective_schema is None else effective_schema
+            ).decode("utf-8"),
         )
         return (
             {"role": "system", "content": system_prompt},
@@ -477,7 +468,10 @@ class TaskSpec:
         return self.parse_normalized_output(normalized, item)
 
     def parse_normalized_output(
-        self, normalized: NormalizedModelOutput, item: "InputItem"
+        self,
+        normalized: NormalizedModelOutput,
+        item: "InputItem",
+        effective_schema: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
         if not normalized.text.startswith("{") or not normalized.text.endswith("}"):
             raise ReviewRunnerError(
@@ -486,7 +480,9 @@ class TaskSpec:
         value = _strict_json(normalized.text, context="normalized model output")
         if not isinstance(value, Mapping):
             raise ReviewRunnerError("model output must be a JSON object")
-        _validate_instance(value, self.response_schema)
+        _validate_instance(
+            value, self.response_schema if effective_schema is None else effective_schema
+        )
         _validate_task_semantics(self.task_id, value, item)
         return value
 
@@ -751,6 +747,83 @@ class InputItem:
     line_number: int
     row_sha256: str
     canonical_sha256: str
+
+
+def _specialize_schema_node(schema: Any, *, property_name: str | None = None) -> Any:
+    if isinstance(schema, Mapping):
+        result = {
+            key: _specialize_schema_node(value, property_name=None)
+            for key, value in schema.items()
+        }
+        if schema.get("type") == "object" and isinstance(schema.get("properties"), Mapping):
+            result["properties"] = {
+                name: _specialize_schema_node(child, property_name=name)
+                for name, child in schema["properties"].items()
+            }
+        elif schema.get("type") == "array" and "items" in schema:
+            result["items"] = _specialize_schema_node(schema["items"])
+        if schema.get("type") == "integer" and schema.get("minimum") == 0 and schema.get("maximum") == 2:
+            result.pop("minimum", None)
+            result.pop("maximum", None)
+            result["enum"] = [0, 1, 2]
+        if schema.get("type") == "string" and property_name in FREE_TEXT_MAX_LENGTHS:
+            result["maxLength"] = FREE_TEXT_MAX_LENGTHS[property_name]
+        return result
+    if isinstance(schema, list):
+        return [_specialize_schema_node(value) for value in schema]
+    return schema
+
+
+def build_effective_response_schema(
+    task_id: str,
+    response_schema: Mapping[str, Any],
+    input_value: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Specialize one frozen response schema to one anonymous input."""
+
+    schema = _specialize_schema_node(response_schema)
+    properties = schema["properties"]
+    payload = input_value
+    if task_id == "persona_scalar":
+        dynamic_values = {"candidate_anonymous_id": payload.get("candidate_anonymous_id")}
+    elif task_id == "persona_pair":
+        candidate_a = _require_mapping(payload.get("candidate_a"), context="candidate_a")
+        candidate_b = _require_mapping(payload.get("candidate_b"), context="candidate_b")
+        dynamic_values = {
+            "candidate_a_id": candidate_a.get("id"),
+            "candidate_b_id": candidate_b.get("id"),
+        }
+    elif task_id == "persona_family":
+        dynamic_values = {"candidate_id": payload.get("candidate_id")}
+        family_options = payload.get("family_options")
+        if (
+            not isinstance(family_options, list)
+            or not family_options
+            or any(not isinstance(value, str) or not value for value in family_options)
+            or len(family_options) != len(set(family_options))
+        ):
+            raise ReviewRunnerError("input family_options must be unique non-empty strings")
+        properties["family_id"]["enum"] = list(family_options)
+    else:
+        dynamic_values = {"blind_item_id": payload.get("blind_item_id")}
+    for field, value in dynamic_values.items():
+        if not isinstance(value, str) or not value:
+            raise ReviewRunnerError(f"input value for dynamic response field {field} is invalid")
+        properties[field]["const"] = value
+    _validate_schema_definition(schema)
+    return schema
+
+
+def effective_response_schema(
+    task: TaskSpec, item: InputItem
+) -> Mapping[str, Any]:
+    return build_effective_response_schema(
+        task.task_id, task.response_schema, item.input_value
+    )
+
+
+def effective_response_schema_sha256(task: TaskSpec, item: InputItem) -> str:
+    return _sha256(canonical_json_bytes(effective_response_schema(task, item)))
 
 
 def _jsonl_rows(raw: bytes, *, context: str) -> tuple[tuple[int, bytes], ...]:
@@ -1021,8 +1094,46 @@ class ReviewerBackend(Protocol):
         self,
         messages: Sequence[Mapping[str, str]],
         decoder: DecoderSpec,
+        effective_schema: Mapping[str, Any],
     ) -> str:
         ...
+
+
+def _load_schema_enforcer(runtime: Mapping[str, Any]) -> tuple[Any, Any]:
+    constraint = _require_mapping(
+        runtime.get("schema_constrained_decoding"),
+        context="registry runtime.schema_constrained_decoding",
+    )
+    _require_exact_keys(
+        constraint,
+        required={"required", "backend", "version"},
+        context="registry runtime.schema_constrained_decoding",
+    )
+    if dict(constraint) != {
+        "required": True,
+        "backend": SCHEMA_ENFORCER_DISTRIBUTION,
+        "version": SCHEMA_ENFORCER_VERSION,
+    }:
+        raise ReviewRunnerError(
+            "schema-constrained decoding must lock lm-format-enforcer==0.11.2"
+        )
+    try:
+        installed = importlib.metadata.version(SCHEMA_ENFORCER_DISTRIBUTION)
+    except importlib.metadata.PackageNotFoundError as exc:
+        raise ReviewRunnerError("required lm-format-enforcer==0.11.2 is not installed") from exc
+    if installed != SCHEMA_ENFORCER_VERSION:
+        raise ReviewRunnerError(
+            "lm-format-enforcer version mismatch: "
+            f"expected {SCHEMA_ENFORCER_VERSION}, got {installed}"
+        )
+    try:
+        from lmformatenforcer import JsonSchemaParser
+        from lmformatenforcer.integrations.transformers import (
+            build_transformers_prefix_allowed_tokens_fn,
+        )
+    except (ImportError, AttributeError) as exc:
+        raise ReviewRunnerError("lm-format-enforcer integration is unavailable") from exc
+    return JsonSchemaParser, build_transformers_prefix_allowed_tokens_fn
 
 
 def _snapshot_provenance(identity: ModelIdentity) -> dict[str, Any]:
@@ -1078,11 +1189,15 @@ class LocalHuggingFaceBackend:
         tokenizer: Any,
         torch_module: Any,
         provenance: Mapping[str, Any],
+        schema_parser_factory: Any,
+        prefix_allowed_tokens_factory: Any,
     ) -> None:
         self._model = model
         self._tokenizer = tokenizer
         self._torch = torch_module
         self._provenance = dict(provenance)
+        self._schema_parser_factory = schema_parser_factory
+        self._prefix_allowed_tokens_factory = prefix_allowed_tokens_factory
 
     @property
     def provenance(self) -> Mapping[str, Any]:
@@ -1095,6 +1210,9 @@ class LocalHuggingFaceBackend:
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+        schema_parser_factory, prefix_allowed_tokens_factory = _load_schema_enforcer(
+            registry.runtime
+        )
         try:
             import torch
             import transformers
@@ -1153,6 +1271,8 @@ class LocalHuggingFaceBackend:
             "python_version": platform.python_version(),
             "torch_version": torch.__version__,
             "transformers_version": transformers.__version__,
+            "schema_constrained_decoding_backend": SCHEMA_ENFORCER_DISTRIBUTION,
+            "schema_constrained_decoding_version": SCHEMA_ENFORCER_VERSION,
             "tokenizer_fix_mistral_regex": bool(
                 tokenizer_options.get("fix_mistral_regex", False)
             ),
@@ -1174,12 +1294,15 @@ class LocalHuggingFaceBackend:
             tokenizer=tokenizer,
             torch_module=torch,
             provenance=provenance,
+            schema_parser_factory=schema_parser_factory,
+            prefix_allowed_tokens_factory=prefix_allowed_tokens_factory,
         )
 
     def generate(
         self,
         messages: Sequence[Mapping[str, str]],
         decoder: DecoderSpec,
+        effective_schema: Mapping[str, Any],
     ) -> str:
         try:
             rendered = self._tokenizer.apply_chat_template(
@@ -1199,6 +1322,15 @@ class LocalHuggingFaceBackend:
             }
             input_length = int(encoded["input_ids"].shape[-1])
             generation_kwargs = decoder.generation_kwargs()
+            try:
+                parser = self._schema_parser_factory(dict(effective_schema))
+                generation_kwargs["prefix_allowed_tokens_fn"] = (
+                    self._prefix_allowed_tokens_factory(self._tokenizer, parser)
+                )
+            except Exception as exc:
+                raise ReviewRunnerError(
+                    f"schema constraint initialization failed: {exc}"
+                ) from exc
             if self._tokenizer.pad_token_id is not None:
                 generation_kwargs["pad_token_id"] = self._tokenizer.pad_token_id
             elif self._tokenizer.eos_token_id is not None:
@@ -1335,6 +1467,20 @@ class AppendOnlyLedger:
             and isinstance(record["item"].get("item_id"), str)
         )
 
+    def require_resumable_contract(self, *, contract_sha256: str) -> None:
+        failed = [
+            record.get("status")
+            for record in self._records
+            if record.get("review_contract_sha256") == contract_sha256
+            and record.get("status")
+            in {"generation_error", "rejected_invalid_output"}
+        ]
+        if failed:
+            raise ReviewRunnerError(
+                "existing ledger contains a failed attempt for this review contract; "
+                "the complete production run is quarantined and cannot resume"
+            )
+
     def append(self, body: Mapping[str, Any]) -> Mapping[str, Any]:
         if "record_sha256" in body or "previous_record_sha256" in body:
             raise ReviewRunnerError("ledger body contains reserved chain fields")
@@ -1403,6 +1549,7 @@ def _attempt_body(
     prepared: PreparedReview,
     item: InputItem,
     messages: Sequence[Mapping[str, str]],
+    effective_schema: Mapping[str, Any],
     backend_provenance: Mapping[str, Any],
     contract_sha256: str,
     attempt_id: str,
@@ -1446,6 +1593,10 @@ def _attempt_body(
             "messages": [dict(message) for message in messages],
             "messages_canonical_sha256": _sha256(canonical_json_bytes(messages)),
         },
+        "effective_response_schema": dict(effective_schema),
+        "effective_response_schema_canonical_sha256": _sha256(
+            canonical_json_bytes(effective_schema)
+        ),
         "decoding": {
             "parameters": dict(prepared.registry.decoder.values),
             "batch_size": prepared.registry.decoder.batch_size,
@@ -1474,7 +1625,7 @@ def run_review(
     clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     attempt_id_factory: Callable[[], str] = _attempt_id,
 ) -> RunSummary:
-    """Run assigned items, retaining invalid attempts and resuming accepted ones."""
+    """Run each pending item once; any prior failed attempt forbids resumption."""
 
     items = assigned_items(prepared)
     contract_sha = review_contract_sha256(prepared)
@@ -1482,6 +1633,7 @@ def run_review(
     invalid_count = 0
     attempted = 0
     with AppendOnlyLedger(output_path) as ledger:
+        ledger.require_resumable_contract(contract_sha256=contract_sha)
         already_accepted = ledger.accepted_item_ids(contract_sha256=contract_sha)
         pending = [item for item in items if item.item_id not in already_accepted]
         skipped = len(items) - len(pending)
@@ -1493,9 +1645,11 @@ def run_review(
 
         for item in pending:
             task = prepared.prompts.tasks[item.task_id]
+            effective_schema = effective_response_schema(task, item)
             messages = task.messages(
                 system_prompt=prepared.prompts.system_prompt,
                 input_value=item.input_value,
+                effective_schema=effective_schema,
             )
             started_at = _timestamp_utc(clock)
             attempt_id = attempt_id_factory()
@@ -1504,7 +1658,7 @@ def run_review(
             attempted += 1
             try:
                 raw_output = backend.generate(  # type: ignore[union-attr]
-                    messages, prepared.registry.decoder
+                    messages, prepared.registry.decoder, effective_schema
                 )
             except Exception as exc:
                 finished_at = _timestamp_utc(clock)
@@ -1512,6 +1666,7 @@ def run_review(
                     prepared=prepared,
                     item=item,
                     messages=messages,
+                    effective_schema=effective_schema,
                     backend_provenance=backend_provenance,
                     contract_sha256=contract_sha,
                     attempt_id=attempt_id,
@@ -1539,7 +1694,9 @@ def run_review(
                 normalized_output = None
                 try:
                     normalized_output = normalize_model_output(raw_output)
-                    response = task.parse_normalized_output(normalized_output, item)
+                    response = task.parse_normalized_output(
+                        normalized_output, item, effective_schema
+                    )
                     validation_error = None
                 except ReviewRunnerError as exc:
                     response = None
@@ -1558,6 +1715,7 @@ def run_review(
                     prepared=prepared,
                     item=item,
                     messages=messages,
+                    effective_schema=effective_schema,
                     backend_provenance=backend_provenance,
                     contract_sha256=contract_sha,
                     attempt_id=attempt_id,

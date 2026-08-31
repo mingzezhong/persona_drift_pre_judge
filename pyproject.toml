@@ -9,6 +9,7 @@ description = "Pressure-conditioned latent-trajectory forecasting of LLM persona
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "accelerate>=1.1,<2",
+  "lm-format-enforcer==0.11.2",
   "numpy>=1.26,<3",
   "pandas>=2.2,<3",
   "pyarrow>=18,<23",

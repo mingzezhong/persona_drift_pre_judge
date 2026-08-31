@@ -44,6 +44,8 @@ class QueueBackend:
             "python_version": "3.11.0",
             "torch_version": prepared.registry.runtime["torch_version"],
             "transformers_version": prepared.registry.runtime["framework_version"],
+            "schema_constrained_decoding_backend": "lm-format-enforcer",
+            "schema_constrained_decoding_version": "0.11.2",
             "tokenizer_fix_mistral_regex": (
                 identity.base_model_family == "mistral"
             ),
@@ -62,9 +64,10 @@ class QueueBackend:
     def provenance(self):
         return self._provenance
 
-    def generate(self, messages, decoder):
+    def generate(self, messages, decoder, effective_schema):
         assert messages
         assert decoder.max_new_tokens > 0
+        assert effective_schema
         return self.outputs.pop(0)
 
 
@@ -164,9 +167,7 @@ def _real_runner_ledgers(directory: Path) -> dict[str, Path]:
             output_path=output,
             backend=QueueBackend(
                 [
-                    f"```json\n{_response_for(item)}\n```"
-                    if slot == "scenario_writer"
-                    else _response_for(item)
+                    _response_for(item)
                     for item in items
                 ],
                 prepared,

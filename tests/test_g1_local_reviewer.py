@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -9,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import yaml
 
@@ -16,10 +18,14 @@ from persona_drift.g1_local_reviewer import (
     AppendOnlyLedger,
     Registry,
     ReviewRunnerError,
+    LocalHuggingFaceBackend,
+    _load_schema_enforcer,
     _tokenizer_load_options,
     assigned_items,
+    effective_response_schema,
     canonical_json_bytes,
     prepare_review,
+    normalize_model_output,
     review_contract,
     review_plan,
     runner_implementation_binding,
@@ -145,6 +151,7 @@ class QueueBackend:
     def __init__(self, outputs):
         self.outputs = list(outputs)
         self.calls = 0
+        self.schemas = []
         self._provenance = {
             "backend": "unit-test-fake",
             "network_used": False,
@@ -155,9 +162,10 @@ class QueueBackend:
     def provenance(self):
         return self._provenance
 
-    def generate(self, messages, decoder):
+    def generate(self, messages, decoder, effective_schema):
         self.calls += 1
-        if not messages or decoder.max_new_tokens < 1:
+        self.schemas.append(effective_schema)
+        if not messages or decoder.max_new_tokens < 1 or not effective_schema:
             raise AssertionError("runner supplied an invalid generation request")
         return self.outputs.pop(0)
 
@@ -301,14 +309,12 @@ class StrictOutputTests(unittest.TestCase):
         parsed = self.task.parse_output(self.valid, self.item)
         self.assertEqual(parsed["blind_item_id"], self.item.input_value["blind_item_id"])
 
-    def test_accepts_exactly_one_complete_json_or_bare_fence(self) -> None:
+    def test_markdown_fences_are_rejected_without_repair(self) -> None:
         for opener in ("```json", "```"):
-            parsed = self.task.parse_output(
-                f"{opener}\n{self.valid}\n```", self.item
-            )
-            self.assertEqual(
-                parsed["blind_item_id"], self.item.input_value["blind_item_id"]
-            )
+            with self.assertRaisesRegex(ReviewRunnerError, "no repair"):
+                self.task.parse_output(
+                    f"{opener}\n{self.valid}\n```", self.item
+                )
 
     def test_rejects_prose_other_fences_duplicates_and_nonfinite_numbers(self) -> None:
         invalid = (
@@ -344,6 +350,234 @@ class StrictOutputTests(unittest.TestCase):
             self.task.parse_output(json.dumps(wrong), self.item)
 
 
+class SchemaConstrainedGenerationTests(unittest.TestCase):
+    def test_effective_schema_locks_dynamic_ids_family_options_and_scores(self) -> None:
+        prepared = prepared_for("primary_01")
+        items = {item.task_id: item for item in assigned_items(prepared)}
+
+        scalar_task = prepared.prompts.tasks["persona_scalar"]
+        scalar_schema = effective_response_schema(
+            scalar_task, items["persona_scalar"]
+        )
+        self.assertEqual(
+            scalar_schema["properties"]["candidate_anonymous_id"]["const"],
+            items["persona_scalar"].input_value["candidate_anonymous_id"],
+        )
+        self.assertEqual(
+            scalar_schema["properties"]["scores"]["properties"]
+            ["construct_consistency"]["enum"],
+            [0, 1, 2],
+        )
+        self.assertNotIn(
+            "minimum",
+            scalar_schema["properties"]["scores"]["properties"]
+            ["construct_consistency"],
+        )
+        self.assertEqual(
+            scalar_schema["properties"]["rationale"]["maxLength"], 2048
+        )
+        self.assertEqual(
+            scalar_schema["required"], scalar_task.response_schema["required"]
+        )
+        self.assertIs(scalar_schema["additionalProperties"], False)
+
+        family_task = prepared.prompts.tasks["persona_family"]
+        family_item = items["persona_family"]
+        family_schema = effective_response_schema(family_task, family_item)
+        self.assertEqual(
+            family_schema["properties"]["candidate_id"]["const"],
+            family_item.input_value["candidate_id"],
+        )
+        self.assertEqual(
+            family_schema["properties"]["family_id"]["enum"],
+            family_item.input_value["family_options"],
+        )
+
+        triage_task = prepared.prompts.tasks["topic_triage"]
+        triage_item = items["topic_triage"]
+        triage_schema = effective_response_schema(triage_task, triage_item)
+        self.assertEqual(
+            triage_schema["properties"]["blind_item_id"]["const"],
+            triage_item.input_value["blind_item_id"],
+        )
+
+    def test_string_integer_and_duplicate_key_remain_invalid(self) -> None:
+        prepared = prepared_for("primary_01", "persona_scalar")
+        item = assigned_items(prepared)[0]
+        task = prepared.prompts.tasks[item.task_id]
+        schema = effective_response_schema(task, item)
+        value = json.loads(response_for(item))
+        value["scores"]["construct_consistency"] = "2"
+        with self.assertRaisesRegex(ReviewRunnerError, "type integer"):
+            task.parse_normalized_output(
+                normalize_model_output(json.dumps(value)), item, schema
+            )
+        duplicate = response_for(item).replace(
+            '"rationale":', '"rationale":"duplicate","rationale":', 1
+        )
+        with self.assertRaisesRegex(ReviewRunnerError, "duplicate JSON key"):
+            task.parse_normalized_output(
+                normalize_model_output(duplicate), item, schema
+            )
+
+    def test_dependency_missing_or_wrong_version_fails_closed(self) -> None:
+        runtime = yaml.safe_load(
+            (
+                PROJECT_ROOT
+                / "configs/g1_reviewer_registry_amendment_3_v2_3.yaml"
+            ).read_text()
+        )["runtime"]
+        with mock.patch(
+            "persona_drift.g1_local_reviewer.importlib.metadata.version",
+            side_effect=__import__("importlib.metadata").metadata.PackageNotFoundError,
+        ):
+            with self.assertRaisesRegex(ReviewRunnerError, "not installed"):
+                _load_schema_enforcer(runtime)
+        with mock.patch(
+            "persona_drift.g1_local_reviewer.importlib.metadata.version",
+            return_value="0.11.1",
+        ):
+            with self.assertRaisesRegex(ReviewRunnerError, "version mismatch"):
+                _load_schema_enforcer(runtime)
+
+    def test_constraint_initialization_failure_prevents_model_generate(self) -> None:
+        class Tensor:
+            shape = (1, 1)
+
+            def to(self, _device):
+                return self
+
+        class Tokenizer:
+            pad_token_id = 0
+            eos_token_id = 1
+
+            def apply_chat_template(self, *_args, **_kwargs):
+                return "prompt"
+
+            def __call__(self, *_args, **_kwargs):
+                return {"input_ids": Tensor()}
+
+        class Model:
+            calls = 0
+
+            def parameters(self):
+                return iter([type("Parameter", (), {"device": "cpu"})()])
+
+            def generate(self, **_kwargs):
+                self.calls += 1
+                raise AssertionError("model.generate must not run")
+
+        model = Model()
+        backend = LocalHuggingFaceBackend(
+            model=model,
+            tokenizer=Tokenizer(),
+            torch_module=object(),
+            provenance={},
+            schema_parser_factory=lambda _schema: (_ for _ in ()).throw(
+                RuntimeError("constraint boom")
+            ),
+            prefix_allowed_tokens_factory=lambda *_args: None,
+        )
+        prepared = prepared_for("primary_01", "topic_triage")
+        item = assigned_items(prepared)[0]
+        with self.assertRaisesRegex(ReviewRunnerError, "constraint initialization"):
+            backend.generate(
+                prepared.prompts.tasks[item.task_id].messages(
+                    system_prompt=prepared.prompts.system_prompt,
+                    input_value=item.input_value,
+                ),
+                prepared.registry.decoder,
+                effective_response_schema(prepared.prompts.tasks[item.task_id], item),
+            )
+        self.assertEqual(model.calls, 0)
+
+    def test_effective_schema_constraint_is_passed_to_exactly_one_generate_call(self) -> None:
+        class Tensor:
+            shape = (1, 1)
+
+            def to(self, _device):
+                return self
+
+        class Tokenizer:
+            pad_token_id = 0
+            eos_token_id = 1
+
+            def apply_chat_template(self, *_args, **_kwargs):
+                return "prompt"
+
+            def __call__(self, *_args, **_kwargs):
+                return {"input_ids": Tensor()}
+
+            def decode(self, *_args, **_kwargs):
+                return "{}"
+
+        class Generated:
+            def __getitem__(self, _key):
+                return []
+
+        class Model:
+            def __init__(self):
+                self.calls = 0
+                self.kwargs = None
+
+            def parameters(self):
+                return iter([type("Parameter", (), {"device": "cpu"})()])
+
+            def generate(self, **kwargs):
+                self.calls += 1
+                self.kwargs = kwargs
+                return Generated()
+
+        class Torch:
+            @staticmethod
+            def inference_mode():
+                return contextlib.nullcontext()
+
+        captured = {}
+        prefix_function = lambda *_args: [0]
+
+        def parser_factory(schema):
+            captured["schema"] = schema
+            return "parser"
+
+        def prefix_factory(tokenizer, parser):
+            captured["tokenizer"] = tokenizer
+            captured["parser"] = parser
+            return prefix_function
+
+        model = Model()
+        tokenizer = Tokenizer()
+        backend = LocalHuggingFaceBackend(
+            model=model,
+            tokenizer=tokenizer,
+            torch_module=Torch(),
+            provenance={},
+            schema_parser_factory=parser_factory,
+            prefix_allowed_tokens_factory=prefix_factory,
+        )
+        prepared = prepared_for("primary_01", "topic_triage")
+        item = assigned_items(prepared)[0]
+        schema = effective_response_schema(prepared.prompts.tasks[item.task_id], item)
+        backend.generate([], prepared.registry.decoder, schema)
+        self.assertEqual(model.calls, 1)
+        self.assertEqual(captured["schema"], schema)
+        self.assertEqual(captured["parser"], "parser")
+        self.assertIs(captured["tokenizer"], tokenizer)
+        self.assertIs(model.kwargs["prefix_allowed_tokens_fn"], prefix_function)
+
+    def test_old_production_registry_cannot_authorize_amended_runner(self) -> None:
+        with self.assertRaisesRegex(
+            ReviewRunnerError, "differs from current exact bytes"
+        ):
+            Registry.load(
+                PROJECT_ROOT
+                / "configs/g1_reviewer_registry_production_v2_3.yaml",
+                reviewer_slot_id="primary_01",
+                production=True,
+                batch_size=1,
+            )
+
+
 class AppendOnlyExecutionTests(unittest.TestCase):
     def setUp(self) -> None:
         self.prepared = prepared_for("primary_01", "topic_triage")
@@ -366,6 +600,12 @@ class AppendOnlyExecutionTests(unittest.TestCase):
             self.assertEqual(summary.attempted, 1)
             self.assertEqual(backend.calls, 1)
             self.assertEqual(first["status"], "accepted")
+            self.assertEqual(
+                first["effective_response_schema_canonical_sha256"],
+                hashlib.sha256(
+                    canonical_json_bytes(first["effective_response_schema"])
+                ).hexdigest(),
+            )
             self.assertEqual(first["normalization"], "none")
             self.assertEqual(
                 first["normalized_output_sha256"], first["raw_output_sha256"]
@@ -395,7 +635,7 @@ class AppendOnlyExecutionTests(unittest.TestCase):
             self.assertEqual(resumed.attempted, 0)
             self.assertEqual(output.read_bytes(), first_bytes)
 
-    def test_fenced_output_is_accepted_but_raw_and_normalization_are_audited(self) -> None:
+    def test_fenced_output_is_rejected_without_repair(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "ratings.jsonl"
             bare = response_for(self.item)
@@ -408,58 +648,46 @@ class AppendOnlyExecutionTests(unittest.TestCase):
                 attempt_id_factory=lambda: "ATT-fenced",
             )
             record = json.loads(output.read_text())
-            self.assertEqual(summary.accepted, 1)
+            self.assertEqual(summary.accepted, 0)
+            self.assertEqual(summary.rejected_invalid_output, 1)
             self.assertEqual(record["raw_output"], fenced)
-            self.assertEqual(
-                record["normalization"],
-                "strip_single_outer_markdown_json_fence",
-            )
-            self.assertEqual(
-                record["normalized_output_sha256"],
-                hashlib.sha256(bare.encode()).hexdigest(),
-            )
+            self.assertIsNone(record["normalization"])
+            self.assertIsNone(record["normalized_output_sha256"])
+            self.assertIn("no repair", record["error"])
 
-    def test_invalid_attempt_is_retained_then_valid_retry_is_chained(self) -> None:
+    def test_invalid_attempt_is_retained_and_same_contract_cannot_resume(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "ratings.jsonl"
+            invalid_backend = QueueBackend(["not JSON"])
             invalid = run_review(
                 self.prepared,
                 output_path=output,
-                backend=QueueBackend(["not JSON"]),
+                backend=invalid_backend,
                 clock=lambda: FIXED_TIME,
                 attempt_id_factory=lambda: "ATT-invalid",
             )
             prefix = output.read_bytes()
             self.assertEqual(invalid.rejected_invalid_output, 1)
+            self.assertEqual(invalid_backend.calls, 1)
+            self.assertEqual(len(invalid_backend.schemas), 1)
 
-            accepted = run_review(
-                self.prepared,
-                output_path=output,
-                backend=QueueBackend([response_for(self.item)]),
-                clock=lambda: FIXED_TIME,
-                attempt_id_factory=lambda: "ATT-valid",
-            )
-            combined = output.read_bytes()
-            self.assertTrue(combined.startswith(prefix))
-            self.assertEqual(accepted.accepted, 1)
-            records = [
-                json.loads(line)
-                for line in combined.decode().splitlines()
-            ]
-            self.assertEqual(
-                [record["status"] for record in records],
-                ["rejected_invalid_output", "accepted"],
-            )
-            self.assertEqual(
-                records[1]["previous_record_sha256"],
-                records[0]["record_sha256"],
-            )
+            def forbidden_factory(_registry):
+                raise AssertionError("failed ledger must stop before model loading")
+
+            with self.assertRaisesRegex(ReviewRunnerError, "cannot resume"):
+                run_review(
+                    self.prepared,
+                    output_path=output,
+                    backend_factory=forbidden_factory,
+                    clock=lambda: FIXED_TIME,
+                )
+            self.assertEqual(output.read_bytes(), prefix)
             with AppendOnlyLedger(output) as ledger:
-                self.assertEqual(len(ledger.records), 2)
+                self.assertEqual(len(ledger.records), 1)
 
     def test_generation_failure_is_appended_before_runner_stops(self) -> None:
         class BrokenBackend(QueueBackend):
-            def generate(self, messages, decoder):
+            def generate(self, messages, decoder, effective_schema):
                 raise RuntimeError("synthetic failure")
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -475,6 +703,19 @@ class AppendOnlyExecutionTests(unittest.TestCase):
             record = json.loads(output.read_text())
             self.assertEqual(record["status"], "generation_error")
             self.assertIn("synthetic failure", record["error"])
+            prefix = output.read_bytes()
+
+            def forbidden_factory(_registry):
+                raise AssertionError("failed ledger must stop before model loading")
+
+            with self.assertRaisesRegex(ReviewRunnerError, "cannot resume"):
+                run_review(
+                    self.prepared,
+                    output_path=output,
+                    backend_factory=forbidden_factory,
+                    clock=lambda: FIXED_TIME,
+                )
+            self.assertEqual(output.read_bytes(), prefix)
 
     def test_existing_ledger_tampering_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
