@@ -11,7 +11,7 @@ PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
 REVIEWER_SLOT="${REVIEWER_SLOT:?submit with qsub -v REVIEWER_SLOT=<slot>}"
 PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
 ASSIGNED_NGPUS=2
-OUTPUT_DIR="$PROJECT_ROOT/outputs/g1/reviewer_smoke_amendment_4"
+OUTPUT_DIR="$PROJECT_ROOT/outputs/g1/reviewer_smoke_amendment_5"
 
 cd "$PROJECT_ROOT"
 mkdir -p "$OUTPUT_DIR"
@@ -52,7 +52,7 @@ PY
 "$PYTHON_BIN" scripts/run_g1_local_reviewer.py \
   --smoke \
   --slot "$REVIEWER_SLOT" \
-  --registry configs/g1_reviewer_registry_amendment_4_v2_3.yaml \
+  --registry configs/g1_reviewer_registry_amendment_5_v2_3.yaml \
   --prompts data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml \
   --packet data/synthetic/g1_reviewer_smoke_v2_3.jsonl \
   --output "$OUTPUT_DIR/${REVIEWER_SLOT}.jsonl"

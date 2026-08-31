@@ -12,10 +12,13 @@ AMENDMENT_1 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
 AMENDMENT_2 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_2.md"
 AMENDMENT_3 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_3.md"
 AMENDMENT_4 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_4.md"
+AMENDMENT_5 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_5.md"
 AMENDED_REGISTRY = ROOT / "configs" / "g1_reviewer_registry_amendment_3_v2_3.yaml"
 AMENDMENT_4_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
+AMENDMENT_5_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
 FAILURE_REPORT = ROOT / "data" / "reports" / "g1_reviewer_production_failure_amendment_3_v2_3.json"
 SMOKE_FAILURE_REPORT = ROOT / "data/reports/g1_reviewer_smoke_failure_amendment_4_v2_3.json"
+AMENDMENT_5_FAILURE_REPORT = ROOT / "data/reports/g1_reviewer_smoke_failure_amendment_5_v2_3.json"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -222,5 +225,35 @@ def test_amendment_4_quarantines_failed_smoke_and_freezes_decoder_policy():
         "relax a response schema",
         "add a retry",
     ):
+        assert forbidden in amendment
+    assert "production_review_authorized: false" in amendment
+
+
+def test_amendment_5_quarantines_token_limit_failure_and_bounds_rationale():
+    report = json.loads(AMENDMENT_5_FAILURE_REPORT.read_text(encoding="utf-8"))
+    assert report["source_commit"] == "d84e824b8eeba2c52865655fffa0a8126a10bf52"
+    assert report["ledger"]["slot_id"] == "primary_03"
+    assert report["ledger"]["accepted"] == 5
+    assert report["ledger"]["invalid"] == 1
+    assert report["ledger"]["invalid_record"] == {
+        "error_class": "unterminated_string",
+        "raw_character_count": 1633,
+        "raw_output_sha256": (
+            "c20fb05e2dafe2abd7afcf13dabb1bf57751c17159666dc099317f8f872120db"
+        ),
+        "reencoded_token_count": 1024,
+        "task_id": "topic_suitability",
+    }
+    assert report["quarantine"]["all_amendment_4_smoke_rows"] is True
+    assert report["quarantine"]["rerun_only_failed_item"] is False
+    registry = yaml.safe_load(AMENDMENT_5_REGISTRY.read_text(encoding="utf-8"))
+    prior = yaml.safe_load(AMENDMENT_4_REGISTRY.read_text(encoding="utf-8"))
+    assert registry["production_review_authorized"] is False
+    assert registry["slots"] == prior["slots"]
+    assert registry["runtime"] == prior["runtime"]
+    amendment = AMENDMENT_5.read_text(encoding="utf-8")
+    assert "reduced from 2048" in amendment
+    assert "to 1024 characters" in amendment
+    for forbidden in ("truncate", "repair", "coerce", "parse-relax", "retry"):
         assert forbidden in amendment
     assert "production_review_authorized: false" in amendment

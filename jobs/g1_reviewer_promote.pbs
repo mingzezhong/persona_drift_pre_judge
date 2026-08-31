@@ -21,9 +21,9 @@ export PYTHONPATH="$PROJECT_ROOT/src"
 echo "job_id=${PBS_JOBID:-unknown}"
 echo "host=$(hostname)"
 echo "project_root=$PROJECT_ROOT"
-echo "smoke_ledger_directory=outputs/g1/reviewer_smoke_amendment_4"
-echo "report_output=data/reports/g1_reviewer_synthetic_smoke_amendment_4_v2_3.json"
-echo "production_registry_output=configs/g1_reviewer_registry_production_amendment_4_v2_3.yaml"
+echo "smoke_ledger_directory=outputs/g1/reviewer_smoke_amendment_5"
+echo "report_output=data/reports/g1_reviewer_synthetic_smoke_amendment_5_v2_3.json"
+echo "production_registry_output=configs/g1_reviewer_registry_production_amendment_5_v2_3.yaml"
 
 "$PYTHON_BIN" scripts/promote_g1_reviewer_registry.py \
   --project-root "$PROJECT_ROOT"

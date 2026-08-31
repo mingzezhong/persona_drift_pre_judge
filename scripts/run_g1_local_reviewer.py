@@ -20,7 +20,7 @@ from persona_drift.g1_local_reviewer import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REGISTRY = (
-    PROJECT_ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
+    PROJECT_ROOT / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
 )
 DEFAULT_PROMPTS = (
     PROJECT_ROOT / "data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"

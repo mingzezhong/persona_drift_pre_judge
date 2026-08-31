@@ -24,7 +24,7 @@ from persona_drift.g1_reviewer_promotion import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
+REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
 PROMPTS = ROOT / "data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"
 SMOKE = ROOT / "data/synthetic/g1_reviewer_smoke_v2_3.jsonl"
 FIXED_TIME = datetime(2026, 8, 28, tzinfo=timezone.utc)

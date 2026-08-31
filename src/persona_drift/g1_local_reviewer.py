@@ -60,7 +60,7 @@ TOKENIZER_CONSTRAINT_DECODER_POLICY = (
 )
 FREE_TEXT_MAX_LENGTHS: Mapping[str, int] = {
     "definition": 512,
-    "rationale": 2048,
+    "rationale": 1024,
     "scenario_summary": 1024,
     "move_text": 1024,
 }

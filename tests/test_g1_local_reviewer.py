@@ -379,7 +379,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
             ["construct_consistency"],
         )
         self.assertEqual(
-            scalar_schema["properties"]["rationale"]["maxLength"], 2048
+            scalar_schema["properties"]["rationale"]["maxLength"], 1024
         )
         self.assertEqual(
             scalar_schema["required"], scalar_task.response_schema["required"]
@@ -429,7 +429,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         runtime = yaml.safe_load(
             (
                 PROJECT_ROOT
-                / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
+                / "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
             ).read_text()
         )["runtime"]
         with mock.patch(

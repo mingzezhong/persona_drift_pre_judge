@@ -48,14 +48,14 @@ REPORT_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-synthetic-smoke-report-v1"
 CONTRACT_SCHEMA_VERSION = REVIEW_CONTRACT_SCHEMA_VERSION
 
 SMOKE_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
+    "configs/g1_reviewer_registry_amendment_5_v2_3.yaml"
 )
 SYNTHETIC_PACKET_PATH = Path("data/synthetic/g1_reviewer_smoke_v2_3.jsonl")
 PROMPT_CATALOG_PATH = Path("data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml")
-SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke_amendment_4")
-SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_amendment_4_v2_3.json")
+SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke_amendment_5")
+SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_amendment_5_v2_3.json")
 PRODUCTION_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_production_amendment_4_v2_3.yaml"
+    "configs/g1_reviewer_registry_production_amendment_5_v2_3.yaml"
 )
 
 SLOT_IDS = (
