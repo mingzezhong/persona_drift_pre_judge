@@ -1,0 +1,114 @@
+{
+  "agreement_evaluation": {
+    "implementation_cross_check": {
+      "all_values_exact_match": true,
+      "independent_package": "krippendorff",
+      "package_version": "0.8.2"
+    },
+    "krippendorff_alpha_ordinal": {
+      "each_dimension_minimum": 0.5,
+      "each_dimension_passed": false,
+      "overall_minimum": 0.67,
+      "overall_observed": 0.13944935293978467,
+      "overall_passed": false,
+      "per_dimension": {
+        "behavioral_observability": 0.05937349687349691,
+        "construct_consistency": -0.09658119658119668,
+        "distinctness": 0.21305418719211822,
+        "item_quality_diversity": 0.12296499796499794,
+        "pressure_opposability": 0.12499200896500118,
+        "safety_hhh_confound_separation": 0.08273060796645715,
+        "subject_frame_transfer": 0.20389717276027175
+      },
+      "statistic_id": "krippendorff_alpha_ordinal"
+    }
+  },
+  "blind_repeat": {
+    "exact_rating_vector_match_count": 9,
+    "minimum_exact_rating_vector_agreement": 0.85,
+    "mismatches": [],
+    "observed_exact_rating_vector_agreement": 1.0,
+    "passed": true,
+    "repeat_count": 9
+  },
+  "diagnostics": {
+    "pairwise_primary_comparisons": {
+      "primary_01__primary_02": {
+        "exact_seven_dimension_vectors": 5,
+        "mean_absolute_dimension_difference": 0.452,
+        "total_score_pearson": 0.101
+      },
+      "primary_01__primary_03": {
+        "exact_seven_dimension_vectors": 10,
+        "mean_absolute_dimension_difference": 0.304,
+        "total_score_pearson": 0.345
+      },
+      "primary_02__primary_03": {
+        "exact_seven_dimension_vectors": 8,
+        "mean_absolute_dimension_difference": 0.399,
+        "total_score_pearson": 0.237
+      }
+    }
+  },
+  "g1_passed": false,
+  "ledgers": {
+    "primary_01": {
+      "accepted_count": 27,
+      "file_sha256": "6d37e31c7248a37524799b9cf0ce0af0a1c3fef21eec035155a7d26eb326376e",
+      "path": "outputs/g1/reviews/persona_scalar_recalibration_1_primary_01_v2_3.jsonl",
+      "tail_record_sha256": "5777e3d144188b0975a83f7a26eadc2153a22c0ac51944417bae43585644768b"
+    },
+    "primary_02": {
+      "accepted_count": 27,
+      "file_sha256": "a9e5516edcc0b5ad2fbdf9a731be977303d1ccd62cbe680e7ce6cae94a8d5cf9",
+      "path": "outputs/g1/reviews/persona_scalar_recalibration_1_primary_02_v2_3.jsonl",
+      "tail_record_sha256": "2ad39f9a640b93f7c010ba70241ebd76c5d2526e923ead3746a6523d0c117179"
+    },
+    "primary_03": {
+      "accepted_count": 27,
+      "file_sha256": "106f5a9df57f057ef841994b0d7f0e96f271bab9fdf2ebcbb6bfc1b9400d0764",
+      "path": "outputs/g1/reviews/persona_scalar_recalibration_1_primary_03_v2_3.jsonl",
+      "tail_record_sha256": "e9e5e1c06ab4bee75d3974aeabee666091c33844bc805caf08597e4aece12899"
+    }
+  },
+  "pair_stage": {
+    "active_packet_absent": true,
+    "authorized": false,
+    "review_executed": false
+  },
+  "packets": {
+    "primary_01": {
+      "file_sha256": "62c2c5909d5da37d437ae2f9e3fdb762eaf0e425c251ab0a2a5eb28cc62ce8f4",
+      "path": "data/stages/persona_scalar_primary_01_input_v2_3.jsonl",
+      "row_count": 27
+    },
+    "primary_02": {
+      "file_sha256": "9f77bef1f8dcb9b463b05d514b9d52503f8ebffa3f5f532893bfdbd660e682f0",
+      "path": "data/stages/persona_scalar_primary_02_input_v2_3.jsonl",
+      "row_count": 27
+    },
+    "primary_03": {
+      "file_sha256": "9a31425251ee06c779132ed5898fc7ac6f143eba2ed059f634b3168cf54cdf8c",
+      "path": "data/stages/persona_scalar_primary_03_input_v2_3.jsonl",
+      "row_count": 27
+    }
+  },
+  "production_registry": {
+    "file_sha256": "b6f85d17698a991f1e2867c25c85cdf6476de0ec2a3a654e4be7a4b41ec71c66",
+    "path": "configs/g1_reviewer_registry_production_amendment_6_v2_3.yaml"
+  },
+  "protocol_actions": {
+    "maximum_recalibration_cycles": 1,
+    "next_required_action": "stop and amend before any further scalar or pair review",
+    "pair_review_must_not_start": true,
+    "recalibration_cycles_completed": 1,
+    "target_model_execution_authorized": false
+  },
+  "schema_version": "restart-v2.3-g1-persona-scalar-recalibration-failure-v1",
+  "smoke_promotion": {
+    "file_sha256": "5371e4ad026fcafa7785cdd6723b7b080fd5d342ae7405ac88c75ec96d125765",
+    "path": "data/reports/g1_reviewer_synthetic_smoke_amendment_6_v2_3.json",
+    "source_commit": "7c943500df6993e902ed72ab9ed646f24465ff17"
+  },
+  "status": "FAIL_CLOSED_STOP_AND_AMEND"
+}
