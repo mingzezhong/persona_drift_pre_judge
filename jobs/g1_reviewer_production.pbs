@@ -12,18 +12,18 @@ PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
 REVIEWER_SLOT="${REVIEWER_SLOT:?submit with REVIEWER_SLOT=<primary_01|primary_02|primary_03>}"
 TASK_ID="${TASK_ID:?submit with TASK_ID=<persona_scalar|topic_triage>}"
 PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
-REGISTRY_PATH="configs/g1_reviewer_registry_production_v2_3.yaml"
+REGISTRY_PATH="configs/g1_reviewer_registry_production_amendment_4_v2_3.yaml"
 PROMPTS_PATH="data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"
 
 cd "$PROJECT_ROOT"
 case "$REVIEWER_SLOT:$TASK_ID" in
   primary_01:persona_scalar|primary_02:persona_scalar|primary_03:persona_scalar)
     PACKET_PATH="data/stages/persona_scalar_${REVIEWER_SLOT}_input_v2_3.jsonl"
-    OUTPUT_PATH="outputs/g1/reviews/persona_scalar_${REVIEWER_SLOT}_v2_3.jsonl"
+    OUTPUT_PATH="outputs/g1/reviews_amendment_4/persona_scalar_${REVIEWER_SLOT}_v2_3.jsonl"
     ;;
   primary_01:topic_triage|primary_02:topic_triage)
     PACKET_PATH="data/reviews/topic_mmlu_triage_input_v2_3.jsonl"
-    OUTPUT_PATH="outputs/g1/reviews/topic_mmlu_triage_${REVIEWER_SLOT}_v2_3.jsonl"
+    OUTPUT_PATH="outputs/g1/reviews_amendment_4/topic_mmlu_triage_${REVIEWER_SLOT}_v2_3.jsonl"
     ;;
   *)
     echo "unsupported production assignment: $REVIEWER_SLOT:$TASK_ID" >&2

@@ -429,7 +429,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         runtime = yaml.safe_load(
             (
                 PROJECT_ROOT
-                / "configs/g1_reviewer_registry_amendment_3_v2_3.yaml"
+                / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
             ).read_text()
         )["runtime"]
         with mock.patch(
@@ -497,6 +497,28 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
             )
         self.assertEqual(model.calls, 0)
 
+    def test_constraint_decoder_preserves_exact_text_without_cleanup(self) -> None:
+        class Tokenizer:
+            calls = []
+
+            def decode(self, token_ids, **kwargs):
+                self.calls.append((token_ids, kwargs))
+                return "exact  ,text\ufffd"
+
+        class TokenizerData:
+            decoder = None
+
+        tokenizer = Tokenizer()
+        tokenizer_data = _build_tokenizer_constraint_data(
+            tokenizer,
+            lambda observed: TokenizerData(),
+        )
+        self.assertEqual(tokenizer_data.decoder([1, 2]), "exact  ,text\ufffd")
+        self.assertEqual(
+            tokenizer.calls,
+            [([1, 2], {"clean_up_tokenization_spaces": False})],
+        )
+
     def test_multiple_items_cache_tokenizer_data_but_get_independent_state(self) -> None:
         class Tensor:
             shape = (1, 1)
@@ -542,7 +564,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         captured = {"schemas": [], "tokenizer_data": [], "parsers": []}
         prefix_function = lambda *_args: [0]
         tokenizer_data_builds = []
-        tokenizer_data = object()
+        tokenizer_data = type("TokenizerData", (), {"decoder": None})()
 
         def tokenizer_data_factory(observed_tokenizer):
             tokenizer_data_builds.append(observed_tokenizer)

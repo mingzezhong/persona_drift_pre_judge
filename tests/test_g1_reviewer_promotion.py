@@ -14,6 +14,7 @@ from persona_drift.g1_local_reviewer import (
     prepare_review,
     runner_implementation_binding,
     run_review,
+    TOKENIZER_CONSTRAINT_DECODER_POLICY,
 )
 from persona_drift.g1_reviewer_promotion import (
     SLOT_IDS,
@@ -23,7 +24,7 @@ from persona_drift.g1_reviewer_promotion import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REGISTRY = ROOT / "configs/g1_reviewer_registry_v2_3.yaml"
+REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
 PROMPTS = ROOT / "data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"
 SMOKE = ROOT / "data/synthetic/g1_reviewer_smoke_v2_3.jsonl"
 FIXED_TIME = datetime(2026, 8, 28, tzinfo=timezone.utc)
@@ -47,6 +48,9 @@ class QueueBackend:
             "schema_constrained_decoding_backend": "lm-format-enforcer",
             "schema_constrained_decoding_version": "0.11.2",
             "tokenizer_constraint_data_cached": True,
+            "tokenizer_constraint_decoder_policy": (
+                TOKENIZER_CONSTRAINT_DECODER_POLICY
+            ),
             "tokenizer_fix_mistral_regex": (
                 identity.base_model_family == "mistral"
             ),
@@ -333,6 +337,25 @@ def test_uncached_tokenizer_constraint_data_fails_closed(tmp_path: Path) -> None
     production_path = tmp_path / "production.yaml"
 
     with pytest.raises(ReviewerPromotionError, match="was not cached"):
+        _promote(ledgers, report_path, production_path)
+
+    assert not report_path.exists()
+    assert not production_path.exists()
+
+def test_wrong_constraint_decoder_policy_fails_closed(tmp_path: Path) -> None:
+    ledgers = _real_runner_ledgers(tmp_path / "ledgers")
+    _replace_runtime_provenance_value(
+        ledgers["primary_01"],
+        "tokenizer_constraint_decoder_policy",
+        "tokenizer_default_cleanup",
+    )
+    report_path = tmp_path / "report.json"
+    production_path = tmp_path / "production.yaml"
+
+    with pytest.raises(
+        ReviewerPromotionError,
+        match="constraint decoder policy differs",
+    ):
         _promote(ledgers, report_path, production_path)
 
     assert not report_path.exists()

@@ -11,8 +11,11 @@ REGISTRY = ROOT / "configs" / "g1_reviewer_registry_v2_3.yaml"
 AMENDMENT_1 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_1.md"
 AMENDMENT_2 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_2.md"
 AMENDMENT_3 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_3.md"
+AMENDMENT_4 = ROOT / "docs" / "gates" / "G1_reviewer_amendment_4.md"
 AMENDED_REGISTRY = ROOT / "configs" / "g1_reviewer_registry_amendment_3_v2_3.yaml"
+AMENDMENT_4_REGISTRY = ROOT / "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
 FAILURE_REPORT = ROOT / "data" / "reports" / "g1_reviewer_production_failure_amendment_3_v2_3.json"
+SMOKE_FAILURE_REPORT = ROOT / "data/reports/g1_reviewer_smoke_failure_amendment_4_v2_3.json"
 SMOKE = ROOT / "data" / "synthetic" / "g1_reviewer_smoke_v2_3.jsonl"
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -175,3 +178,49 @@ def test_amendment_3_registry_is_schema_stress_only_and_not_production():
     assert hashlib.sha256(old_production.read_bytes()).hexdigest() == (
         "93f3c5571057b66afd6134725a56166e303382b22e94dd14bb856413711ac877"
     )
+
+
+def test_amendment_4_quarantines_failed_smoke_and_freezes_decoder_policy():
+    report = json.loads(SMOKE_FAILURE_REPORT.read_text(encoding="utf-8"))
+    assert report["source_commit"] == "fe34d1a0e959d95a89b157bae4635e5455444bc4"
+    assert report["inspection_scope"]["production_scores_inspected"] is False
+    assert report["inspection_scope"]["production_rationales_inspected"] is False
+    assert report["ledgers"]["primary_03"]["accepted"] == 4
+    assert report["ledgers"]["primary_03"]["invalid"] == 2
+    assert {
+        row["task_id"]: row["reencoded_token_count"]
+        for row in report["ledgers"]["primary_03"]["invalid_records"]
+    } == {
+        "persona_scalar": 355,
+        "topic_suitability": 1024,
+    }
+    assert report["quarantine"] == {
+        "all_amendment_3_smoke_ledgers": True,
+        "complete_remaining_slots": False,
+        "preserve_ledgers": True,
+        "rerun_only_failed_items": False,
+        "reuse_accepted_rows": False,
+    }
+    registry = yaml.safe_load(AMENDMENT_4_REGISTRY.read_text(encoding="utf-8"))
+    assert registry["production_review_authorized"] is False
+    assert registry["registry_status"] == "frozen_for_synthetic_smoke"
+    assert registry["runtime"]["schema_constrained_decoding"] == {
+        "required": True,
+        "backend": "lm-format-enforcer",
+        "version": "0.11.2",
+        "tokenizer_decoder_policy": (
+            "exact_decode_cleanup_false_no_replacement_strip_v1"
+        ),
+    }
+    assert registry["slots"] == yaml.safe_load(
+        AMENDED_REGISTRY.read_text(encoding="utf-8")
+    )["slots"]
+    amendment = AMENDMENT_4.read_text(encoding="utf-8")
+    for forbidden in (
+        "repair model output",
+        "coerce a value",
+        "relax a response schema",
+        "add a retry",
+    ):
+        assert forbidden in amendment
+    assert "production_review_authorized: false" in amendment

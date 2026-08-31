@@ -31,6 +31,7 @@ from persona_drift.g1_local_reviewer import (
     RUNNER_IMPLEMENTATION_RELATIVE_PATHS,
     RUNNER_IMPLEMENTATION_SCHEMA_VERSION,
     SYNTHETIC_MODE,
+    TOKENIZER_CONSTRAINT_DECODER_POLICY,
     _validate_instance,
     build_effective_response_schema,
     normalize_model_output,
@@ -47,14 +48,14 @@ REPORT_SCHEMA_VERSION = "restart-v2.3-g1-reviewer-synthetic-smoke-report-v1"
 CONTRACT_SCHEMA_VERSION = REVIEW_CONTRACT_SCHEMA_VERSION
 
 SMOKE_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_amendment_3_v2_3.yaml"
+    "configs/g1_reviewer_registry_amendment_4_v2_3.yaml"
 )
 SYNTHETIC_PACKET_PATH = Path("data/synthetic/g1_reviewer_smoke_v2_3.jsonl")
 PROMPT_CATALOG_PATH = Path("data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml")
-SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke")
-SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_v2_3.json")
+SMOKE_LEDGER_DIRECTORY = Path("outputs/g1/reviewer_smoke_amendment_4")
+SMOKE_REPORT_PATH = Path("data/reports/g1_reviewer_synthetic_smoke_amendment_4_v2_3.json")
 PRODUCTION_REGISTRY_PATH = Path(
-    "configs/g1_reviewer_registry_production_v2_3.yaml"
+    "configs/g1_reviewer_registry_production_amendment_4_v2_3.yaml"
 )
 
 SLOT_IDS = (
@@ -339,6 +340,19 @@ def _load_registry(raw: bytes) -> Mapping[str, Any]:
         or runtime.get("trust_remote_code") is not False
     ):
         raise ReviewerPromotionError("smoke registry runtime is not offline-frozen")
+    constraint = _require_mapping(
+        runtime.get("schema_constrained_decoding"),
+        "registry schema_constrained_decoding",
+    )
+    if dict(constraint) != {
+        "required": True,
+        "backend": "lm-format-enforcer",
+        "version": "0.11.2",
+        "tokenizer_decoder_policy": TOKENIZER_CONSTRAINT_DECODER_POLICY,
+    }:
+        raise ReviewerPromotionError(
+            "smoke registry schema-constrained decoding policy is not frozen"
+        )
     decoding = _require_mapping(runtime.get("decoding"), "registry decoding")
     if (
         decoding.get("do_sample") is not False
@@ -598,6 +612,7 @@ def _validate_runtime_provenance(
         "schema_constrained_decoding_backend",
         "schema_constrained_decoding_version",
         "tokenizer_constraint_data_cached",
+        "tokenizer_constraint_decoder_policy",
         "tokenizer_fix_mistral_regex",
         "cuda_version",
         "cuda_available",
@@ -638,6 +653,12 @@ def _validate_runtime_provenance(
     if provenance["tokenizer_constraint_data_cached"] is not True:
         raise ReviewerPromotionError(
             f"{slot_id} runtime tokenizer constraint data was not cached"
+        )
+    if provenance["tokenizer_constraint_decoder_policy"] != (
+        TOKENIZER_CONSTRAINT_DECODER_POLICY
+    ):
+        raise ReviewerPromotionError(
+            f"{slot_id} runtime tokenizer constraint decoder policy differs"
         )
     tokenizer_fix_mistral_regex = provenance["tokenizer_fix_mistral_regex"]
     if not isinstance(tokenizer_fix_mistral_regex, bool):

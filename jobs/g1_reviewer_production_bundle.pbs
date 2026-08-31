@@ -11,7 +11,7 @@ umask 027
 PROJECT_ROOT="${PBS_O_WORKDIR:?PBS_O_WORKDIR is required}"
 BUNDLE_ID="${BUNDLE_ID:?submit with BUNDLE_ID=<p01|p02_p03>}"
 PYTHON_BIN="/shared/homes/u24524629/miniconda3/envs/persona-drift/bin/python"
-REGISTRY_PATH="configs/g1_reviewer_registry_production_v2_3.yaml"
+REGISTRY_PATH="configs/g1_reviewer_registry_production_amendment_4_v2_3.yaml"
 PROMPTS_PATH="data/rater_specs/g1_local_reviewer_prompts_v2_3.yaml"
 
 cd "$PROJECT_ROOT"
@@ -30,7 +30,7 @@ test -s "data/stages/persona_scalar_primary_01_input_v2_3.jsonl"
 test -s "data/stages/persona_scalar_primary_02_input_v2_3.jsonl"
 test -s "data/stages/persona_scalar_primary_03_input_v2_3.jsonl"
 test -s "data/reviews/topic_mmlu_triage_input_v2_3.jsonl"
-mkdir -p "outputs/g1/reviews"
+mkdir -p "outputs/g1/reviews_amendment_4"
 
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
@@ -82,28 +82,28 @@ case "$BUNDLE_ID" in
       primary_01 \
       persona_scalar \
       data/stages/persona_scalar_primary_01_input_v2_3.jsonl \
-      outputs/g1/reviews/persona_scalar_primary_01_v2_3.jsonl
+      outputs/g1/reviews_amendment_4/persona_scalar_primary_01_v2_3.jsonl
     run_assignment \
       primary_01 \
       topic_triage \
       data/reviews/topic_mmlu_triage_input_v2_3.jsonl \
-      outputs/g1/reviews/topic_mmlu_triage_primary_01_v2_3.jsonl
+      outputs/g1/reviews_amendment_4/topic_mmlu_triage_primary_01_v2_3.jsonl
     ;;
   p02_p03)
     run_assignment \
       primary_02 \
       persona_scalar \
       data/stages/persona_scalar_primary_02_input_v2_3.jsonl \
-      outputs/g1/reviews/persona_scalar_primary_02_v2_3.jsonl
+      outputs/g1/reviews_amendment_4/persona_scalar_primary_02_v2_3.jsonl
     run_assignment \
       primary_03 \
       persona_scalar \
       data/stages/persona_scalar_primary_03_input_v2_3.jsonl \
-      outputs/g1/reviews/persona_scalar_primary_03_v2_3.jsonl
+      outputs/g1/reviews_amendment_4/persona_scalar_primary_03_v2_3.jsonl
     run_assignment \
       primary_02 \
       topic_triage \
       data/reviews/topic_mmlu_triage_input_v2_3.jsonl \
-      outputs/g1/reviews/topic_mmlu_triage_primary_02_v2_3.jsonl
+      outputs/g1/reviews_amendment_4/topic_mmlu_triage_primary_02_v2_3.jsonl
     ;;
 esac

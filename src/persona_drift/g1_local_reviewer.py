@@ -55,6 +55,9 @@ SYNTHETIC_MODE = "SYNTHETIC_SMOKE"
 PRODUCTION_MODE = "PRODUCTION"
 SCHEMA_ENFORCER_DISTRIBUTION = "lm-format-enforcer"
 SCHEMA_ENFORCER_VERSION = "0.11.2"
+TOKENIZER_CONSTRAINT_DECODER_POLICY = (
+    "exact_decode_cleanup_false_no_replacement_strip_v1"
+)
 FREE_TEXT_MAX_LENGTHS: Mapping[str, int] = {
     "definition": 512,
     "rationale": 2048,
@@ -1106,16 +1109,23 @@ def _load_schema_enforcer(runtime: Mapping[str, Any]) -> tuple[Any, Any, Any]:
     )
     _require_exact_keys(
         constraint,
-        required={"required", "backend", "version"},
+        required={
+            "required",
+            "backend",
+            "version",
+            "tokenizer_decoder_policy",
+        },
         context="registry runtime.schema_constrained_decoding",
     )
     if dict(constraint) != {
         "required": True,
         "backend": SCHEMA_ENFORCER_DISTRIBUTION,
         "version": SCHEMA_ENFORCER_VERSION,
+        "tokenizer_decoder_policy": TOKENIZER_CONSTRAINT_DECODER_POLICY,
     }:
         raise ReviewRunnerError(
-            "schema-constrained decoding must lock lm-format-enforcer==0.11.2"
+            "schema-constrained decoding must lock lm-format-enforcer==0.11.2 "
+            "and the exact tokenizer decoder policy"
         )
     try:
         installed = importlib.metadata.version(SCHEMA_ENFORCER_DISTRIBUTION)
@@ -1152,6 +1162,35 @@ def _build_tokenizer_constraint_data(tokenizer: Any, factory: Any) -> Any:
         raise ReviewRunnerError(
             "tokenizer constraint data initialization returned no data"
         )
+    if not hasattr(tokenizer_data, "decoder"):
+        raise ReviewRunnerError(
+            "tokenizer constraint data lacks a replaceable decoder"
+        )
+
+    # LMFE 0.11.2 calls tokenizer.decode() with the tokenizer default. For
+    # tokenizers whose default enables clean_up_tokenization_spaces, incremental
+    # decoding can silently lose punctuation and desynchronise the JSON parser
+    # from the generated token stream (upstream issue #166). Keep the pinned
+    # dependency, but replace only its cached decoder with the exact policy also
+    # used for the final completion. Do not strip U+FFFD: every decoded
+    # character must advance the constraint state.
+    def exact_decoder(token_ids: Sequence[int]) -> str:
+        decoded = tokenizer.decode(
+            token_ids,
+            clean_up_tokenization_spaces=False,
+        )
+        if not isinstance(decoded, str):
+            raise ReviewRunnerError(
+                "tokenizer constraint decoder returned non-text output"
+            )
+        return decoded
+
+    try:
+        tokenizer_data.decoder = exact_decoder
+    except Exception as exc:
+        raise ReviewRunnerError(
+            f"tokenizer constraint decoder policy installation failed: {exc}"
+        ) from exc
     return tokenizer_data
 
 
@@ -1305,6 +1344,9 @@ class LocalHuggingFaceBackend:
             "schema_constrained_decoding_backend": SCHEMA_ENFORCER_DISTRIBUTION,
             "schema_constrained_decoding_version": SCHEMA_ENFORCER_VERSION,
             "tokenizer_constraint_data_cached": True,
+            "tokenizer_constraint_decoder_policy": (
+                TOKENIZER_CONSTRAINT_DECODER_POLICY
+            ),
             "tokenizer_fix_mistral_regex": bool(
                 tokenizer_options.get("fix_mistral_regex", False)
             ),
