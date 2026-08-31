@@ -46,6 +46,7 @@ class QueueBackend:
             "transformers_version": prepared.registry.runtime["framework_version"],
             "schema_constrained_decoding_backend": "lm-format-enforcer",
             "schema_constrained_decoding_version": "0.11.2",
+            "tokenizer_constraint_data_cached": True,
             "tokenizer_fix_mistral_regex": (
                 identity.base_model_family == "mistral"
             ),
@@ -317,6 +318,21 @@ def test_tokenizer_mistral_fix_value_for_wrong_family_fails_closed(
     production_path = tmp_path / "production.yaml"
 
     with pytest.raises(ReviewerPromotionError, match="differs from model family"):
+        _promote(ledgers, report_path, production_path)
+
+    assert not report_path.exists()
+    assert not production_path.exists()
+
+
+def test_uncached_tokenizer_constraint_data_fails_closed(tmp_path: Path) -> None:
+    ledgers = _real_runner_ledgers(tmp_path / "ledgers")
+    _replace_runtime_provenance_value(
+        ledgers["primary_01"], "tokenizer_constraint_data_cached", False
+    )
+    report_path = tmp_path / "report.json"
+    production_path = tmp_path / "production.yaml"
+
+    with pytest.raises(ReviewerPromotionError, match="was not cached"):
         _promote(ledgers, report_path, production_path)
 
     assert not report_path.exists()

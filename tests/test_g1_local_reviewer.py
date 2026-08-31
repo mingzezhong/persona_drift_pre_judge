@@ -19,6 +19,7 @@ from persona_drift.g1_local_reviewer import (
     Registry,
     ReviewRunnerError,
     LocalHuggingFaceBackend,
+    _build_tokenizer_constraint_data,
     _load_schema_enforcer,
     _tokenizer_load_options,
     assigned_items,
@@ -356,8 +357,12 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
         items = {item.task_id: item for item in assigned_items(prepared)}
 
         scalar_task = prepared.prompts.tasks["persona_scalar"]
+        frozen_scalar_schema = canonical_json_bytes(scalar_task.response_schema)
         scalar_schema = effective_response_schema(
             scalar_task, items["persona_scalar"]
+        )
+        self.assertEqual(
+            canonical_json_bytes(scalar_task.response_schema), frozen_scalar_schema
         )
         self.assertEqual(
             scalar_schema["properties"]["candidate_anonymous_id"]["const"],
@@ -476,6 +481,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
             schema_parser_factory=lambda _schema: (_ for _ in ()).throw(
                 RuntimeError("constraint boom")
             ),
+            tokenizer_constraint_data=object(),
             prefix_allowed_tokens_factory=lambda *_args: None,
         )
         prepared = prepared_for("primary_01", "topic_triage")
@@ -491,7 +497,7 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
             )
         self.assertEqual(model.calls, 0)
 
-    def test_effective_schema_constraint_is_passed_to_exactly_one_generate_call(self) -> None:
+    def test_multiple_items_cache_tokenizer_data_but_get_independent_state(self) -> None:
         class Tensor:
             shape = (1, 1)
 
@@ -533,37 +539,74 @@ class SchemaConstrainedGenerationTests(unittest.TestCase):
             def inference_mode():
                 return contextlib.nullcontext()
 
-        captured = {}
+        captured = {"schemas": [], "tokenizer_data": [], "parsers": []}
         prefix_function = lambda *_args: [0]
+        tokenizer_data_builds = []
+        tokenizer_data = object()
+
+        def tokenizer_data_factory(observed_tokenizer):
+            tokenizer_data_builds.append(observed_tokenizer)
+            return tokenizer_data
 
         def parser_factory(schema):
-            captured["schema"] = schema
-            return "parser"
+            parser = object()
+            captured["schemas"].append(schema)
+            captured["parsers"].append(parser)
+            return parser
 
-        def prefix_factory(tokenizer, parser):
-            captured["tokenizer"] = tokenizer
-            captured["parser"] = parser
+        def prefix_factory(observed_tokenizer_data, parser):
+            captured["tokenizer_data"].append(observed_tokenizer_data)
             return prefix_function
 
         model = Model()
         tokenizer = Tokenizer()
+        cached_tokenizer_data = _build_tokenizer_constraint_data(
+            tokenizer, tokenizer_data_factory
+        )
         backend = LocalHuggingFaceBackend(
             model=model,
             tokenizer=tokenizer,
             torch_module=Torch(),
             provenance={},
             schema_parser_factory=parser_factory,
+            tokenizer_constraint_data=cached_tokenizer_data,
             prefix_allowed_tokens_factory=prefix_factory,
         )
-        prepared = prepared_for("primary_01", "topic_triage")
-        item = assigned_items(prepared)[0]
-        schema = effective_response_schema(prepared.prompts.tasks[item.task_id], item)
-        backend.generate([], prepared.registry.decoder, schema)
-        self.assertEqual(model.calls, 1)
-        self.assertEqual(captured["schema"], schema)
-        self.assertEqual(captured["parser"], "parser")
-        self.assertIs(captured["tokenizer"], tokenizer)
+        prepared = prepared_for("primary_01", "topic_triage", "persona_scalar")
+        items = assigned_items(prepared)
+        schemas = [
+            effective_response_schema(prepared.prompts.tasks[item.task_id], item)
+            for item in items
+        ]
+        for schema in schemas:
+            backend.generate([], prepared.registry.decoder, schema)
+        self.assertEqual(tokenizer_data_builds, [tokenizer])
+        self.assertEqual(model.calls, len(items))
+        self.assertEqual(captured["schemas"], schemas)
+        self.assertEqual(len({id(parser) for parser in captured["parsers"]}), len(items))
+        self.assertTrue(
+            all(value is tokenizer_data for value in captured["tokenizer_data"])
+        )
         self.assertIs(model.kwargs["prefix_allowed_tokens_fn"], prefix_function)
+
+    def test_tokenizer_data_build_failure_stops_before_generate(self) -> None:
+        class Model:
+            calls = 0
+
+            def generate(self, **_kwargs):
+                self.calls += 1
+
+        model = Model()
+        with self.assertRaisesRegex(
+            ReviewRunnerError, "tokenizer constraint data initialization failed"
+        ):
+            _build_tokenizer_constraint_data(
+                object(),
+                lambda _tokenizer: (_ for _ in ()).throw(
+                    RuntimeError("trie build failed")
+                ),
+            )
+        self.assertEqual(model.calls, 0)
 
     def test_old_production_registry_cannot_authorize_amended_runner(self) -> None:
         with self.assertRaisesRegex(

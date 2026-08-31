@@ -1099,7 +1099,7 @@ class ReviewerBackend(Protocol):
         ...
 
 
-def _load_schema_enforcer(runtime: Mapping[str, Any]) -> tuple[Any, Any]:
+def _load_schema_enforcer(runtime: Mapping[str, Any]) -> tuple[Any, Any, Any]:
     constraint = _require_mapping(
         runtime.get("schema_constrained_decoding"),
         context="registry runtime.schema_constrained_decoding",
@@ -1129,11 +1129,30 @@ def _load_schema_enforcer(runtime: Mapping[str, Any]) -> tuple[Any, Any]:
     try:
         from lmformatenforcer import JsonSchemaParser
         from lmformatenforcer.integrations.transformers import (
+            build_token_enforcer_tokenizer_data,
             build_transformers_prefix_allowed_tokens_fn,
         )
     except (ImportError, AttributeError) as exc:
         raise ReviewRunnerError("lm-format-enforcer integration is unavailable") from exc
-    return JsonSchemaParser, build_transformers_prefix_allowed_tokens_fn
+    return (
+        JsonSchemaParser,
+        build_token_enforcer_tokenizer_data,
+        build_transformers_prefix_allowed_tokens_fn,
+    )
+
+
+def _build_tokenizer_constraint_data(tokenizer: Any, factory: Any) -> Any:
+    try:
+        tokenizer_data = factory(tokenizer)
+    except Exception as exc:
+        raise ReviewRunnerError(
+            f"tokenizer constraint data initialization failed: {exc}"
+        ) from exc
+    if tokenizer_data is None:
+        raise ReviewRunnerError(
+            "tokenizer constraint data initialization returned no data"
+        )
+    return tokenizer_data
 
 
 def _snapshot_provenance(identity: ModelIdentity) -> dict[str, Any]:
@@ -1190,6 +1209,7 @@ class LocalHuggingFaceBackend:
         torch_module: Any,
         provenance: Mapping[str, Any],
         schema_parser_factory: Any,
+        tokenizer_constraint_data: Any,
         prefix_allowed_tokens_factory: Any,
     ) -> None:
         self._model = model
@@ -1197,6 +1217,7 @@ class LocalHuggingFaceBackend:
         self._torch = torch_module
         self._provenance = dict(provenance)
         self._schema_parser_factory = schema_parser_factory
+        self._tokenizer_constraint_data = tokenizer_constraint_data
         self._prefix_allowed_tokens_factory = prefix_allowed_tokens_factory
 
     @property
@@ -1210,9 +1231,11 @@ class LocalHuggingFaceBackend:
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-        schema_parser_factory, prefix_allowed_tokens_factory = _load_schema_enforcer(
-            registry.runtime
-        )
+        (
+            schema_parser_factory,
+            tokenizer_data_factory,
+            prefix_allowed_tokens_factory,
+        ) = _load_schema_enforcer(registry.runtime)
         try:
             import torch
             import transformers
@@ -1255,6 +1278,14 @@ class LocalHuggingFaceBackend:
         )
         try:
             tokenizer = AutoTokenizer.from_pretrained(snapshot, **tokenizer_options)
+        except Exception as exc:  # pragma: no cover - exercised on GPU host
+            raise ReviewRunnerError(
+                f"failed to load frozen local tokenizer {snapshot}: {exc}"
+            ) from exc
+        tokenizer_constraint_data = _build_tokenizer_constraint_data(
+            tokenizer, tokenizer_data_factory
+        )
+        try:
             model = AutoModelForCausalLM.from_pretrained(
                 snapshot,
                 device_map=device_map,
@@ -1273,6 +1304,7 @@ class LocalHuggingFaceBackend:
             "transformers_version": transformers.__version__,
             "schema_constrained_decoding_backend": SCHEMA_ENFORCER_DISTRIBUTION,
             "schema_constrained_decoding_version": SCHEMA_ENFORCER_VERSION,
+            "tokenizer_constraint_data_cached": True,
             "tokenizer_fix_mistral_regex": bool(
                 tokenizer_options.get("fix_mistral_regex", False)
             ),
@@ -1295,6 +1327,7 @@ class LocalHuggingFaceBackend:
             torch_module=torch,
             provenance=provenance,
             schema_parser_factory=schema_parser_factory,
+            tokenizer_constraint_data=tokenizer_constraint_data,
             prefix_allowed_tokens_factory=prefix_allowed_tokens_factory,
         )
 
@@ -1325,7 +1358,9 @@ class LocalHuggingFaceBackend:
             try:
                 parser = self._schema_parser_factory(dict(effective_schema))
                 generation_kwargs["prefix_allowed_tokens_fn"] = (
-                    self._prefix_allowed_tokens_factory(self._tokenizer, parser)
+                    self._prefix_allowed_tokens_factory(
+                        self._tokenizer_constraint_data, parser
+                    )
                 )
             except Exception as exc:
                 raise ReviewRunnerError(

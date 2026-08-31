@@ -597,6 +597,7 @@ def _validate_runtime_provenance(
         "transformers_version",
         "schema_constrained_decoding_backend",
         "schema_constrained_decoding_version",
+        "tokenizer_constraint_data_cached",
         "tokenizer_fix_mistral_regex",
         "cuda_version",
         "cuda_available",
@@ -633,6 +634,10 @@ def _validate_runtime_provenance(
     ):
         raise ReviewerPromotionError(
             f"{slot_id} runtime schema-constrained decoding dependency differs"
+        )
+    if provenance["tokenizer_constraint_data_cached"] is not True:
+        raise ReviewerPromotionError(
+            f"{slot_id} runtime tokenizer constraint data was not cached"
         )
     tokenizer_fix_mistral_regex = provenance["tokenizer_fix_mistral_regex"]
     if not isinstance(tokenizer_fix_mistral_regex, bool):

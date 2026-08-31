@@ -156,6 +156,7 @@ def test_amendment_3_failure_report_is_status_only_and_quarantines_every_row():
 
 def test_amendment_3_registry_is_schema_stress_only_and_not_production():
     registry = yaml.safe_load(AMENDED_REGISTRY.read_text(encoding="utf-8"))
+    prior_registry = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
     assert registry["registry_status"] == "frozen_for_synthetic_smoke"
     assert registry["synthetic_smoke_authorized"] is True
     assert registry["production_review_authorized"] is False
@@ -164,6 +165,7 @@ def test_amendment_3_registry_is_schema_stress_only_and_not_production():
         "backend": "lm-format-enforcer",
         "version": "0.11.2",
     }
+    assert registry["slots"] == prior_registry["slots"]
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert '"lm-format-enforcer==0.11.2"' in pyproject
     phase2 = yaml.safe_load((ROOT / "configs/g1_phase2_v2_3.yaml").read_text())
