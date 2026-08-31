@@ -44,6 +44,9 @@ class QueueBackend:
             "python_version": "3.11.0",
             "torch_version": prepared.registry.runtime["torch_version"],
             "transformers_version": prepared.registry.runtime["framework_version"],
+            "tokenizer_fix_mistral_regex": (
+                identity.base_model_family == "mistral"
+            ),
             "cuda_version": "12.8",
             "cuda_available": True,
             "cuda_device_count": 1,
@@ -190,6 +193,24 @@ def _promote(
     )
 
 
+def _replace_runtime_provenance_value(
+    path: Path, key: str, value: object
+) -> None:
+    records = [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+    ]
+    previous = None
+    for record in records:
+        record["runtime_provenance"][key] = value
+        record["previous_record_sha256"] = previous
+        record.pop("record_sha256")
+        previous = hashlib.sha256(canonical_json_bytes(record)).hexdigest()
+        record["record_sha256"] = previous
+    path.write_bytes(
+        b"".join(canonical_json_bytes(record) + b"\n" for record in records)
+    )
+
+
 def test_five_complete_runner_ledgers_promote_without_overwriting_source(
     tmp_path: Path,
 ) -> None:
@@ -261,6 +282,40 @@ def test_missing_fifth_real_ledger_fails_closed_without_outputs(
     production_path = tmp_path / "production.yaml"
 
     with pytest.raises(ReviewerPromotionError, match="scenario_writer.*missing"):
+        _promote(ledgers, report_path, production_path)
+
+    assert not report_path.exists()
+    assert not production_path.exists()
+
+
+def test_non_boolean_tokenizer_mistral_fix_provenance_fails_closed(
+    tmp_path: Path,
+) -> None:
+    ledgers = _real_runner_ledgers(tmp_path / "ledgers")
+    _replace_runtime_provenance_value(
+        ledgers["primary_01"], "tokenizer_fix_mistral_regex", "false"
+    )
+    report_path = tmp_path / "report.json"
+    production_path = tmp_path / "production.yaml"
+
+    with pytest.raises(ReviewerPromotionError, match="must be bool"):
+        _promote(ledgers, report_path, production_path)
+
+    assert not report_path.exists()
+    assert not production_path.exists()
+
+
+def test_tokenizer_mistral_fix_value_for_wrong_family_fails_closed(
+    tmp_path: Path,
+) -> None:
+    ledgers = _real_runner_ledgers(tmp_path / "ledgers")
+    _replace_runtime_provenance_value(
+        ledgers["primary_01"], "tokenizer_fix_mistral_regex", True
+    )
+    report_path = tmp_path / "report.json"
+    production_path = tmp_path / "production.yaml"
+
+    with pytest.raises(ReviewerPromotionError, match="differs from model family"):
         _promote(ledgers, report_path, production_path)
 
     assert not report_path.exists()

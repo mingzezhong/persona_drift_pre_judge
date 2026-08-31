@@ -589,6 +589,7 @@ def _validate_runtime_provenance(
         "python_version",
         "torch_version",
         "transformers_version",
+        "tokenizer_fix_mistral_regex",
         "cuda_version",
         "cuda_available",
         "cuda_device_count",
@@ -618,6 +619,16 @@ def _validate_runtime_provenance(
         )
     if provenance["torch_version"] != registry_runtime.get("torch_version"):
         raise ReviewerPromotionError(f"{slot_id} runtime torch version differs from registry")
+    tokenizer_fix_mistral_regex = provenance["tokenizer_fix_mistral_regex"]
+    if not isinstance(tokenizer_fix_mistral_regex, bool):
+        raise ReviewerPromotionError(
+            f"{slot_id} runtime tokenizer_fix_mistral_regex must be bool"
+        )
+    expected_mistral_fix = registry_slot["base_model_family"] == "mistral"
+    if tokenizer_fix_mistral_regex is not expected_mistral_fix:
+        raise ReviewerPromotionError(
+            f"{slot_id} runtime tokenizer_fix_mistral_regex differs from model family"
+        )
     for field in ("python_version", "cuda_version", "hostname"):
         if not isinstance(provenance[field], str) or not provenance[field]:
             raise ReviewerPromotionError(f"{slot_id} runtime {field} must be non-empty")
