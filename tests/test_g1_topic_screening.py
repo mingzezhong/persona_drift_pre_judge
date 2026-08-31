@@ -659,7 +659,7 @@ class TrackedTopicScreeningPacketTests(unittest.TestCase):
             validate_umbrella_topic_review_contract(tampered, self.umbrella)
 
         relevant_change = copy.deepcopy(self.umbrella)
-        relevant_change["authorization_guard"]["rater_facing_export_frozen"] = True
+        relevant_change["authorization_guard"]["rater_facing_export_frozen"] = False
         with self.assertRaisesRegex(TopicScreeningError, "projection differs"):
             validate_umbrella_topic_review_contract(self.manifest, relevant_change)
         output_change = copy.deepcopy(self.umbrella)

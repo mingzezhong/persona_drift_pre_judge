@@ -7,7 +7,7 @@
   "target_model_outcomes_observed": false,
   "config_sha256": "04a0b4cd77d079d618f6ebe9618fd049a70eee83c5ead23144ef120c121f453d",
   "umbrella_relevant_contract_projection_schema_id": "restart-v2.3-g1-persona-relevant-contract-projection-v1",
-  "umbrella_relevant_contract_projection_sha256": "fe55dae48945a4704f7270c3ec3b3de09a64977477e80548775e10d08c58b799",
+  "umbrella_relevant_contract_projection_sha256": "7e5e68ca115b744efc8eba0e3013661f22a55f0e58448a9a034471d0412b13f4",
   "umbrella_relevant_contract_projection": {
     "projection_schema_id": "restart-v2.3-g1-persona-relevant-contract-projection-v1",
     "protocol_state": {
@@ -25,9 +25,9 @@
       "execution_authorized": false,
       "reviewer_registry_complete": false,
       "reviewer_synthetic_smoke_passed": false,
-      "rater_facing_export_frozen": false,
-      "review_access_boundary_attested": false,
-      "review_packet_manifests_frozen": false
+      "rater_facing_export_frozen": true,
+      "review_access_boundary_attested": true,
+      "review_packet_manifests_frozen": true
     },
     "reviewer_registry": {
       "identity_lock_status": "not_frozen",
@@ -70,9 +70,11 @@
       ]
     },
     "review_execution_boundary": {
-      "status": "not_frozen",
-      "rater_facing_export_manifest_sha256": null,
-      "execution_environment_attestation_sha256": null,
+      "status": "frozen",
+      "rater_facing_export_manifest_path": "data/manifests/g1_rater_facing_export_v2_3.json",
+      "rater_facing_export_manifest_sha256": "24f11b126df691661ae988f2a1b7edc8e6b1bf72c561999c5e523dc1507cab54",
+      "execution_environment_attestation_path": "data/attestations/g1_review_execution_environment_v2_3.json",
+      "execution_environment_attestation_sha256": "fc99ac6b029ed04fc11706266a6687211b60140a8f39f6744b520c2e5fbde111",
       "export_may_contain_only": [
         "rater_facing_packet",
         "frozen_rubric",
@@ -92,6 +94,8 @@
         "external_tools"
       ],
       "exact_export_hash_and_access_attestation_required_before_execution": true,
+      "hashes_bind_current_exact_data_only_export": true,
+      "boundary_freeze_generates_no_ratings": true,
       "unresolved_policy": "stop_before_any_rating"
     },
     "blinding": {
@@ -299,9 +303,9 @@
     "duplicate_audit": "aca23c38b3ae8b0444d9b3cc6c44a47936b132e4a2706f2dbdf4237a93ecc177"
   },
   "output_sha256": {
-    "rubric": "e3ad4bd4a326fbec30b6702b54eba14fa0867c904a6e9879584ac5a572374eed",
-    "packet_manifest": "6ce06b1bed91304a5d38b3d6734f7ecba4b767652db1fe40422b7668340d5b65",
-    "exposure_ledger": "3df056539b47f9d9c530aa9f2ebce9d5065c6498aacc63b6e489b06a14ac7757",
+    "rubric": "9bbf2349dbba042d7a63931051f10c9c680fdf756a6055e736f0d15643247df6",
+    "packet_manifest": "676015e30f7169a203857af8ebc16459c0f955b64c4db3ed409a9cb65a7ac524",
+    "exposure_ledger": "7ada7e24c3f701dd488998e1e06a0e3b2c9841e4e888039e7ddd0480a602f7c9",
     "blinded_packet": "09bf413a2688a09f161e22b404c1fd0cdf5658155c2b4348499d56fe11a3e546"
   },
   "counts": {

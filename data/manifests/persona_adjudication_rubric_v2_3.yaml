@@ -7,7 +7,7 @@ selection_outcome_blind: true
 rubric_id: lps-v2.3-g1-persona-semantic-rubric-v1
 config_sha256: 04a0b4cd77d079d618f6ebe9618fd049a70eee83c5ead23144ef120c121f453d
 umbrella_relevant_contract_projection_schema_id: restart-v2.3-g1-persona-relevant-contract-projection-v1
-umbrella_relevant_contract_projection_sha256: fe55dae48945a4704f7270c3ec3b3de09a64977477e80548775e10d08c58b799
+umbrella_relevant_contract_projection_sha256: 7e5e68ca115b744efc8eba0e3013661f22a55f0e58448a9a034471d0412b13f4
 umbrella_relevant_contract_projection:
   projection_schema_id: restart-v2.3-g1-persona-relevant-contract-projection-v1
   protocol_state:
@@ -24,9 +24,9 @@ umbrella_relevant_contract_projection:
     execution_authorized: false
     reviewer_registry_complete: false
     reviewer_synthetic_smoke_passed: false
-    rater_facing_export_frozen: false
-    review_access_boundary_attested: false
-    review_packet_manifests_frozen: false
+    rater_facing_export_frozen: true
+    review_access_boundary_attested: true
+    review_packet_manifests_frozen: true
   reviewer_registry:
     identity_lock_status: not_frozen
     exact_model_id_and_revision_required: true
@@ -58,9 +58,11 @@ umbrella_relevant_contract_projection:
       model_revision: null
       base_model_family: null
   review_execution_boundary:
-    status: not_frozen
-    rater_facing_export_manifest_sha256: null
-    execution_environment_attestation_sha256: null
+    status: frozen
+    rater_facing_export_manifest_path: data/manifests/g1_rater_facing_export_v2_3.json
+    rater_facing_export_manifest_sha256: 24f11b126df691661ae988f2a1b7edc8e6b1bf72c561999c5e523dc1507cab54
+    execution_environment_attestation_path: data/attestations/g1_review_execution_environment_v2_3.json
+    execution_environment_attestation_sha256: fc99ac6b029ed04fc11706266a6687211b60140a8f39f6744b520c2e5fbde111
     export_may_contain_only:
     - rater_facing_packet
     - frozen_rubric
@@ -77,6 +79,8 @@ umbrella_relevant_contract_projection:
     - web_and_network
     - external_tools
     exact_export_hash_and_access_attestation_required_before_execution: true
+    hashes_bind_current_exact_data_only_export: true
+    boundary_freeze_generates_no_ratings: true
     unresolved_policy: stop_before_any_rating
   blinding:
     forbidden_to_all_reviewers:

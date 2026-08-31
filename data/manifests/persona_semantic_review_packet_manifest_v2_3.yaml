@@ -6,7 +6,7 @@ contains_target_model_data: false
 selection_outcome_blind: true
 config_sha256: 04a0b4cd77d079d618f6ebe9618fd049a70eee83c5ead23144ef120c121f453d
 umbrella_relevant_contract_projection_schema_id: restart-v2.3-g1-persona-relevant-contract-projection-v1
-umbrella_relevant_contract_projection_sha256: fe55dae48945a4704f7270c3ec3b3de09a64977477e80548775e10d08c58b799
+umbrella_relevant_contract_projection_sha256: 7e5e68ca115b744efc8eba0e3013661f22a55f0e58448a9a034471d0412b13f4
 umbrella_relevant_contract_projection:
   projection_schema_id: restart-v2.3-g1-persona-relevant-contract-projection-v1
   protocol_state:
@@ -23,9 +23,9 @@ umbrella_relevant_contract_projection:
     execution_authorized: false
     reviewer_registry_complete: false
     reviewer_synthetic_smoke_passed: false
-    rater_facing_export_frozen: false
-    review_access_boundary_attested: false
-    review_packet_manifests_frozen: false
+    rater_facing_export_frozen: true
+    review_access_boundary_attested: true
+    review_packet_manifests_frozen: true
   reviewer_registry:
     identity_lock_status: not_frozen
     exact_model_id_and_revision_required: true
@@ -57,9 +57,11 @@ umbrella_relevant_contract_projection:
       model_revision: null
       base_model_family: null
   review_execution_boundary:
-    status: not_frozen
-    rater_facing_export_manifest_sha256: null
-    execution_environment_attestation_sha256: null
+    status: frozen
+    rater_facing_export_manifest_path: data/manifests/g1_rater_facing_export_v2_3.json
+    rater_facing_export_manifest_sha256: 24f11b126df691661ae988f2a1b7edc8e6b1bf72c561999c5e523dc1507cab54
+    execution_environment_attestation_path: data/attestations/g1_review_execution_environment_v2_3.json
+    execution_environment_attestation_sha256: fc99ac6b029ed04fc11706266a6687211b60140a8f39f6744b520c2e5fbde111
     export_may_contain_only:
     - rater_facing_packet
     - frozen_rubric
@@ -76,6 +78,8 @@ umbrella_relevant_contract_projection:
     - web_and_network
     - external_tools
     exact_export_hash_and_access_attestation_required_before_execution: true
+    hashes_bind_current_exact_data_only_export: true
+    boundary_freeze_generates_no_ratings: true
     unresolved_policy: stop_before_any_rating
   blinding:
     forbidden_to_all_reviewers:
@@ -237,7 +241,7 @@ umbrella_relevant_contract_projection:
       shortfall_or_nonpartition_policy: stop_and_amend_without_filler_traits
 candidate_pool_sha256: 7e74b4189ceb2a462fe0651b82be2b16f113aa4133a6dc5dd14f49ba4d635334
 duplicate_audit_sha256: aca23c38b3ae8b0444d9b3cc6c44a47936b132e4a2706f2dbdf4237a93ecc177
-rubric_sha256: e3ad4bd4a326fbec30b6702b54eba14fa0867c904a6e9879584ac5a572374eed
+rubric_sha256: 9bbf2349dbba042d7a63931051f10c9c680fdf756a6055e736f0d15643247df6
 blinded_packet_path: data/reviews/persona_semantic_review_packet_v2_3.jsonl
 blinded_packet_sha256: 09bf413a2688a09f161e22b404c1fd0cdf5658155c2b4348499d56fe11a3e546
 blinded_packet_schema_id: lps-v2.3-g1-persona-semantic-review-row-v1
@@ -271,3 +275,6 @@ license_evidence_bindings:
     path: data/licenses/anthropics_evals_84fcc677e52e1902d696c32cd1a6b663e70d3993_LICENSE.txt
     file_sha256: 7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661
 g1_passed: false
+execution_boundary_binding:
+  rater_facing_export_manifest_sha256: 24f11b126df691661ae988f2a1b7edc8e6b1bf72c561999c5e523dc1507cab54
+  execution_environment_attestation_sha256: fc99ac6b029ed04fc11706266a6687211b60140a8f39f6744b520c2e5fbde111

@@ -79,9 +79,9 @@ def test_reviewer_registry_is_fail_closed_and_distinct_base() -> None:
 
 def test_review_execution_boundary_is_fail_closed() -> None:
     boundary = _config()["review_execution_boundary"]
-    assert boundary["status"] == "not_frozen"
-    assert boundary["rater_facing_export_manifest_sha256"] is None
-    assert boundary["execution_environment_attestation_sha256"] is None
+    assert boundary["status"] == "frozen"
+    assert SHA_RE.fullmatch(boundary["rater_facing_export_manifest_sha256"])
+    assert SHA_RE.fullmatch(boundary["execution_environment_attestation_sha256"])
     assert "repository_checkout" in boundary["export_must_exclude"]
     assert "administrator_maps" in boundary["export_must_exclude"]
     assert boundary["reviewer_access_must_disable"] == [
@@ -90,6 +90,13 @@ def test_review_execution_boundary_is_fail_closed() -> None:
         "external_tools",
     ]
     assert boundary["unresolved_policy"] == "stop_before_any_rating"
+    guard = _config()["authorization_guard"]
+    assert guard["rater_facing_export_frozen"] is True
+    assert guard["review_access_boundary_attested"] is True
+    assert guard["review_packet_manifests_frozen"] is True
+    assert guard["all_required_reviews_complete"] is False
+    assert _config()["ratings_generated"] is False
+    assert _review_authorized(_config()) is False
 
 
 def test_persona_packet_contract_is_hash_bound_and_balanced() -> None:
@@ -156,8 +163,8 @@ def test_mmlu_triage_union_audit_and_rescue_are_exact() -> None:
     assert canonical_structured_file_sha256(contract) == (
         topic["implementation_contract_canonical_sha256"]
     )
-    assert topic["implementation_contract_file_sha256"] == "a2a0b613644625f7cbe7bb0a2465799c5dd6c0cbf0a0c3d5a4fa6abd05dd63c4"
-    assert topic["implementation_contract_canonical_sha256"] == "6ac8f9a804741fe500441562b9c77b4adf2a2aa0d2d69c19da1f5f078a6ed19e"
+    assert topic["implementation_contract_file_sha256"] == "27c87dec07b6c3ece723c81f54ee483f103673c8ffe9e378025ce012c668cdae"
+    assert topic["implementation_contract_canonical_sha256"] == "6e2f7fa3595fae003ca722cb219a8576d81ef6bfd9613ad577f22bc6349528fc"
     assert topic["triage_rater_slots"] == ["primary_01", "primary_02"]
     assert topic["primary_full_screen_rater_slots"] == ["primary_01", "primary_02", "primary_03"]
     mmlu = topic["mmlu_pro"]

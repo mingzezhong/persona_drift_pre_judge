@@ -343,10 +343,10 @@ class GeneratedPersonaReviewPacketTests(unittest.TestCase):
         registry_changed["reviewer_registry"]["slots"][0]["model_id"] = "assigned"
         relevant_mutations.append(registry_changed)
         guard_changed = copy.deepcopy(umbrella)
-        guard_changed["authorization_guard"]["rater_facing_export_frozen"] = True
+        guard_changed["authorization_guard"]["rater_facing_export_frozen"] = False
         relevant_mutations.append(guard_changed)
         boundary_changed = copy.deepcopy(umbrella)
-        boundary_changed["review_execution_boundary"]["status"] = "frozen"
+        boundary_changed["review_execution_boundary"]["status"] = "not_frozen"
         relevant_mutations.append(boundary_changed)
         output_changed = copy.deepcopy(umbrella)
         output_changed["outputs"]["immutable_raw_ratings_required"] = False

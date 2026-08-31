@@ -26,9 +26,9 @@ authorization_guard:
   execution_authorized: false
   reviewer_registry_complete: false
   reviewer_synthetic_smoke_passed: false
-  rater_facing_export_frozen: false
-  review_access_boundary_attested: false
-  review_packet_manifests_frozen: false
+  rater_facing_export_frozen: true
+  review_access_boundary_attested: true
+  review_packet_manifests_frozen: true
   all_required_reviews_complete: false
   agreement_rules_passed: false
   persona_catalog_frozen: false
@@ -90,9 +90,11 @@ reviewer_registry:
   unresolved_identity_policy: stop_before_review_packet_execution
 
 review_execution_boundary:
-  status: not_frozen
-  rater_facing_export_manifest_sha256: null
-  execution_environment_attestation_sha256: null
+  status: frozen
+  rater_facing_export_manifest_path: data/manifests/g1_rater_facing_export_v2_3.json
+  rater_facing_export_manifest_sha256: 24f11b126df691661ae988f2a1b7edc8e6b1bf72c561999c5e523dc1507cab54
+  execution_environment_attestation_path: data/attestations/g1_review_execution_environment_v2_3.json
+  execution_environment_attestation_sha256: fc99ac6b029ed04fc11706266a6687211b60140a8f39f6744b520c2e5fbde111
   export_may_contain_only:
     - rater_facing_packet
     - frozen_rubric
@@ -109,6 +111,8 @@ review_execution_boundary:
     - web_and_network
     - external_tools
   exact_export_hash_and_access_attestation_required_before_execution: true
+  hashes_bind_current_exact_data_only_export: true
+  boundary_freeze_generates_no_ratings: true
   unresolved_policy: stop_before_any_rating
 
 blinding:
@@ -270,8 +274,8 @@ persona_review:
 
 topic_review:
   implementation_contract_path: data/manifests/topic_screening_packets_v2_3.yaml
-  implementation_contract_file_sha256: a2a0b613644625f7cbe7bb0a2465799c5dd6c0cbf0a0c3d5a4fa6abd05dd63c4
-  implementation_contract_canonical_sha256: 6ac8f9a804741fe500441562b9c77b4adf2a2aa0d2d69c19da1f5f078a6ed19e
+  implementation_contract_file_sha256: 27c87dec07b6c3ece723c81f54ee483f103673c8ffe9e378025ce012c668cdae
+  implementation_contract_canonical_sha256: 6e2f7fa3595fae003ca722cb219a8576d81ef6bfd9613ad577f22bc6349528fc
   implementation_contract_binding_status: hash_locked
   triage_rater_slots:
     - primary_01
